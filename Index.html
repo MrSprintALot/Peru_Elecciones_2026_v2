@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perú Elige 2026 — Conteo Rápido de Actas al 100% (DATUM)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F5F0;--card:#FFF;--surface:#EFEDE8;--border:rgba(0,0,0,.07);--bh:rgba(0,0,0,.14);
+  --tx:#1A1A1A;--tx2:#555;--txm:#999;
+  --red:#D91B30;--red-l:#FDE8EA;--gold:#C8A84E;
+  --font-d:'Sora',sans-serif;--font-b:'DM Sans',sans-serif;
+  --R:14px;--Rs:10px;
+  --ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--font-b);background:var(--bg);color:var(--tx);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.ctn{max-width:1400px;margin:0 auto;padding:0 2rem}
+.stripe{height:5px;background:linear-gradient(90deg,var(--red) 50%,#fff 50%)}
+
+/* Hero */
+.hero{padding:2.5rem 0 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--red-l);color:var(--red);font-family:var(--font-d);font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 14px;border-radius:99px;margin-bottom:.75rem}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1.5s ease infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-family:var(--font-d);font-size:2.2rem;font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:.4rem}
+h1 span{color:var(--red)}
+.sub{font-size:.88rem;color:var(--tx2);line-height:1.6}
+.meta{display:flex;flex-wrap:wrap;gap:1rem;margin-top:.75rem;font-size:.76rem;color:var(--txm)}
+.meta b{color:var(--tx2);font-weight:600}
+
+/* National bar */
+.nb{margin-bottom:1.5rem;padding:1.2rem 1.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--R);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.nb__lbl{font-family:var(--font-d);font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin-bottom:.7rem}
+.nb__trk{height:36px;border-radius:8px;overflow:hidden;display:flex;background:var(--surface)}
+.nb__seg{height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:.58rem;font-weight:700;color:#fff;cursor:pointer;min-width:0;transition:filter .2s;transform:scaleX(0);animation:segIn .6s var(--spring) forwards}
+.nb__seg:hover{filter:brightness(1.15)}
+@keyframes segIn{to{transform:scaleX(1)}}
+.nb__leg{display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:.7rem}
+.nb__li{display:flex;align-items:center;gap:5px;font-size:.7rem;color:var(--tx2);cursor:pointer}
+.nb__li:hover{color:var(--tx)}
+.nb__dot{width:7px;height:7px;border-radius:2px;flex-shrink:0}
+.nb__pct{font-family:var(--font-d);font-weight:700;color:var(--tx)}
+
+/* Map section */
+.map-sec{margin-bottom:1.5rem}
+.map-sec__lbl{font-family:var(--font-d);font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin-bottom:.3rem}
+.map-sec__hint{font-size:.74rem;color:var(--txm);margin-bottom:.75rem}
+.map-card{background:var(--card);border:1px solid var(--border);border-radius:var(--R);padding:1.25rem;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+#mapC{width:100%}
+#mapC svg{width:100%;height:auto}
+.dp{stroke:#fff;stroke-width:.7px;cursor:pointer;transition:all .3s var(--ease);transform-origin:center center}
+.dp:hover{filter:brightness(1.12) saturate(1.2);stroke:rgba(0,0,0,.2);stroke-width:1.4px}
+.dp.active{stroke:var(--red);stroke-width:2.5px;filter:brightness(1.15)}
+.dl{font-family:var(--font-d);font-size:6.5px;font-weight:700;fill:#fff;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:2.2px}
+
+/* Tooltip */
+.tt{position:absolute;pointer-events:none;background:#fff;border:1px solid var(--bh);border-radius:var(--Rs);padding:10px 14px;box-shadow:0 8px 30px rgba(0,0,0,.12);font-size:.78rem;z-index:50;opacity:0;transition:opacity .12s;max-width:240px}
+.tt.v{opacity:1}
+.tt__n{font-family:var(--font-d);font-weight:700;font-size:.88rem;margin-bottom:4px}
+.tt__w{display:flex;align-items:center;gap:6px}
+.tt__wd{width:8px;height:8px;border-radius:3px}
+.tt__h{font-size:.66rem;color:var(--txm);margin-top:5px}
+
+/* Extranjero chip */
+.ext-chip{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:var(--Rs);background:var(--card);border:1px solid var(--border);cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.05);margin-top:1rem}
+.ext-chip:hover{border-color:var(--bh);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:18px;width:100%;max-width:540px;max-height:85vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .4s var(--spring)}
+@keyframes modalIn{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:none}}
+.modal__head{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border);position:relative}
+.modal__close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;border:none;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--tx2);transition:all .2s}
+.modal__close:hover{background:var(--red-l);color:var(--red)}
+.modal__dn{font-family:var(--font-d);font-size:1.4rem;font-weight:800;letter-spacing:-.02em;margin-bottom:2px}
+.modal__dm{font-size:.76rem;color:var(--tx2)}
+.modal__wt{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-family:var(--font-d);font-size:.66rem;font-weight:700;margin-top:8px}
+.modal__body{padding:1rem 1.5rem 1.5rem;overflow-y:auto;max-height:calc(85vh - 130px)}
+.modal__st{font-family:var(--font-d);font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin:1rem 0 .5rem}
+.modal__st:first-child{margin-top:0}
+.cr{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:var(--Rs);margin-bottom:2px;transition:background .2s;opacity:0;animation:rowIn .35s var(--ease) forwards}
+.cr:hover{background:var(--surface)}
+@keyframes rowIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.cr__p{font-family:var(--font-d);font-size:.65rem;font-weight:700;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--txm)}
+.cr__p.t1{background:#FFF8E1;color:#F9A825}.cr__p.t2{background:#F5F5F5;color:#9E9E9E}.cr__p.t3{background:#FBE9E7;color:#BF360C}
+.cr__i{min-width:0}
+.cr__n{font-weight:600;font-size:.78rem;display:flex;align-items:center;gap:5px}
+.cr__nd{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.cr__pt{font-size:.64rem;color:var(--txm);margin-top:1px}
+.cr__pw{text-align:right}
+.cr__pc{font-family:var(--font-d);font-weight:800;font-size:1rem}
+.cr__br{width:70px;height:3px;border-radius:2px;background:var(--surface);margin-top:3px;overflow:hidden;margin-left:auto}
+.cr__bf{height:100%;border-radius:2px;transform:scaleX(0);transform-origin:right;animation:barIn .5s var(--spring) forwards}
+@keyframes barIn{to{transform:scaleX(1)}}
+
+/* Dept grid */
+.dg{margin-bottom:2rem}
+.dg__lbl{font-family:var(--font-d);font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin-bottom:.3rem}
+.dg__h{font-size:.74rem;color:var(--txm);margin-bottom:.7rem}
+.dg__g{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:7px}
+.dc{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--Rs);background:var(--card);border:1px solid var(--border);cursor:pointer;transition:all .2s;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.dc:hover{border-color:var(--bh);transform:translateY(-1px);box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.dc.act{border-color:var(--red);box-shadow:0 0 0 2px rgba(217,27,48,.12)}
+.dc__c{width:6px;height:26px;border-radius:3px;flex-shrink:0}
+.dc__i{flex:1;min-width:0}
+.dc__dn{font-family:var(--font-d);font-size:.74rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dc__w{font-size:.64rem;color:var(--tx2)}
+.dc__p{font-family:var(--font-d);font-size:.84rem;font-weight:700;flex-shrink:0}
+
+/* Footer */
+.ft{padding:1.5rem 0;border-top:1px solid var(--border);font-size:.7rem;color:var(--txm);line-height:1.8}
+@media(max-width:768px){h1{font-size:1.6rem}.ctn{padding:0 1rem}}
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+<div class="ctn">
+  <header class="hero">
+    <div class="badge">Conteo rápido al 100%</div>
+    <h1>Conteo Rápido de Actas al 100% <span>(DATUM)</span></h1>
+    <p class="sub">Elecciones Generales 2026 — Primera vuelta, domingo 12 de abril</p>
+    <div class="meta">
+      <span><b>Actas:</b> 1,500</span>
+      <span><b>Margen:</b> ±1%</span>
+      <span><b>2da vuelta:</b> 7 junio 2026</span>
+      <span><b>Fuente:</b> Datum · América TV / Canal N</span>
+    </div>
+  </header>
+  <section class="nb">
+    <div class="nb__lbl">Resultado nacional — votos válidos</div>
+    <div class="nb__trk" id="nT"></div>
+    <div class="nb__leg" id="nL"></div>
+  </section>
+  <section class="map-sec">
+    <div class="map-sec__lbl">Mapa electoral por departamento</div>
+    <div class="map-sec__hint">Haz clic en un departamento para ver todos los candidatos</div>
+    <div class="map-card">
+      <div id="mapC"></div>
+      <div class="tt" id="tt"></div>
+      <div style="text-align:center">
+        <div class="ext-chip" id="extChip">
+          <span style="font-size:1.3rem">🌎</span>
+          <div style="text-align:left">
+            <div style="font-family:var(--font-d);font-size:.78rem;font-weight:700">Voto en el Extranjero</div>
+            <div style="font-size:.68rem;color:var(--tx2)">López Aliaga 28.2%</div>
+          </div>
+          <div style="font-family:var(--font-d);font-size:.9rem;font-weight:700;color:#1E5BB8">28.2%</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="dg">
+    <div class="dg__lbl">Todos los departamentos</div>
+    <div class="dg__h">Haz clic para ver detalle completo</div>
+    <div class="dg__g" id="dG"></div>
+  </section>
+  <footer class="ft">
+    <strong>Fuente:</strong> Datum Internacional para América TV / Canal N — Conteo rápido de actas al 100%, 13 abril 2026.<br>
+    Porcentajes de votos válidos. Margen de error ±1%. Visualización con datos de fuentes públicas. No es resultado oficial.
+  </footer>
+</div>
+<div class="modal-bg" id="mBg"><div class="modal" id="modal"><div class="modal__head" id="mH"></div><div class="modal__body" id="mB"></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<script>
+/* ═══════════════ CANDIDATE REGISTRY ═══════════════ */
+const C={
+ 'Keiko Fujimori':{p:'Fuerza Popular',c:'#CC7A1A',s:'Keiko'},
+ 'Rafael López Aliaga':{p:'Renovación Popular',c:'#1E5BB8',s:'López Aliaga'},
+ 'Jorge Nieto':{p:'Buen Gobierno',c:'#0D8A72',s:'Nieto'},
+ 'Ricardo Belmont':{p:'Cívico Obras',c:'#8E24AA',s:'Belmont'},
+ 'Roberto Sánchez':{p:'Juntos por el Perú',c:'#C62828',s:'R. Sánchez'},
+ 'Carlos Álvarez':{p:'País para Todos',c:'#5E35B1',s:'C. Álvarez'},
+ 'Alfonso López Chau':{p:'Ahora Nación',c:'#2E7D32',s:'L. Chau'},
+ 'Rosario Fernández':{p:'Un Camino Diferente',c:'#607D8B',s:'Fernández'},
+ 'George Forsyth':{p:'Somos Perú',c:'#00838F',s:'Forsyth'},
+ 'Marisol Pérez Tello':{p:'Primero la Gente',c:'#AD1457',s:'Pérez Tello'},
+ 'Charlie Carrasco':{p:'Demócrata Unido',c:'#6D4C41',s:'Carrasco'},
+ 'José Luna Gálvez':{p:'Podemos Perú',c:'#F57F17',s:'Luna'},
+ 'César Acuña':{p:'Alianza para el Progreso',c:'#0277BD',s:'Acuña'},
+ 'Yonhy Lescano':{p:'Cooperación Popular',c:'#558B2F',s:'Lescano'},
+ 'Ronald Atencio':{p:'Alianza Venceremos',c:'#4E342E',s:'Atencio'},
+ 'Fernando Olivera':{p:'Frente Esperanza',c:'#BF360C',s:'Olivera'},
+ 'Mario Vizcarra':{p:'Perú Primero',c:'#1565C0',s:'Vizcarra'},
+ 'Carlos Espá':{p:'Sí Creo',c:'#7B1FA2',s:'Espá'},
+ 'Otros':{p:'',c:'#BDBDBD',s:'Otros'}
+};
+function gc(n){return C[n]?.c||'#BDBDBD'}
+function gs(n){return C[n]?.s||n}
+
+/* ═══════════════ NATIONAL DATA ═══════════════ */
+const NAT=[
+ {n:'Keiko Fujimori',v:16.8},{n:'Rafael López Aliaga',v:12.9},{n:'Jorge Nieto',v:11.6},
+ {n:'Ricardo Belmont',v:10.1},{n:'Roberto Sánchez',v:9.4},{n:'Carlos Álvarez',v:8.1},
+ {n:'Alfonso López Chau',v:7.7},{n:'Otros',v:23.4}
+];
+
+/* ═══════════════ COMPLETE DEPARTMENT DATA ═══════════════ */
+const D={
+'Amazonas':[['Roberto Sánchez',25.7],['Keiko Fujimori',20.8],['Ricardo Belmont',11.5],['Alfonso López Chau',6],['Carlos Álvarez',3.9],['Jorge Nieto',3.9],['Rafael López Aliaga',3.4],['Otros',24.8]],
+'Áncash':[['Keiko Fujimori',17.8],['Roberto Sánchez',11.8],['Carlos Álvarez',10.4],['Ricardo Belmont',9.7],['Jorge Nieto',9.3],['Alfonso López Chau',9.3],['Rafael López Aliaga',7.1],['Otros',24.6]],
+'Apurímac':[['Roberto Sánchez',30.3],['Ricardo Belmont',15.1],['Alfonso López Chau',11.8],['Keiko Fujimori',8.9],['Jorge Nieto',4.4],['Rafael López Aliaga',3.7],['Charlie Carrasco',3.3],['Otros',22.5]],
+'Arequipa':[['Jorge Nieto',20.4],['Rafael López Aliaga',12.3],['Alfonso López Chau',9.1],['Carlos Álvarez',8.8],['Ricardo Belmont',8.8],['Keiko Fujimori',8],['Roberto Sánchez',7.3],['Otros',25.3]],
+'Ayacucho':[['Roberto Sánchez',20.7],['Ricardo Belmont',17.8],['Alfonso López Chau',16],['Keiko Fujimori',7.1],['Jorge Nieto',6.1],['Carlos Espá',3.5],['Carlos Álvarez',3.1],['Otros',25.7]],
+'Cajamarca':[['Roberto Sánchez',43.1],['Ricardo Belmont',13.5],['Keiko Fujimori',12.3],['Alfonso López Chau',4.9],['Jorge Nieto',4.7],['Rafael López Aliaga',2.6],['Carlos Álvarez',2.5],['Otros',16.4]],
+'Callao':[['Keiko Fujimori',20.1],['Rafael López Aliaga',18.1],['Jorge Nieto',14.9],['Carlos Álvarez',11.4],['Ricardo Belmont',8.3],['Alfonso López Chau',6.2],['Marisol Pérez Tello',4.4],['Otros',16.6]],
+'Cusco':[['Alfonso López Chau',15.6],['Ricardo Belmont',14.8],['Jorge Nieto',13.9],['Roberto Sánchez',11.9],['Rafael López Aliaga',7.4],['Keiko Fujimori',6.7],['Marisol Pérez Tello',5.1],['Otros',24.6]],
+'Huancavelica':[['Roberto Sánchez',33.9],['Ricardo Belmont',13.4],['Alfonso López Chau',10.3],['Keiko Fujimori',6.7],['Jorge Nieto',4.5],['Rafael López Aliaga',4.4],['José Luna Gálvez',3.1],['Otros',23.7]],
+'Huánuco':[['Roberto Sánchez',24.1],['Keiko Fujimori',15.7],['Ricardo Belmont',15.6],['Rafael López Aliaga',7.7],['Alfonso López Chau',6.5],['Carlos Álvarez',6.3],['Jorge Nieto',6],['Otros',18.1]],
+'Ica':[['Keiko Fujimori',20.3],['Carlos Álvarez',11.1],['Rafael López Aliaga',9.7],['Ricardo Belmont',9.5],['Jorge Nieto',9.4],['Roberto Sánchez',8.2],['Alfonso López Chau',6.5],['Otros',25.3]],
+'Junín':[['Keiko Fujimori',17.2],['Alfonso López Chau',11.5],['Ricardo Belmont',10.7],['Roberto Sánchez',9.3],['Rafael López Aliaga',9],['Jorge Nieto',8.8],['Carlos Álvarez',8.1],['Otros',25.4]],
+'La Libertad':[['Keiko Fujimori',20.7],['Jorge Nieto',10.1],['Rosario Fernández',9.6],['Rafael López Aliaga',8.5],['Carlos Álvarez',8.4],['Roberto Sánchez',7.2],['Ricardo Belmont',6.9],['Otros',28.6]],
+'Lambayeque':[['Keiko Fujimori',25.4],['Rafael López Aliaga',10.5],['Jorge Nieto',10],['Carlos Álvarez',9.3],['Roberto Sánchez',8.6],['Ricardo Belmont',6.9],['Alfonso López Chau',5.1],['Otros',24.2]],
+'Lima':[['Rafael López Aliaga',22.2],['Keiko Fujimori',16.4],['Jorge Nieto',15.7],['Carlos Álvarez',8.7],['Ricardo Belmont',8.7],['Alfonso López Chau',6.8],['Marisol Pérez Tello',4.5],['Otros',17]],
+'Lima Provincias':[['Keiko Fujimori',24.7],['Ricardo Belmont',11.7],['Carlos Álvarez',9.5],['Jorge Nieto',9],['Roberto Sánchez',8.3],['Rafael López Aliaga',8.1],['Alfonso López Chau',7.2],['Otros',21.5]],
+'Loreto':[['Keiko Fujimori',29.9],['Carlos Álvarez',15.3],['Rafael López Aliaga',6.6],['George Forsyth',5.7],['Roberto Sánchez',5],['César Acuña',4.8],['Jorge Nieto',4.6],['Otros',28.1]],
+'Madre de Dios':[['Roberto Sánchez',20.3],['Keiko Fujimori',17.3],['Ricardo Belmont',13],['Carlos Álvarez',7.6],['Alfonso López Chau',7.5],['Jorge Nieto',4.3],['Rafael López Aliaga',4.2],['Otros',25.8]],
+'Moquegua':[['Jorge Nieto',12.4],['Alfonso López Chau',10.4],['Ricardo Belmont',10.1],['Rafael López Aliaga',9.7],['Roberto Sánchez',8],['Mario Vizcarra',7.9],['Keiko Fujimori',6.6],['Otros',34.9]],
+'Pasco':[['Keiko Fujimori',18.3],['Roberto Sánchez',13.9],['Ricardo Belmont',10.2],['Rafael López Aliaga',10],['Alfonso López Chau',9.7],['Jorge Nieto',5.2],['José Luna Gálvez',5],['Otros',27.7]],
+'Piura':[['Keiko Fujimori',29.3],['Carlos Álvarez',11.7],['Jorge Nieto',9.4],['Ricardo Belmont',7.1],['Rafael López Aliaga',7],['Roberto Sánchez',5.8],['Alfonso López Chau',5.2],['Otros',24.5]],
+'Puno':[['Roberto Sánchez',20.2],['Ricardo Belmont',16.4],['Alfonso López Chau',11],['Yonhy Lescano',11],['Ronald Atencio',4.9],['Jorge Nieto',4.5],['Fernando Olivera',4.2],['Otros',27.8]],
+'San Martín':[['Keiko Fujimori',24.4],['Roberto Sánchez',17],['Ricardo Belmont',12.3],['Rafael López Aliaga',6.4],['Carlos Álvarez',6.2],['Jorge Nieto',5.4],['Alfonso López Chau',4.6],['Otros',23.7]],
+'Tacna':[['Ricardo Belmont',14.8],['Jorge Nieto',13.2],['Roberto Sánchez',9.9],['Alfonso López Chau',9.2],['Marisol Pérez Tello',7.2],['Carlos Álvarez',7],['Keiko Fujimori',6.5],['Otros',32.2]],
+'Tumbes':[['Keiko Fujimori',29.5],['Carlos Álvarez',16],['Roberto Sánchez',6.3],['Rafael López Aliaga',6.2],['Jorge Nieto',6.1],['Alfonso López Chau',5.6],['José Luna Gálvez',5],['Otros',25.3]],
+'Ucayali':[['Keiko Fujimori',27.7],['Ricardo Belmont',11],['Carlos Álvarez',10.8],['Roberto Sánchez',9.6],['Jorge Nieto',6.9],['Rafael López Aliaga',6.3],['Alfonso López Chau',4.6],['Otros',23.1]],
+'Extranjero':[['Rafael López Aliaga',28.2],['Keiko Fujimori',14],['Jorge Nieto',11],['Carlos Álvarez',10.1],['Ricardo Belmont',8.8],['Alfonso López Chau',7.9],['Marisol Pérez Tello',4.1],['Otros',15.9]]
+};
+
+const DN={'Lima':'Lima Metropolitana'};
+function norm(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
+const NM={};Object.keys(D).forEach(k=>{NM[norm(k)]=k});
+NM['lima metropolitana']='Lima';NM['lima']='Lima';NM['provincia constitucional del callao']='Callao';
+function mtch(n){const x=norm(n);if(NM[x])return NM[x];for(const k of Object.keys(D))if(norm(k).includes(x)||x.includes(norm(k)))return k;return null}
+
+/* ═══════════════ NATIONAL BAR ═══════════════ */
+(function(){
+  const t=document.getElementById('nT'),l=document.getElementById('nL');
+  NAT.forEach((c,i)=>{
+    const s=document.createElement('div');s.className='nb__seg';
+    s.style.width=c.v+'%';s.style.background=gc(c.n);s.style.animationDelay=(i*.1)+'s';
+    s.style.transformOrigin='left';
+    s.innerHTML='<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 3px">'+(c.v>=7.5?gs(c.n)+' '+c.v+'%':'')+'</span>';
+    s.title=c.n+(C[c.n]?.p?' — '+C[c.n].p:'')+': '+c.v+'%';
+    t.appendChild(s);
+  });
+  NAT.forEach(c=>{
+    const it=document.createElement('div');it.className='nb__li';
+    it.innerHTML='<span class="nb__dot" style="background:'+gc(c.n)+'"></span><span>'+gs(c.n)+'</span><span class="nb__pct">'+c.v+'%</span>';
+    it.title=c.n+(C[c.n]?.p?' — '+C[c.n].p:'');
+    l.appendChild(it);
+  });
+})();
+
+/* ═══════════════ MAP ═══════════════ */
+const tt=document.getElementById('tt');
+
+/* Manual centroid overrides for mislabeled departments */
+const CENT_FIX={
+  'Callao':[-77.1,-12.05],
+  'Lima':[-76.8,-12.05],
+  'Tumbes':[-80.4,-3.6],
+  'Moquegua':[-70.9,-17.1],
+  'Tacna':[-70.3,-17.6],
+  'Puno':[-70.0,-15.5]
+};
+
+d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json').then(topo=>{
+  const feat=topojson.feature(topo,topo.objects.per).features;
+  const ctn=document.getElementById('mapC'),w=ctn.clientWidth,h=Math.max(560,w*1.15);
+  const pr=d3.geoMercator().center([-75.5,-9.5]).scale(w*2.7).translate([w/2,h/2]);
+  const pa=d3.geoPath(pr);
+  const svg=d3.select('#mapC').append('svg').attr('viewBox','0 0 '+w+' '+h).attr('preserveAspectRatio','xMidYMid meet');
+
+  /* Puzzle animation: scatter pieces then assemble */
+  const paths=svg.selectAll('path').data(feat).join('path').attr('d',pa).attr('class','dp')
+    .attr('fill',d=>{const dk=mtch(d.properties.name||d.id||'');return dk&&D[dk]?gc(D[dk][0][0]):'#E0E0E0'})
+    .attr('data-dept',d=>mtch(d.properties.name||d.id||'')||'')
+    .style('opacity',0)
+    .on('mouseenter',function(ev,d){
+      const dk=mtch(d.properties.name||d.id||'');if(!dk||!D[dk])return;
+      const r=D[dk],dn=DN[dk]||dk;
+      tt.innerHTML='<div class="tt__n">'+dn+'</div><div class="tt__w"><span class="tt__wd" style="background:'+gc(r[0][0])+'"></span><b>'+r[0][0]+'</b><span style="margin-left:auto;font-family:var(--font-d);font-weight:700">'+r[0][1]+'%</span></div><div class="tt__h">Clic para ver los '+r.length+' candidatos</div>';
+      tt.classList.add('v');
+    })
+    .on('mousemove',function(ev){const rc=document.querySelector('.map-card').getBoundingClientRect();tt.style.left=(ev.clientX-rc.left+15)+'px';tt.style.top=(ev.clientY-rc.top-10)+'px'})
+    .on('mouseleave',()=>tt.classList.remove('v'))
+    .on('click',function(ev,d){
+      const dk=mtch(d.properties.name||d.id||'');if(!dk)return;
+      svg.selectAll('.dp').classed('active',false);d3.select(this).classed('active',true);
+      document.querySelectorAll('.dc').forEach(c=>c.classList.remove('act'));
+      const ch=document.querySelector('[data-dc="'+dk+'"]');if(ch)ch.classList.add('act');
+      openModal(dk);
+    });
+
+  /* Puzzle entrance animation */
+  paths.each(function(d,i){
+    const el=d3.select(this);
+    const cx=pa.centroid(d);
+    const randX=(Math.random()-.5)*300;
+    const randY=(Math.random()-.5)*300;
+    const randR=(Math.random()-.5)*30;
+    el.style('transform','translate('+randX+'px,'+randY+'px) rotate('+randR+'deg)')
+      .style('transition','all 1s cubic-bezier(.34,1.56,.64,1) '+(i*40)+'ms');
+    setTimeout(()=>{
+      el.style('opacity',1).style('transform','translate(0,0) rotate(0deg)');
+    },100);
+  });
+
+  /* Labels */
+  const ABBR={'Lima':'LIM','Callao':'CAL','Áncash':'ANC','Arequipa':'AQP','Ayacucho':'AYA','Cajamarca':'CAJ','Cusco':'CUS','Huancavelica':'HCV','Huánuco':'HCO','Ica':'ICA','Junín':'JUN','La Libertad':'LAL','Lambayeque':'LAM','Loreto':'LOR','Madre de Dios':'MDD','Moquegua':'MOQ','Pasco':'PAS','Piura':'PIU','Puno':'PUN','San Martín':'SMR','Tacna':'TAC','Tumbes':'TUM','Ucayali':'UCA','Amazonas':'AMA','Apurímac':'APU','Lima Provincias':'LPR'};
+
+  setTimeout(()=>{
+    svg.selectAll('text.dl').data(feat).join('text').attr('class','dl')
+      .attr('x',d=>{
+        const dk=mtch(d.properties.name||d.id||'');
+        if(dk&&CENT_FIX[dk])return pr(CENT_FIX[dk])[0];
+        return pa.centroid(d)[0];
+      })
+      .attr('y',d=>{
+        const dk=mtch(d.properties.name||d.id||'');
+        if(dk&&CENT_FIX[dk])return pr(CENT_FIX[dk])[1];
+        return pa.centroid(d)[1];
+      })
+      .text(d=>{const dk=mtch(d.properties.name||d.id||'');return dk?ABBR[dk]||dk.substring(0,3).toUpperCase():''})
+      .style('opacity',0)
+      .transition().delay((d,i)=>800+i*30).duration(400).style('opacity',1);
+  },200);
+});
+
+/* Extranjero chip */
+document.getElementById('extChip').addEventListener('click',()=>openModal('Extranjero'));
+
+/* ═══════════════ MODAL ═══════════════ */
+const mBg=document.getElementById('mBg');
+mBg.addEventListener('click',e=>{if(e.target===mBg)closeModal()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+function closeModal(){mBg.classList.remove('open')}
+
+function openModal(dk){
+  const r=D[dk];if(!r)return;
+  const dn=DN[dk]||dk,wc=gc(r[0][0]),mx=r[0][1];
+  const mH=document.getElementById('mH'),mB=document.getElementById('mB');
+
+  mH.innerHTML='<button class="modal__close" onclick="closeModal()">✕</button>'+
+    '<div class="modal__dn">'+dn+'</div>'+
+    '<div class="modal__dm">Conteo rápido Datum al 100% · '+r.length+' candidatos</div>'+
+    '<div class="modal__wt" style="background:'+wc+'15;color:'+wc+';border:1px solid '+wc+'30">🏆 '+gs(r[0][0])+' — '+r[0][1]+'%</div>';
+
+  let html='<div class="modal__st">Todos los candidatos</div>';
+  r.forEach((x,i)=>{
+    const cc=gc(x[0]),cn=C[x[0]]||{p:'',s:x[0]};
+    const ps=i===0?'t1':i===1?'t2':i===2?'t3':'';
+    const bw=(x[1]/mx*100).toFixed(1);
+    html+='<div class="cr" style="animation-delay:'+(i*.04)+'s">'+
+      '<div class="cr__p '+ps+'">'+(i+1)+'</div>'+
+      '<div class="cr__i"><div class="cr__n"><span class="cr__nd" style="background:'+cc+'"></span>'+x[0]+'</div>'+
+      '<div class="cr__pt">'+(cn.p||'')+'</div></div>'+
+      '<div class="cr__pw"><div class="cr__pc" style="color:'+cc+'">'+x[1]+'%</div>'+
+      '<div class="cr__br"><div class="cr__bf" style="width:'+bw+'%;background:'+cc+';animation-delay:'+(i*.06)+'s"></div></div></div></div>';
+  });
+
+  /* Visual chart */
+  html+='<div class="modal__st">Distribución visual</div><div style="display:flex;gap:3px;height:130px;align-items:flex-end;padding:0 4px">';
+  r.forEach((x,i)=>{
+    if(x[0]==='Otros')return;
+    const cc=gc(x[0]),hh=Math.max(4,(x[1]/mx*100)).toFixed(1);
+    html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0">'+
+      '<span style="font-family:var(--font-d);font-size:.6rem;font-weight:700;color:'+cc+'">'+x[1]+'%</span>'+
+      '<div style="width:100%;height:'+hh+'%;background:'+cc+';border-radius:5px 5px 2px 2px;transform:scaleY(0);transform-origin:bottom;animation:barVIn .5s var(--spring) '+(i*.07)+'s forwards;min-height:3px"></div>'+
+      '<span style="font-size:.5rem;color:var(--txm);text-align:center;line-height:1.1;overflow:hidden;max-height:2.2em">'+gs(x[0])+'</span></div>';
+  });
+  html+='</div>';
+
+  mB.innerHTML=html;
+  mBg.classList.add('open');
+}
+
+/* ═══════════════ DEPT GRID ═══════════════ */
+(function(){
+  const g=document.getElementById('dG');
+  Object.keys(D).sort((a,b)=>{if(a==='Extranjero')return 1;if(b==='Extranjero')return -1;return a.localeCompare(b,'es')}).forEach(dk=>{
+    const r=D[dk],cc=gc(r[0][0]),dn=DN[dk]||dk;
+    const ch=document.createElement('div');ch.className='dc';ch.setAttribute('data-dc',dk);
+    ch.innerHTML='<div class="dc__c" style="background:'+cc+'"></div>'+
+      '<div class="dc__i"><div class="dc__dn">'+(dk==='Extranjero'?'🌎 ':'')+dn+'</div>'+
+      '<div class="dc__w">'+gs(r[0][0])+' · '+(C[r[0][0]]?.p||'')+'</div></div>'+
+      '<div class="dc__p" style="color:'+cc+'">'+r[0][1]+'%</div>';
+    ch.addEventListener('click',()=>{
+      g.querySelectorAll('.dc').forEach(c=>c.classList.remove('act'));ch.classList.add('act');
+      const svg=document.querySelector('#mapC svg');
+      if(svg){d3.select('#mapC svg').selectAll('.dp').classed('active',false);
+        const mp=d3.select('#mapC svg').select('[data-dept="'+dk+'"]');if(!mp.empty())mp.classed('active',true)}
+      openModal(dk);
+    });
+    g.appendChild(ch);
+  });
+})();
+
+/* Add vertical bar animation keyframes */
+const sty=document.createElement('style');
+sty.textContent='@keyframes barVIn{from{transform:scaleY(0)}to{transform:scaleY(1)}}';
+document.head.appendChild(sty);
+</script>
+</body>
+</html>
