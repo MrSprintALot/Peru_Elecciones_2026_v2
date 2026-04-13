@@ -1,533 +1,1201 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Mapa interactivo con los resultados del conteo rápido de actas al 100% de Datum Internacional — Elecciones Generales Perú 2026, primera vuelta.">
-<!-- Open Graph for LinkedIn / Facebook -->
-<meta property="og:title" content="🗳️ Mapa Interactivo — Conteo Rápido Datum al 100% · Elecciones Perú 2026">
-<meta property="og:description" content="Explora los resultados completos por departamento. 7 candidatos en cada región. Haz clic y descubre cómo votó el Perú.">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://renzonunezaf.github.io/Elecciones_2026/og-preview.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="627">
-<meta property="og:url" content="https://renzonunezaf.github.io/Elecciones_2026/">
-<meta property="og:locale" content="es_PE">
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="🗳️ Mapa Interactivo — Conteo Rápido Datum al 100% · Elecciones Perú 2026">
-<meta name="twitter:description" content="Explora los resultados completos por departamento. 7 candidatos en cada región.">
-<meta name="twitter:image" content="https://renzonunezaf.github.io/Elecciones_2026/og-preview.png">
-<title>Mapa Interactivo — Perú Elige 2026 · Conteo Rápido de Actas al 100% (DATUM)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#F7F5F0;--card:#FFF;--surface:#EFEDE8;--border:rgba(0,0,0,.07);--bh:rgba(0,0,0,.14);
-  --tx:#1A1A1A;--tx2:#555;--txm:#999;
-  --red:#D91B30;--red-l:#FDE8EA;--gold:#C8A84E;
-  --font-d:'Sora',sans-serif;--font-b:'DM Sans',sans-serif;
-  --R:14px;--Rs:10px;
-  --ease:cubic-bezier(.4,0,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
-}
-html{font-size:16px;scroll-behavior:smooth}
-body{font-family:var(--font-b);background:var(--bg);color:var(--tx);overflow-x:hidden;-webkit-font-smoothing:antialiased}
-.ctn{max-width:1400px;margin:0 auto;padding:0 2rem}
-.stripe{height:5px;background:linear-gradient(90deg,var(--red) 50%,#fff 50%)}
+  <!--
+  ============================================================
+    PERÚ ELIGE 2026 — Mapa Interactivo Electoral
+    Conteo Rápido de Actas al 100% (DATUM Internacional)
+  ============================================================
+    Autor:    Renzo Núñez
+    Fuente:   Datos transmitidos por América TV / Canal N
+              Datum Internacional — 13 de abril de 2026
+    Versión:  1.0
+    Repo:     https://renzonunezaf.github.io/Elecciones_2026/
+  ============================================================
+    Descripción:
+    Mapa interactivo del Perú con los resultados completos del
+    conteo rápido de actas al 100%, desglosado por los 26
+    departamentos + Callao + voto en el extranjero, mostrando
+    los 7 principales candidatos en cada región.
+  ============================================================
+  -->
 
-/* Hero */
-.hero{padding:1.5rem 0 1rem;border-bottom:1px solid var(--border);margin-bottom:1rem}
-.badge{display:inline-flex;align-items:center;gap:6px;background:var(--red-l);color:var(--red);font-family:var(--font-d);font-size:.66rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:5px 14px;border-radius:99px;margin-bottom:.75rem}
-.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1.5s ease infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-h1{font-family:var(--font-d);font-size:2.2rem;font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:.4rem}
-h1 span{color:var(--red)}
-.sub{font-size:.88rem;color:var(--tx2);line-height:1.6}
-.meta{display:flex;flex-wrap:wrap;gap:1rem;margin-top:.75rem;font-size:.76rem;color:var(--txm)}
-.meta b{color:var(--tx2);font-weight:600}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="Renzo Núñez">
+  <meta name="description" content="Mapa interactivo con los resultados del conteo rápido de actas al 100% de Datum Internacional — Elecciones Generales Perú 2026, primera vuelta.">
 
-/* National bar */
-.nb{margin-bottom:1rem;padding:1rem 1.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--R);box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.nb__lbl{font-family:var(--font-d);font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin-bottom:.7rem}
-.nb__trk{height:28px;border-radius:7px;overflow:hidden;display:flex;background:var(--surface);margin-bottom:1rem}
-.nb__seg{height:100%;display:flex;align-items:center;justify-content:center;font-family:var(--font-d);font-size:.55rem;font-weight:700;color:#fff;cursor:pointer;min-width:0;transition:filter .2s;transform:scaleX(0);animation:segIn .6s var(--spring) forwards}
-.nb__seg:hover{filter:brightness(1.15)}
-@keyframes segIn{to{transform:scaleX(1)}}
-/* Candidate cards grid */
-.nb__grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.nb__card{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--Rs);background:var(--surface);transition:background .2s;cursor:default}
-.nb__card:hover{background:#E8E6E0}
-.nb__card-color{width:4px;height:32px;border-radius:3px;flex-shrink:0}
-.nb__card-info{flex:1;min-width:0}
-.nb__card-name{font-family:var(--font-d);font-size:.76rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nb__card-party{font-size:.62rem;color:var(--txm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nb__card-pct{font-family:var(--font-d);font-size:1.1rem;font-weight:800;flex-shrink:0}
-.nb__card-bar{width:100%;height:3px;border-radius:2px;background:rgba(0,0,0,.06);margin-top:4px;overflow:hidden}
-.nb__card-barfill{height:100%;border-radius:2px;transform:scaleX(0);transform-origin:left;animation:segIn .7s var(--spring) forwards}
-@media(max-width:1100px){.nb__grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:768px){.nb__grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:420px){.nb__grid{grid-template-columns:1fr}}
+  <!-- Open Graph (LinkedIn / Facebook) -->
+  <meta property="og:title" content="🗳️ Mapa Interactivo — Conteo Rápido Datum al 100% · Elecciones Perú 2026">
+  <meta property="og:description" content="Explora los resultados completos por departamento. 7 candidatos en cada región. Haz clic y descubre cómo votó el Perú.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://renzonunezaf.github.io/Elecciones_2026/og-preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="627">
+  <meta property="og:url" content="https://renzonunezaf.github.io/Elecciones_2026/">
+  <meta property="og:locale" content="es_PE">
 
-/* Map section */
-.map-sec{margin-bottom:1rem}
-.map-sec__lbl{font-family:var(--font-d);font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin-bottom:.3rem}
-.map-sec__hint{font-size:.74rem;color:var(--txm);margin-bottom:.75rem}
-.map-card{background:var(--card);border:1px solid var(--border);border-radius:var(--R);padding:1rem 1.25rem;position:relative;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-#mapC{width:100%}
-#mapC svg{width:100%;height:auto}
-.dp{stroke:#fff;stroke-width:.7px;cursor:pointer;transition:all .3s var(--ease);transform-origin:center center}
-.dp:hover{filter:brightness(1.12) saturate(1.2);stroke:rgba(0,0,0,.2);stroke-width:1.4px}
-.dp.active{stroke:var(--red);stroke-width:2.5px;filter:brightness(1.15)}
-.dl{font-family:var(--font-d);font-size:6.5px;font-weight:700;fill:#fff;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:2.2px}
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="🗳️ Mapa Interactivo — Conteo Rápido Datum al 100% · Elecciones Perú 2026">
+  <meta name="twitter:description" content="Explora los resultados completos por departamento. 7 candidatos en cada región.">
+  <meta name="twitter:image" content="https://renzonunezaf.github.io/Elecciones_2026/og-preview.png">
 
-/* Tooltip */
-.tt{position:absolute;pointer-events:none;background:#fff;border:1px solid var(--bh);border-radius:var(--Rs);padding:10px 14px;box-shadow:0 8px 30px rgba(0,0,0,.12);font-size:.78rem;z-index:50;opacity:0;transition:opacity .12s;max-width:240px}
-.tt.v{opacity:1}
-.tt__n{font-family:var(--font-d);font-weight:700;font-size:.88rem;margin-bottom:4px}
-.tt__w{display:flex;align-items:center;gap:6px}
-.tt__wd{width:8px;height:8px;border-radius:3px}
-.tt__h{font-size:.66rem;color:var(--txm);margin-top:5px}
+  <title>Mapa Interactivo — Perú Elige 2026 · Conteo Rápido de Actas al 100% (DATUM)</title>
 
-/* Extranjero chip */
-.ext-chip{display:inline-flex;align-items:center;gap:10px;padding:12px 20px;border-radius:var(--Rs);background:var(--card);border:1px solid var(--border);cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.05);margin-top:1rem}
-.ext-chip:hover{border-color:var(--bh);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1)}
+  <!-- Tipografías -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
 
-/* Modal */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);overflow-y:auto}
-.modal-bg.open{display:flex}
-.modal{background:var(--card);border-radius:18px;width:100%;max-width:540px;max-height:88vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:modalIn .4s var(--spring);margin:auto}
-@keyframes modalIn{from{opacity:0;transform:translateY(40px) scale(.95)}to{opacity:1;transform:none}}
-.modal__head{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border);position:relative}
-.modal__close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;border:none;background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--tx2);transition:all .2s}
-.modal__close:hover{background:var(--red-l);color:var(--red)}
-.modal__dn{font-family:var(--font-d);font-size:1.4rem;font-weight:800;letter-spacing:-.02em;margin-bottom:2px}
-.modal__dm{font-size:.76rem;color:var(--tx2)}
-.modal__wt{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-family:var(--font-d);font-size:.66rem;font-weight:700;margin-top:8px}
-.modal__body{padding:1rem 1.5rem 1.5rem;overflow-y:auto;max-height:calc(88vh - 130px)}
-.modal__st{font-family:var(--font-d);font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin:1rem 0 .5rem}
-.modal__st:first-child{margin-top:0}
-.cr{display:grid;grid-template-columns:26px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-radius:var(--Rs);margin-bottom:2px;transition:background .2s;opacity:0;animation:rowIn .35s var(--ease) forwards}
-.cr:hover{background:var(--surface)}
-@keyframes rowIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
-.cr__p{font-family:var(--font-d);font-size:.65rem;font-weight:700;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:var(--surface);color:var(--txm)}
-.cr__p.t1{background:#FFF8E1;color:#F9A825}.cr__p.t2{background:#F5F5F5;color:#9E9E9E}.cr__p.t3{background:#FBE9E7;color:#BF360C}
-.cr__i{min-width:0}
-.cr__n{font-weight:600;font-size:.78rem;display:flex;align-items:center;gap:5px}
-.cr__nd{width:5px;height:5px;border-radius:50%;flex-shrink:0}
-.cr__pt{font-size:.64rem;color:var(--txm);margin-top:1px}
-.cr__pw{text-align:right}
-.cr__pc{font-family:var(--font-d);font-weight:800;font-size:1rem}
-.cr__br{width:70px;height:3px;border-radius:2px;background:var(--surface);margin-top:3px;overflow:hidden;margin-left:auto}
-.cr__bf{height:100%;border-radius:2px;transform:scaleX(0);transform-origin:right;animation:barIn .5s var(--spring) forwards}
-@keyframes barIn{to{transform:scaleX(1)}}
+  <style>
+    /* ==========================================================
+       1. RESET & VARIABLES DE DISEÑO
+       ========================================================== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Dept grid */
-.dg{margin-bottom:2rem}
-.dg__lbl{font-family:var(--font-d);font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txm);margin-bottom:.3rem}
-.dg__h{font-size:.74rem;color:var(--txm);margin-bottom:.7rem}
-.dg__g{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:7px}
-.dc{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:var(--Rs);background:var(--card);border:1px solid var(--border);cursor:pointer;transition:all .2s;box-shadow:0 1px 2px rgba(0,0,0,.04)}
-.dc:hover{border-color:var(--bh);transform:translateY(-1px);box-shadow:0 3px 12px rgba(0,0,0,.08)}
-.dc.act{border-color:var(--red);box-shadow:0 0 0 2px rgba(217,27,48,.12)}
-.dc__c{width:6px;height:26px;border-radius:3px;flex-shrink:0}
-.dc__i{flex:1;min-width:0}
-.dc__dn{font-family:var(--font-d);font-size:.74rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dc__w{font-size:.64rem;color:var(--tx2)}
-.dc__p{font-family:var(--font-d);font-size:.84rem;font-weight:700;flex-shrink:0}
+    :root {
+      /* Colores base */
+      --color-bg:          #F7F5F0;
+      --color-card:        #FFFFFF;
+      --color-surface:     #EFEDE8;
+      --color-border:      rgba(0, 0, 0, 0.07);
+      --color-border-hover: rgba(0, 0, 0, 0.14);
 
-/* Footer */
-.ft{padding:1.5rem 0;border-top:1px solid var(--border);font-size:.7rem;color:var(--txm);line-height:1.8}
+      /* Colores de texto */
+      --color-text:        #1A1A1A;
+      --color-text-sec:    #555555;
+      --color-text-muted:  #999999;
 
-/* ── RESPONSIVE ── */
-@media(max-width:900px){
-  .ctn{padding:0 1rem}
-  h1{font-size:1.6rem}
-  .nb{padding:.75rem 1rem}
-  .modal{max-width:95vw;max-height:90vh;border-radius:14px}
-  .modal__body{max-height:calc(90vh - 120px)}
-  .modal__dn{font-size:1.2rem}
-  .dg__g{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
-  .map-card{padding:.75rem}
-  .ext-chip{padding:10px 14px}
-}
-@media(max-width:480px){
-  h1{font-size:1.3rem}
-  .sub{font-size:.78rem}
-  .meta{font-size:.68rem;gap:.6rem}
-  .modal__head{padding:1rem 1rem .75rem}
-  .modal__body{padding:.75rem 1rem 1rem}
-  .cr{grid-template-columns:22px 1fr auto;gap:6px;padding:7px 8px}
-  .cr__p{width:22px;height:22px;font-size:.6rem}
-  .cr__n{font-size:.72rem}
-  .cr__pc{font-size:.88rem}
-  .cr__br{width:50px}
-  .dg__g{grid-template-columns:1fr}
-  .nb__trk{height:22px}
-  .ext-chip{width:100%;justify-content:center}
-}
-</style>
+      /* Colores de marca Perú */
+      --color-peru-red:    #D91B30;
+      --color-peru-red-lt: #FDE8EA;
+      --color-peru-gold:   #C8A84E;
+
+      /* Tipografía */
+      --font-display: 'Sora', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+
+      /* Bordes */
+      --radius:    14px;
+      --radius-sm: 10px;
+
+      /* Transiciones */
+      --ease:   cubic-bezier(0.4, 0, 0.2, 1);
+      --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--color-bg);
+      color: var(--color-text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==========================================================
+       2. LAYOUT PRINCIPAL
+       ========================================================== */
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; }
+
+    /* Franja rojo/blanco superior (identidad peruana) */
+    .peru-stripe {
+      height: 5px;
+      background: linear-gradient(90deg, var(--color-peru-red) 50%, #fff 50%);
+    }
+
+    /* ==========================================================
+       3. HERO / ENCABEZADO
+       ========================================================== */
+    .hero {
+      padding: 1.5rem 0 1rem;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 1rem;
+    }
+
+    .hero__badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--color-peru-red-lt);
+      color: var(--color-peru-red);
+      font-family: var(--font-display);
+      font-size: 0.66rem; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 99px;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Indicador animado del badge */
+    .hero__badge::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--color-peru-red);
+      animation: blink 1.5s ease infinite;
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .hero__title {
+      font-family: var(--font-display);
+      font-size: 2.2rem; font-weight: 800;
+      line-height: 1.1; letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    .hero__title span { color: var(--color-peru-red); }
+
+    .hero__subtitle {
+      font-size: 0.88rem; color: var(--color-text-sec); line-height: 1.6;
+    }
+
+    .hero__meta {
+      display: flex; flex-wrap: wrap; gap: 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.76rem; color: var(--color-text-muted);
+    }
+
+    .hero__meta b { color: var(--color-text-sec); font-weight: 600; }
+
+    /* ==========================================================
+       4. BARRA DE RESULTADOS NACIONALES
+       ========================================================== */
+    .national {
+      margin-bottom: 1rem; padding: 1rem 1.5rem;
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .national__label {
+      font-family: var(--font-display);
+      font-size: 0.64rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-text-muted); margin-bottom: 0.7rem;
+    }
+
+    /* Barra proporcional de colores */
+    .national__bar {
+      height: 28px; border-radius: 7px; overflow: hidden;
+      display: flex; background: var(--color-surface);
+      margin-bottom: 1rem;
+    }
+
+    .national__bar-segment {
+      height: 100%; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 0.55rem; font-weight: 700;
+      color: #fff; cursor: pointer; min-width: 0;
+      transition: filter 0.2s;
+      transform: scaleX(0);
+      animation: segment-grow 0.6s var(--spring) forwards;
+    }
+
+    .national__bar-segment:hover { filter: brightness(1.15); }
+
+    @keyframes segment-grow { to { transform: scaleX(1); } }
+
+    /* Grilla de tarjetas de candidatos */
+    .national__grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .national__card {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      transition: background 0.2s; cursor: default;
+    }
+
+    .national__card:hover { background: #E8E6E0; }
+
+    .national__card-color {
+      width: 4px; height: 32px; border-radius: 3px; flex-shrink: 0;
+    }
+
+    .national__card-info { flex: 1; min-width: 0; }
+
+    .national__card-name {
+      font-family: var(--font-display);
+      font-size: 0.76rem; font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .national__card-party {
+      font-size: 0.62rem; color: var(--color-text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .national__card-pct {
+      font-family: var(--font-display);
+      font-size: 1.1rem; font-weight: 800; flex-shrink: 0;
+    }
+
+    .national__card-bar {
+      width: 100%; height: 3px; border-radius: 2px;
+      background: rgba(0, 0, 0, 0.06);
+      margin-top: 4px; overflow: hidden;
+    }
+
+    .national__card-barfill {
+      height: 100%; border-radius: 2px;
+      transform: scaleX(0); transform-origin: left;
+      animation: segment-grow 0.7s var(--spring) forwards;
+    }
+
+    /* ==========================================================
+       5. SECCIÓN DEL MAPA
+       ========================================================== */
+    .map-section { margin-bottom: 1rem; }
+
+    .map-section__label {
+      font-family: var(--font-display);
+      font-size: 0.64rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-text-muted); margin-bottom: 0.3rem;
+    }
+
+    .map-section__hint {
+      font-size: 0.74rem; color: var(--color-text-muted);
+      margin-bottom: 0.75rem;
+    }
+
+    .map-card {
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem; position: relative;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Contenedor SVG del mapa */
+    #map-container { width: 100%; }
+    #map-container svg { width: 100%; height: auto; }
+
+    /* Polígonos de departamentos */
+    .dept-path {
+      stroke: #fff; stroke-width: 0.7px; cursor: pointer;
+      transition: all 0.3s var(--ease);
+      transform-origin: center center;
+    }
+
+    .dept-path:hover {
+      filter: brightness(1.12) saturate(1.2);
+      stroke: rgba(0, 0, 0, 0.2); stroke-width: 1.4px;
+    }
+
+    .dept-path.active {
+      stroke: var(--color-peru-red); stroke-width: 2.5px;
+      filter: brightness(1.15);
+    }
+
+    /* Etiquetas de departamentos sobre el mapa */
+    .dept-label {
+      font-family: var(--font-display); font-size: 6.5px; font-weight: 700;
+      fill: #fff; pointer-events: none; text-anchor: middle;
+      paint-order: stroke; stroke: rgba(0, 0, 0, 0.5); stroke-width: 2.2px;
+    }
+
+    /* ==========================================================
+       6. TOOLTIP (hover sobre departamento)
+       ========================================================== */
+    .tooltip {
+      position: absolute; pointer-events: none;
+      background: #fff; border: 1px solid var(--color-border-hover);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      font-size: 0.78rem; z-index: 50;
+      opacity: 0; transition: opacity 0.12s;
+      max-width: 240px;
+    }
+
+    .tooltip.visible { opacity: 1; }
+
+    .tooltip__name {
+      font-family: var(--font-display); font-weight: 700;
+      font-size: 0.88rem; margin-bottom: 4px;
+    }
+
+    .tooltip__winner { display: flex; align-items: center; gap: 6px; }
+    .tooltip__winner-dot { width: 8px; height: 8px; border-radius: 3px; }
+    .tooltip__hint { font-size: 0.66rem; color: var(--color-text-muted); margin-top: 5px; }
+
+    /* ==========================================================
+       7. CHIP DE VOTO EN EL EXTRANJERO
+       ========================================================== */
+    .extranjero-chip {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 12px 20px; border-radius: var(--radius-sm);
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      margin-top: 1rem;
+    }
+
+    .extranjero-chip:hover {
+      border-color: var(--color-border-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ==========================================================
+       8. MODAL (detalle por departamento)
+       ========================================================== */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.45); z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      overflow-y: auto;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--color-card);
+      border-radius: 18px; width: 100%; max-width: 540px;
+      max-height: 88vh; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      animation: modal-enter 0.4s var(--spring);
+      margin: auto;
+    }
+
+    @keyframes modal-enter {
+      from { opacity: 0; transform: translateY(40px) scale(0.95); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .modal__header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--color-border);
+      position: relative;
+    }
+
+    .modal__close {
+      position: absolute; top: 16px; right: 16px;
+      width: 32px; height: 32px; border-radius: 8px;
+      border: none; background: var(--color-surface);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: var(--color-text-sec);
+      transition: all 0.2s;
+    }
+
+    .modal__close:hover {
+      background: var(--color-peru-red-lt);
+      color: var(--color-peru-red);
+    }
+
+    .modal__dept-name {
+      font-family: var(--font-display);
+      font-size: 1.4rem; font-weight: 800;
+      letter-spacing: -0.02em; margin-bottom: 2px;
+    }
+
+    .modal__dept-meta { font-size: 0.76rem; color: var(--color-text-sec); }
+
+    .modal__winner-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 12px; border-radius: 99px;
+      font-family: var(--font-display);
+      font-size: 0.66rem; font-weight: 700;
+      margin-top: 8px;
+    }
+
+    .modal__body {
+      padding: 1rem 1.5rem 1.5rem;
+      overflow-y: auto;
+      max-height: calc(88vh - 130px);
+    }
+
+    .modal__section-title {
+      font-family: var(--font-display);
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin: 1rem 0 0.5rem;
+    }
+
+    .modal__section-title:first-child { margin-top: 0; }
+
+    /* Fila de candidato dentro del modal */
+    .candidate-row {
+      display: grid; grid-template-columns: 26px 1fr auto;
+      gap: 8px; align-items: center;
+      padding: 8px 10px; border-radius: var(--radius-sm);
+      margin-bottom: 2px; transition: background 0.2s;
+      opacity: 0; animation: row-enter 0.35s var(--ease) forwards;
+    }
+
+    .candidate-row:hover { background: var(--color-surface); }
+
+    @keyframes row-enter {
+      from { opacity: 0; transform: translateX(-10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .candidate-row__position {
+      font-family: var(--font-display); font-size: 0.65rem; font-weight: 700;
+      width: 26px; height: 26px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--color-surface); color: var(--color-text-muted);
+    }
+
+    /* Medallas: oro, plata, bronce */
+    .candidate-row__position.gold   { background: #FFF8E1; color: #F9A825; }
+    .candidate-row__position.silver { background: #F5F5F5; color: #9E9E9E; }
+    .candidate-row__position.bronze { background: #FBE9E7; color: #BF360C; }
+
+    .candidate-row__info { min-width: 0; }
+
+    .candidate-row__name {
+      font-weight: 600; font-size: 0.78rem;
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    .candidate-row__name-dot {
+      width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    .candidate-row__party {
+      font-size: 0.64rem; color: var(--color-text-muted); margin-top: 1px;
+    }
+
+    .candidate-row__pct-wrap { text-align: right; }
+
+    .candidate-row__pct {
+      font-family: var(--font-display); font-weight: 800; font-size: 1rem;
+    }
+
+    .candidate-row__bar {
+      width: 70px; height: 3px; border-radius: 2px;
+      background: var(--color-surface);
+      margin-top: 3px; overflow: hidden; margin-left: auto;
+    }
+
+    .candidate-row__bar-fill {
+      height: 100%; border-radius: 2px;
+      transform: scaleX(0); transform-origin: right;
+      animation: bar-fill-in 0.5s var(--spring) forwards;
+    }
+
+    @keyframes bar-fill-in { to { transform: scaleX(1); } }
+
+    /* ==========================================================
+       9. GRILLA DE DEPARTAMENTOS (navegación secundaria)
+       ========================================================== */
+    .dept-grid { margin-bottom: 2rem; }
+
+    .dept-grid__label {
+      font-family: var(--font-display);
+      font-size: 0.64rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--color-text-muted); margin-bottom: 0.3rem;
+    }
+
+    .dept-grid__hint {
+      font-size: 0.74rem; color: var(--color-text-muted);
+      margin-bottom: 0.7rem;
+    }
+
+    .dept-grid__items {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+      gap: 7px;
+    }
+
+    .dept-chip {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 12px; border-radius: var(--radius-sm);
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .dept-chip:hover {
+      border-color: var(--color-border-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .dept-chip.active {
+      border-color: var(--color-peru-red);
+      box-shadow: 0 0 0 2px rgba(217, 27, 48, 0.12);
+    }
+
+    .dept-chip__color { width: 6px; height: 26px; border-radius: 3px; flex-shrink: 0; }
+    .dept-chip__info  { flex: 1; min-width: 0; }
+
+    .dept-chip__name {
+      font-family: var(--font-display);
+      font-size: 0.74rem; font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .dept-chip__winner { font-size: 0.64rem; color: var(--color-text-sec); }
+
+    .dept-chip__pct {
+      font-family: var(--font-display);
+      font-size: 0.84rem; font-weight: 700; flex-shrink: 0;
+    }
+
+    /* ==========================================================
+       10. FOOTER
+       ========================================================== */
+    .footer {
+      padding: 1.5rem 0;
+      border-top: 1px solid var(--color-border);
+      font-size: 0.7rem; color: var(--color-text-muted);
+      line-height: 1.8;
+    }
+
+    /* ==========================================================
+       11. RESPONSIVE DESIGN
+       ========================================================== */
+    @media (max-width: 1100px) {
+      .national__grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (max-width: 900px) {
+      .container { padding: 0 1rem; }
+      .hero__title { font-size: 1.6rem; }
+      .national { padding: 0.75rem 1rem; }
+      .modal { max-width: 95vw; max-height: 90vh; border-radius: 14px; }
+      .modal__body { max-height: calc(90vh - 120px); }
+      .modal__dept-name { font-size: 1.2rem; }
+      .dept-grid__items { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+      .map-card { padding: 0.75rem; }
+      .extranjero-chip { padding: 10px 14px; }
+    }
+
+    @media (max-width: 768px) {
+      .national__grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+      .hero__title { font-size: 1.3rem; }
+      .hero__subtitle { font-size: 0.78rem; }
+      .hero__meta { font-size: 0.68rem; gap: 0.6rem; }
+      .modal__header { padding: 1rem 1rem 0.75rem; }
+      .modal__body { padding: 0.75rem 1rem 1rem; }
+      .candidate-row { grid-template-columns: 22px 1fr auto; gap: 6px; padding: 7px 8px; }
+      .candidate-row__position { width: 22px; height: 22px; font-size: 0.6rem; }
+      .candidate-row__name { font-size: 0.72rem; }
+      .candidate-row__pct { font-size: 0.88rem; }
+      .candidate-row__bar { width: 50px; }
+      .dept-grid__items { grid-template-columns: 1fr; }
+      .national__bar { height: 22px; }
+      .national__grid { grid-template-columns: 1fr; }
+      .extranjero-chip { width: 100%; justify-content: center; }
+    }
+  </style>
 </head>
+
 <body>
-<div class="stripe"></div>
-<div class="ctn">
-  <header class="hero">
-    <div class="badge">Conteo rápido al 100%</div>
-    <h1>Conteo Rápido de Actas al 100% <span>(DATUM)</span></h1>
-    <p class="sub">Elecciones Generales 2026 — Primera vuelta, domingo 12 de abril</p>
-    <div class="meta">
-      <span><b>Actas:</b> 1,500</span>
-      <span><b>Margen:</b> ±1%</span>
-      <span><b>2da vuelta:</b> 7 junio 2026</span>
-      <span><b>Fuente:</b> Datum · América TV / Canal N</span>
-    </div>
-  </header>
-  <section class="nb">
-    <div class="nb__lbl">Resultado nacional — votos válidos</div>
-    <div class="nb__trk" id="nT"></div>
-    <div class="nb__grid" id="nG"></div>
-  </section>
-  <section class="map-sec">
-    <div class="map-sec__lbl">Mapa electoral por departamento</div>
-    <div class="map-sec__hint">Haz clic en un departamento para ver todos los candidatos</div>
-    <div class="map-card">
-      <div id="mapC"></div>
-      <div class="tt" id="tt"></div>
-      <div style="text-align:center">
-        <div class="ext-chip" id="extChip">
-          <span style="font-size:1.3rem">🌎</span>
-          <div style="text-align:left">
-            <div style="font-family:var(--font-d);font-size:.78rem;font-weight:700">Voto en el Extranjero</div>
-            <div style="font-size:.68rem;color:var(--tx2)">López Aliaga 28.2%</div>
+
+  <!-- ========================================================
+       FRANJA SUPERIOR PERUANA (rojo y blanco)
+       ======================================================== -->
+  <div class="peru-stripe"></div>
+
+  <div class="container">
+
+    <!-- ========================================================
+         HERO / ENCABEZADO
+         ======================================================== -->
+    <header class="hero">
+      <div class="hero__badge">Conteo rápido al 100%</div>
+      <h1 class="hero__title">Conteo Rápido de Actas al 100% <span>(DATUM)</span></h1>
+      <p class="hero__subtitle">Elecciones Generales 2026 — Primera vuelta, domingo 12 de abril</p>
+      <div class="hero__meta">
+        <span><b>Actas:</b> 1,500 procesadas</span>
+        <span><b>Margen:</b> ±1%</span>
+        <span><b>2da vuelta:</b> 7 junio 2026</span>
+        <span><b>Fuente:</b> Datum · América TV / Canal N</span>
+      </div>
+    </header>
+
+    <!-- ========================================================
+         RESULTADOS NACIONALES
+         ======================================================== -->
+    <section class="national">
+      <div class="national__label">Resultado nacional — votos válidos</div>
+      <div class="national__bar" id="nationalBar"></div>
+      <div class="national__grid" id="nationalGrid"></div>
+    </section>
+
+    <!-- ========================================================
+         MAPA INTERACTIVO DEL PERÚ
+         ======================================================== -->
+    <section class="map-section">
+      <div class="map-section__label">Mapa electoral por departamento</div>
+      <div class="map-section__hint">Haz clic en un departamento para ver todos los candidatos</div>
+      <div class="map-card">
+        <div id="map-container"></div>
+        <div class="tooltip" id="tooltip"></div>
+
+        <!-- Chip para el voto en el extranjero (no está en el mapa) -->
+        <div style="text-align:center">
+          <div class="extranjero-chip" id="extranjeroChip">
+            <span style="font-size:1.3rem">🌎</span>
+            <div style="text-align:left">
+              <div style="font-family:var(--font-display);font-size:.78rem;font-weight:700">Voto en el Extranjero</div>
+              <div style="font-size:.68rem;color:var(--color-text-sec)">López Aliaga 28.2%</div>
+            </div>
+            <div style="font-family:var(--font-display);font-size:.9rem;font-weight:700;color:#1E5BB8">28.2%</div>
           </div>
-          <div style="font-family:var(--font-d);font-size:.9rem;font-weight:700;color:#1E5BB8">28.2%</div>
         </div>
       </div>
+    </section>
+
+    <!-- ========================================================
+         GRILLA DE TODOS LOS DEPARTAMENTOS
+         ======================================================== -->
+    <section class="dept-grid">
+      <div class="dept-grid__label">Todos los departamentos</div>
+      <div class="dept-grid__hint">Haz clic para ver detalle completo</div>
+      <div class="dept-grid__items" id="deptGridItems"></div>
+    </section>
+
+    <!-- ========================================================
+         FOOTER
+         ======================================================== -->
+    <footer class="footer">
+      <strong>Fuente:</strong> Datum Internacional para América TV / Canal N — Conteo rápido de actas al 100%, 13 abril 2026.<br>
+      Porcentajes de votos válidos. Margen de error ±1%. No es resultado oficial.<br>
+      <br>
+      <strong style="color:var(--color-text-sec)">Elaborado por Renzo Núñez en base a los datos publicados por América TV — Datum.</strong>
+    </footer>
+
+  </div><!-- /.container -->
+
+  <!-- ========================================================
+       MODAL (ventana emergente de detalle por departamento)
+       ======================================================== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal__header" id="modalHeader"></div>
+      <div class="modal__body" id="modalBody"></div>
     </div>
-  </section>
-  <section class="dg">
-    <div class="dg__lbl">Todos los departamentos</div>
-    <div class="dg__h">Haz clic para ver detalle completo</div>
-    <div class="dg__g" id="dG"></div>
-  </section>
-  <footer class="ft">
-    <strong>Fuente:</strong> Datum Internacional para América TV / Canal N — Conteo rápido de actas al 100%, 13 abril 2026.<br>
-    Porcentajes de votos válidos. Margen de error ±1%. No es resultado oficial.<br>
-    <br>
-    <strong style="color:var(--tx2)">Elaborado por Renzo Núñez en base a los datos publicados por América TV — Datum.</strong>
-  </footer>
-</div>
-<div class="modal-bg" id="mBg"><div class="modal" id="modal"><div class="modal__head" id="mH"></div><div class="modal__body" id="mB"></div></div></div>
+  </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-<script>
-/* ═══════════════ CANDIDATE REGISTRY ═══════════════ */
-const C={
- 'Keiko Fujimori':{p:'Fuerza Popular',c:'#CC7A1A',s:'Keiko'},
- 'Rafael López Aliaga':{p:'Renovación Popular',c:'#1E5BB8',s:'López Aliaga'},
- 'Jorge Nieto':{p:'Buen Gobierno',c:'#0D8A72',s:'Nieto'},
- 'Ricardo Belmont':{p:'Cívico Obras',c:'#8E24AA',s:'Belmont'},
- 'Roberto Sánchez':{p:'Juntos por el Perú',c:'#C62828',s:'R. Sánchez'},
- 'Carlos Álvarez':{p:'País para Todos',c:'#5E35B1',s:'C. Álvarez'},
- 'Alfonso López Chau':{p:'Ahora Nación',c:'#2E7D32',s:'L. Chau'},
- 'Rosario Fernández':{p:'Un Camino Diferente',c:'#607D8B',s:'Fernández'},
- 'George Forsyth':{p:'Somos Perú',c:'#00838F',s:'Forsyth'},
- 'Marisol Pérez Tello':{p:'Primero la Gente',c:'#AD1457',s:'Pérez Tello'},
- 'Charlie Carrasco':{p:'Demócrata Unido',c:'#6D4C41',s:'Carrasco'},
- 'José Luna Gálvez':{p:'Podemos Perú',c:'#F57F17',s:'Luna'},
- 'César Acuña':{p:'Alianza para el Progreso',c:'#0277BD',s:'Acuña'},
- 'Yonhy Lescano':{p:'Cooperación Popular',c:'#558B2F',s:'Lescano'},
- 'Ronald Atencio':{p:'Alianza Venceremos',c:'#4E342E',s:'Atencio'},
- 'Fernando Olivera':{p:'Frente Esperanza',c:'#BF360C',s:'Olivera'},
- 'Mario Vizcarra':{p:'Perú Primero',c:'#1565C0',s:'Vizcarra'},
- 'Carlos Espá':{p:'Sí Creo',c:'#7B1FA2',s:'Espá'},
- 'Otros':{p:'',c:'#BDBDBD',s:'Otros'}
-};
-function gc(n){return C[n]?.c||'#BDBDBD'}
-function gs(n){return C[n]?.s||n}
+  <!-- ========================================================
+       DEPENDENCIAS EXTERNAS
+       D3.js:      Renderizado del mapa SVG
+       TopoJSON:   Parsing de la geometría del Perú
+       ======================================================== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 
-/* ═══════════════ NATIONAL DATA ═══════════════ */
-const NAT=[
- {n:'Keiko Fujimori',v:16.8},{n:'Rafael López Aliaga',v:12.9},{n:'Jorge Nieto',v:11.6},
- {n:'Ricardo Belmont',v:10.1},{n:'Roberto Sánchez',v:9.4},{n:'Carlos Álvarez',v:8.1},
- {n:'Alfonso López Chau',v:7.7},{n:'Otros',v:23.4}
-];
+  <script>
+    /* ==========================================================
+       REGISTRO DE CANDIDATOS
+       Cada candidato tiene: partido, color y nombre corto.
+       ========================================================== */
+    const CANDIDATES = {
+      'Keiko Fujimori':       { party: 'Fuerza Popular',        color: '#CC7A1A', short: 'Keiko' },
+      'Rafael López Aliaga':  { party: 'Renovación Popular',    color: '#1E5BB8', short: 'López Aliaga' },
+      'Jorge Nieto':          { party: 'Buen Gobierno',         color: '#0D8A72', short: 'Nieto' },
+      'Ricardo Belmont':      { party: 'Cívico Obras',          color: '#8E24AA', short: 'Belmont' },
+      'Roberto Sánchez':      { party: 'Juntos por el Perú',    color: '#C62828', short: 'R. Sánchez' },
+      'Carlos Álvarez':       { party: 'País para Todos',       color: '#5E35B1', short: 'C. Álvarez' },
+      'Alfonso López Chau':   { party: 'Ahora Nación',          color: '#2E7D32', short: 'L. Chau' },
+      'Rosario Fernández':    { party: 'Un Camino Diferente',   color: '#607D8B', short: 'Fernández' },
+      'George Forsyth':       { party: 'Somos Perú',            color: '#00838F', short: 'Forsyth' },
+      'Marisol Pérez Tello':  { party: 'Primero la Gente',      color: '#AD1457', short: 'Pérez Tello' },
+      'Charlie Carrasco':     { party: 'Demócrata Unido',       color: '#6D4C41', short: 'Carrasco' },
+      'José Luna Gálvez':     { party: 'Podemos Perú',          color: '#F57F17', short: 'Luna' },
+      'César Acuña':          { party: 'Alianza para el Progreso', color: '#0277BD', short: 'Acuña' },
+      'Yonhy Lescano':        { party: 'Cooperación Popular',   color: '#558B2F', short: 'Lescano' },
+      'Ronald Atencio':       { party: 'Alianza Venceremos',    color: '#4E342E', short: 'Atencio' },
+      'Fernando Olivera':     { party: 'Frente Esperanza',      color: '#BF360C', short: 'Olivera' },
+      'Mario Vizcarra':       { party: 'Perú Primero',          color: '#1565C0', short: 'Vizcarra' },
+      'Carlos Espá':          { party: 'Sí Creo',               color: '#7B1FA2', short: 'Espá' },
+      'Otros':                { party: '',                      color: '#BDBDBD', short: 'Otros' }
+    };
 
-/* ═══════════════ COMPLETE DEPARTMENT DATA ═══════════════ */
-const D={
-'Amazonas':[['Roberto Sánchez',25.7],['Keiko Fujimori',20.8],['Ricardo Belmont',11.5],['Alfonso López Chau',6],['Carlos Álvarez',3.9],['Jorge Nieto',3.9],['Rafael López Aliaga',3.4],['Otros',24.8]],
-'Áncash':[['Keiko Fujimori',17.8],['Roberto Sánchez',11.8],['Carlos Álvarez',10.4],['Ricardo Belmont',9.7],['Jorge Nieto',9.3],['Alfonso López Chau',9.3],['Rafael López Aliaga',7.1],['Otros',24.6]],
-'Apurímac':[['Roberto Sánchez',30.3],['Ricardo Belmont',15.1],['Alfonso López Chau',11.8],['Keiko Fujimori',8.9],['Jorge Nieto',4.4],['Rafael López Aliaga',3.7],['Charlie Carrasco',3.3],['Otros',22.5]],
-'Arequipa':[['Jorge Nieto',20.4],['Rafael López Aliaga',12.3],['Alfonso López Chau',9.1],['Carlos Álvarez',8.8],['Ricardo Belmont',8.8],['Keiko Fujimori',8],['Roberto Sánchez',7.3],['Otros',25.3]],
-'Ayacucho':[['Roberto Sánchez',20.7],['Ricardo Belmont',17.8],['Alfonso López Chau',16],['Keiko Fujimori',7.1],['Jorge Nieto',6.1],['Carlos Espá',3.5],['Carlos Álvarez',3.1],['Otros',25.7]],
-'Cajamarca':[['Roberto Sánchez',43.1],['Ricardo Belmont',13.5],['Keiko Fujimori',12.3],['Alfonso López Chau',4.9],['Jorge Nieto',4.7],['Rafael López Aliaga',2.6],['Carlos Álvarez',2.5],['Otros',16.4]],
-'Callao':[['Keiko Fujimori',20.1],['Rafael López Aliaga',18.1],['Jorge Nieto',14.9],['Carlos Álvarez',11.4],['Ricardo Belmont',8.3],['Alfonso López Chau',6.2],['Marisol Pérez Tello',4.4],['Otros',16.6]],
-'Cusco':[['Alfonso López Chau',15.6],['Ricardo Belmont',14.8],['Jorge Nieto',13.9],['Roberto Sánchez',11.9],['Rafael López Aliaga',7.4],['Keiko Fujimori',6.7],['Marisol Pérez Tello',5.1],['Otros',24.6]],
-'Huancavelica':[['Roberto Sánchez',33.9],['Ricardo Belmont',13.4],['Alfonso López Chau',10.3],['Keiko Fujimori',6.7],['Jorge Nieto',4.5],['Rafael López Aliaga',4.4],['José Luna Gálvez',3.1],['Otros',23.7]],
-'Huánuco':[['Roberto Sánchez',24.1],['Keiko Fujimori',15.7],['Ricardo Belmont',15.6],['Rafael López Aliaga',7.7],['Alfonso López Chau',6.5],['Carlos Álvarez',6.3],['Jorge Nieto',6],['Otros',18.1]],
-'Ica':[['Keiko Fujimori',20.3],['Carlos Álvarez',11.1],['Rafael López Aliaga',9.7],['Ricardo Belmont',9.5],['Jorge Nieto',9.4],['Roberto Sánchez',8.2],['Alfonso López Chau',6.5],['Otros',25.3]],
-'Junín':[['Keiko Fujimori',17.2],['Alfonso López Chau',11.5],['Ricardo Belmont',10.7],['Roberto Sánchez',9.3],['Rafael López Aliaga',9],['Jorge Nieto',8.8],['Carlos Álvarez',8.1],['Otros',25.4]],
-'La Libertad':[['Keiko Fujimori',20.7],['Jorge Nieto',10.1],['Rosario Fernández',9.6],['Rafael López Aliaga',8.5],['Carlos Álvarez',8.4],['Roberto Sánchez',7.2],['Ricardo Belmont',6.9],['Otros',28.6]],
-'Lambayeque':[['Keiko Fujimori',25.4],['Rafael López Aliaga',10.5],['Jorge Nieto',10],['Carlos Álvarez',9.3],['Roberto Sánchez',8.6],['Ricardo Belmont',6.9],['Alfonso López Chau',5.1],['Otros',24.2]],
-'Lima':[['Rafael López Aliaga',22.2],['Keiko Fujimori',16.4],['Jorge Nieto',15.7],['Carlos Álvarez',8.7],['Ricardo Belmont',8.7],['Alfonso López Chau',6.8],['Marisol Pérez Tello',4.5],['Otros',17]],
-'Lima Provincias':[['Keiko Fujimori',24.7],['Ricardo Belmont',11.7],['Carlos Álvarez',9.5],['Jorge Nieto',9],['Roberto Sánchez',8.3],['Rafael López Aliaga',8.1],['Alfonso López Chau',7.2],['Otros',21.5]],
-'Loreto':[['Keiko Fujimori',29.9],['Carlos Álvarez',15.3],['Rafael López Aliaga',6.6],['George Forsyth',5.7],['Roberto Sánchez',5],['César Acuña',4.8],['Jorge Nieto',4.6],['Otros',28.1]],
-'Madre de Dios':[['Roberto Sánchez',20.3],['Keiko Fujimori',17.3],['Ricardo Belmont',13],['Carlos Álvarez',7.6],['Alfonso López Chau',7.5],['Jorge Nieto',4.3],['Rafael López Aliaga',4.2],['Otros',25.8]],
-'Moquegua':[['Jorge Nieto',12.4],['Alfonso López Chau',10.4],['Ricardo Belmont',10.1],['Rafael López Aliaga',9.7],['Roberto Sánchez',8],['Mario Vizcarra',7.9],['Keiko Fujimori',6.6],['Otros',34.9]],
-'Pasco':[['Keiko Fujimori',18.3],['Roberto Sánchez',13.9],['Ricardo Belmont',10.2],['Rafael López Aliaga',10],['Alfonso López Chau',9.7],['Jorge Nieto',5.2],['José Luna Gálvez',5],['Otros',27.7]],
-'Piura':[['Keiko Fujimori',29.3],['Carlos Álvarez',11.7],['Jorge Nieto',9.4],['Ricardo Belmont',7.1],['Rafael López Aliaga',7],['Roberto Sánchez',5.8],['Alfonso López Chau',5.2],['Otros',24.5]],
-'Puno':[['Roberto Sánchez',20.2],['Ricardo Belmont',16.4],['Alfonso López Chau',11],['Yonhy Lescano',11],['Ronald Atencio',4.9],['Jorge Nieto',4.5],['Fernando Olivera',4.2],['Otros',27.8]],
-'San Martín':[['Keiko Fujimori',24.4],['Roberto Sánchez',17],['Ricardo Belmont',12.3],['Rafael López Aliaga',6.4],['Carlos Álvarez',6.2],['Jorge Nieto',5.4],['Alfonso López Chau',4.6],['Otros',23.7]],
-'Tacna':[['Ricardo Belmont',14.8],['Jorge Nieto',13.2],['Roberto Sánchez',9.9],['Alfonso López Chau',9.2],['Marisol Pérez Tello',7.2],['Carlos Álvarez',7],['Keiko Fujimori',6.5],['Otros',32.2]],
-'Tumbes':[['Keiko Fujimori',29.5],['Carlos Álvarez',16],['Roberto Sánchez',6.3],['Rafael López Aliaga',6.2],['Jorge Nieto',6.1],['Alfonso López Chau',5.6],['José Luna Gálvez',5],['Otros',25.3]],
-'Ucayali':[['Keiko Fujimori',27.7],['Ricardo Belmont',11],['Carlos Álvarez',10.8],['Roberto Sánchez',9.6],['Jorge Nieto',6.9],['Rafael López Aliaga',6.3],['Alfonso López Chau',4.6],['Otros',23.1]],
-'Extranjero':[['Rafael López Aliaga',28.2],['Keiko Fujimori',14],['Jorge Nieto',11],['Carlos Álvarez',10.1],['Ricardo Belmont',8.8],['Alfonso López Chau',7.9],['Marisol Pérez Tello',4.1],['Otros',15.9]]
-};
+    /** Obtiene el color asignado a un candidato */
+    function getColor(name)     { return CANDIDATES[name]?.color || '#BDBDBD'; }
 
-const DN={'Lima':'Lima Metropolitana'};
+    /** Obtiene el nombre corto de un candidato */
+    function getShortName(name) { return CANDIDATES[name]?.short || name; }
 
-/* ═══════════════ GEOGRAPHIC MATCHING ═══════════════ 
-   Instead of matching by name/ID (unreliable), we match each 
-   topojson polygon to the nearest known department centroid.
-   This is 100% reliable regardless of naming conventions.
-   ═══════════════════════════════════════════════════ */
-const GEO_CENTERS={
-  'Amazonas':[-78.0,-6.0],'Áncash':[-77.5,-9.3],'Apurímac':[-73.0,-14.0],
-  'Arequipa':[-72.0,-15.8],'Ayacucho':[-74.0,-13.8],'Cajamarca':[-78.5,-6.8],
-  'Callao':[-77.12,-12.05],'Cusco':[-72.0,-13.2],'Huancavelica':[-75.2,-13.0],
-  'Huánuco':[-76.2,-9.5],'Ica':[-75.5,-14.5],'Junín':[-75.3,-11.5],
-  'La Libertad':[-78.5,-8.0],'Lambayeque':[-79.8,-6.5],
-  'Lima':[-76.6,-12.0],
-  'Loreto':[-75.5,-4.5],'Madre de Dios':[-70.5,-12.0],
-  'Moquegua':[-70.9,-17.0],'Pasco':[-76.0,-10.4],'Piura':[-80.3,-5.0],
-  'Puno':[-70.0,-15.2],'San Martín':[-76.7,-7.0],'Tacna':[-70.3,-17.6],
-  'Tumbes':[-80.4,-3.7],'Ucayali':[-74.0,-9.5]
-};
 
-function haversine(a,b){
-  const R=6371,dLat=(b[1]-a[1])*Math.PI/180,dLon=(b[0]-a[0])*Math.PI/180;
-  const x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a[1]*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
-}
+    /* ==========================================================
+       RESULTADOS NACIONALES
+       Fuente: Conteo rápido Datum al 100%
+       ========================================================== */
+    const NATIONAL_RESULTS = [
+      { name: 'Keiko Fujimori',      pct: 16.8 },
+      { name: 'Rafael López Aliaga', pct: 12.9 },
+      { name: 'Jorge Nieto',         pct: 11.6 },
+      { name: 'Ricardo Belmont',     pct: 10.1 },
+      { name: 'Roberto Sánchez',     pct:  9.4 },
+      { name: 'Carlos Álvarez',      pct:  8.1 },
+      { name: 'Alfonso López Chau',  pct:  7.7 },
+      { name: 'Otros',               pct: 23.4 }
+    ];
 
-/* Cache: feature index → department key */
-const FEAT_MAP={};
 
-function buildGeoMatch(features,projection){
-  const path=d3.geoPath(projection);
-  const assigned=new Set();
-  const candidates=[];
+    /* ==========================================================
+       RESULTADOS POR DEPARTAMENTO (data completa)
+       Formato: [['Candidato', porcentaje], ...]
+       Transcrito del noticiero de América TV / Canal N
+       ========================================================== */
+    const DEPT_DATA = {
+      'Amazonas':       [['Roberto Sánchez',25.7],['Keiko Fujimori',20.8],['Ricardo Belmont',11.5],['Alfonso López Chau',6],['Carlos Álvarez',3.9],['Jorge Nieto',3.9],['Rafael López Aliaga',3.4],['Otros',24.8]],
+      'Áncash':         [['Keiko Fujimori',17.8],['Roberto Sánchez',11.8],['Carlos Álvarez',10.4],['Ricardo Belmont',9.7],['Jorge Nieto',9.3],['Alfonso López Chau',9.3],['Rafael López Aliaga',7.1],['Otros',24.6]],
+      'Apurímac':       [['Roberto Sánchez',30.3],['Ricardo Belmont',15.1],['Alfonso López Chau',11.8],['Keiko Fujimori',8.9],['Jorge Nieto',4.4],['Rafael López Aliaga',3.7],['Charlie Carrasco',3.3],['Otros',22.5]],
+      'Arequipa':       [['Jorge Nieto',20.4],['Rafael López Aliaga',12.3],['Alfonso López Chau',9.1],['Carlos Álvarez',8.8],['Ricardo Belmont',8.8],['Keiko Fujimori',8],['Roberto Sánchez',7.3],['Otros',25.3]],
+      'Ayacucho':       [['Roberto Sánchez',20.7],['Ricardo Belmont',17.8],['Alfonso López Chau',16],['Keiko Fujimori',7.1],['Jorge Nieto',6.1],['Carlos Espá',3.5],['Carlos Álvarez',3.1],['Otros',25.7]],
+      'Cajamarca':      [['Roberto Sánchez',43.1],['Ricardo Belmont',13.5],['Keiko Fujimori',12.3],['Alfonso López Chau',4.9],['Jorge Nieto',4.7],['Rafael López Aliaga',2.6],['Carlos Álvarez',2.5],['Otros',16.4]],
+      'Callao':         [['Keiko Fujimori',20.1],['Rafael López Aliaga',18.1],['Jorge Nieto',14.9],['Carlos Álvarez',11.4],['Ricardo Belmont',8.3],['Alfonso López Chau',6.2],['Marisol Pérez Tello',4.4],['Otros',16.6]],
+      'Cusco':          [['Alfonso López Chau',15.6],['Ricardo Belmont',14.8],['Jorge Nieto',13.9],['Roberto Sánchez',11.9],['Rafael López Aliaga',7.4],['Keiko Fujimori',6.7],['Marisol Pérez Tello',5.1],['Otros',24.6]],
+      'Huancavelica':   [['Roberto Sánchez',33.9],['Ricardo Belmont',13.4],['Alfonso López Chau',10.3],['Keiko Fujimori',6.7],['Jorge Nieto',4.5],['Rafael López Aliaga',4.4],['José Luna Gálvez',3.1],['Otros',23.7]],
+      'Huánuco':        [['Roberto Sánchez',24.1],['Keiko Fujimori',15.7],['Ricardo Belmont',15.6],['Rafael López Aliaga',7.7],['Alfonso López Chau',6.5],['Carlos Álvarez',6.3],['Jorge Nieto',6],['Otros',18.1]],
+      'Ica':            [['Keiko Fujimori',20.3],['Carlos Álvarez',11.1],['Rafael López Aliaga',9.7],['Ricardo Belmont',9.5],['Jorge Nieto',9.4],['Roberto Sánchez',8.2],['Alfonso López Chau',6.5],['Otros',25.3]],
+      'Junín':          [['Keiko Fujimori',17.2],['Alfonso López Chau',11.5],['Ricardo Belmont',10.7],['Roberto Sánchez',9.3],['Rafael López Aliaga',9],['Jorge Nieto',8.8],['Carlos Álvarez',8.1],['Otros',25.4]],
+      'La Libertad':    [['Keiko Fujimori',20.7],['Jorge Nieto',10.1],['Rosario Fernández',9.6],['Rafael López Aliaga',8.5],['Carlos Álvarez',8.4],['Roberto Sánchez',7.2],['Ricardo Belmont',6.9],['Otros',28.6]],
+      'Lambayeque':     [['Keiko Fujimori',25.4],['Rafael López Aliaga',10.5],['Jorge Nieto',10],['Carlos Álvarez',9.3],['Roberto Sánchez',8.6],['Ricardo Belmont',6.9],['Alfonso López Chau',5.1],['Otros',24.2]],
+      'Lima':           [['Rafael López Aliaga',22.2],['Keiko Fujimori',16.4],['Jorge Nieto',15.7],['Carlos Álvarez',8.7],['Ricardo Belmont',8.7],['Alfonso López Chau',6.8],['Marisol Pérez Tello',4.5],['Otros',17]],
+      'Lima Provincias': [['Keiko Fujimori',24.7],['Ricardo Belmont',11.7],['Carlos Álvarez',9.5],['Jorge Nieto',9],['Roberto Sánchez',8.3],['Rafael López Aliaga',8.1],['Alfonso López Chau',7.2],['Otros',21.5]],
+      'Loreto':         [['Keiko Fujimori',29.9],['Carlos Álvarez',15.3],['Rafael López Aliaga',6.6],['George Forsyth',5.7],['Roberto Sánchez',5],['César Acuña',4.8],['Jorge Nieto',4.6],['Otros',28.1]],
+      'Madre de Dios':  [['Roberto Sánchez',20.3],['Keiko Fujimori',17.3],['Ricardo Belmont',13],['Carlos Álvarez',7.6],['Alfonso López Chau',7.5],['Jorge Nieto',4.3],['Rafael López Aliaga',4.2],['Otros',25.8]],
+      'Moquegua':       [['Jorge Nieto',12.4],['Alfonso López Chau',10.4],['Ricardo Belmont',10.1],['Rafael López Aliaga',9.7],['Roberto Sánchez',8],['Mario Vizcarra',7.9],['Keiko Fujimori',6.6],['Otros',34.9]],
+      'Pasco':          [['Keiko Fujimori',18.3],['Roberto Sánchez',13.9],['Ricardo Belmont',10.2],['Rafael López Aliaga',10],['Alfonso López Chau',9.7],['Jorge Nieto',5.2],['José Luna Gálvez',5],['Otros',27.7]],
+      'Piura':          [['Keiko Fujimori',29.3],['Carlos Álvarez',11.7],['Jorge Nieto',9.4],['Ricardo Belmont',7.1],['Rafael López Aliaga',7],['Roberto Sánchez',5.8],['Alfonso López Chau',5.2],['Otros',24.5]],
+      'Puno':           [['Roberto Sánchez',20.2],['Ricardo Belmont',16.4],['Alfonso López Chau',11],['Yonhy Lescano',11],['Ronald Atencio',4.9],['Jorge Nieto',4.5],['Fernando Olivera',4.2],['Otros',27.8]],
+      'San Martín':     [['Keiko Fujimori',24.4],['Roberto Sánchez',17],['Ricardo Belmont',12.3],['Rafael López Aliaga',6.4],['Carlos Álvarez',6.2],['Jorge Nieto',5.4],['Alfonso López Chau',4.6],['Otros',23.7]],
+      'Tacna':          [['Ricardo Belmont',14.8],['Jorge Nieto',13.2],['Roberto Sánchez',9.9],['Alfonso López Chau',9.2],['Marisol Pérez Tello',7.2],['Carlos Álvarez',7],['Keiko Fujimori',6.5],['Otros',32.2]],
+      'Tumbes':         [['Keiko Fujimori',29.5],['Carlos Álvarez',16],['Roberto Sánchez',6.3],['Rafael López Aliaga',6.2],['Jorge Nieto',6.1],['Alfonso López Chau',5.6],['José Luna Gálvez',5],['Otros',25.3]],
+      'Ucayali':        [['Keiko Fujimori',27.7],['Ricardo Belmont',11],['Carlos Álvarez',10.8],['Roberto Sánchez',9.6],['Jorge Nieto',6.9],['Rafael López Aliaga',6.3],['Alfonso López Chau',4.6],['Otros',23.1]],
+      'Extranjero':     [['Rafael López Aliaga',28.2],['Keiko Fujimori',14],['Jorge Nieto',11],['Carlos Álvarez',10.1],['Ricardo Belmont',8.8],['Alfonso López Chau',7.9],['Marisol Pérez Tello',4.1],['Otros',15.9]]
+    };
 
-  features.forEach((f,i)=>{
-    const c=d3.geoCentroid(f);/* real lon/lat centroid */
-    candidates.push({idx:i,lon:c[0],lat:c[1],area:path.area(f)});
-  });
+    /** Nombres para mostrar (sobrescrituras) */
+    const DISPLAY_NAMES = { 'Lima': 'Lima Metropolitana' };
 
-  /* Sort by area descending so large polygons get matched first */
-  const sorted=[...candidates].sort((a,b)=>b.area-a.area);
 
-  /* For each feature find nearest unassigned department */
-  sorted.forEach(feat=>{
-    let bestDept=null,bestDist=Infinity;
-    for(const[dept,center]of Object.entries(GEO_CENTERS)){
-      if(assigned.has(dept))continue;
-      const dist=haversine([feat.lon,feat.lat],center);
-      if(dist<bestDist){bestDist=dist;bestDept=dept}
+    /* ==========================================================
+       SISTEMA DE MATCHING GEOGRÁFICO
+       Asigna cada polígono del topojson al departamento correcto
+       usando la distancia entre centroides reales (Haversine).
+       Esto elimina cualquier dependencia de nombres/IDs del topojson.
+       ========================================================== */
+
+    /** Coordenadas geográficas reales de cada departamento [lon, lat] */
+    const GEO_CENTERS = {
+      'Amazonas':      [-78.0, -6.0],   'Áncash':        [-77.5, -9.3],
+      'Apurímac':      [-73.0, -14.0],  'Arequipa':      [-72.0, -15.8],
+      'Ayacucho':      [-74.0, -13.8],  'Cajamarca':     [-78.5, -6.8],
+      'Callao':        [-77.12, -12.05],'Cusco':         [-72.0, -13.2],
+      'Huancavelica':  [-75.2, -13.0],  'Huánuco':       [-76.2, -9.5],
+      'Ica':           [-75.5, -14.5],  'Junín':         [-75.3, -11.5],
+      'La Libertad':   [-78.5, -8.0],   'Lambayeque':    [-79.8, -6.5],
+      'Lima':          [-76.6, -12.0],  'Loreto':        [-75.5, -4.5],
+      'Madre de Dios': [-70.5, -12.0],  'Moquegua':      [-70.9, -17.0],
+      'Pasco':         [-76.0, -10.4],  'Piura':         [-80.3, -5.0],
+      'Puno':          [-70.0, -15.2],  'San Martín':    [-76.7, -7.0],
+      'Tacna':         [-70.3, -17.6],  'Tumbes':        [-80.4, -3.7],
+      'Ucayali':       [-74.0, -9.5]
+    };
+
+    /** Fórmula de Haversine: distancia real (km) entre dos puntos [lon,lat] */
+    function haversine(a, b) {
+      const R = 6371;
+      const dLat = (b[1] - a[1]) * Math.PI / 180;
+      const dLon = (b[0] - a[0]) * Math.PI / 180;
+      const x = Math.sin(dLat / 2) ** 2 +
+                Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
     }
-    if(bestDept&&bestDist<300){/* max 300km tolerance */
-      FEAT_MAP[feat.idx]=bestDept;
-      assigned.add(bestDept);
+
+    /** Cache de matching: índice de feature → clave de departamento */
+    const FEATURE_TO_DEPT = {};
+
+    /**
+     * Construye el matching geográfico.
+     * Para cada polígono del topojson, calcula su centroide real
+     * y lo asigna al departamento más cercano.
+     */
+    function buildGeoMatch(features, projection) {
+      const path = d3.geoPath(projection);
+      const assigned = new Set();
+      const candidates = [];
+
+      /* Calcular centroide geográfico real de cada feature */
+      features.forEach((f, i) => {
+        const c = d3.geoCentroid(f);
+        candidates.push({ idx: i, lon: c[0], lat: c[1], area: path.area(f) });
+      });
+
+      /* Procesar polígonos grandes primero (Lima antes que Callao) */
+      const sorted = [...candidates].sort((a, b) => b.area - a.area);
+
+      sorted.forEach(feat => {
+        let bestDept = null, bestDist = Infinity;
+
+        for (const [dept, center] of Object.entries(GEO_CENTERS)) {
+          if (assigned.has(dept)) continue;
+          const dist = haversine([feat.lon, feat.lat], center);
+          if (dist < bestDist) { bestDist = dist; bestDept = dept; }
+        }
+
+        if (bestDept && bestDist < 300) {
+          FEATURE_TO_DEPT[feat.idx] = bestDept;
+          assigned.add(bestDept);
+        }
+      });
+
+      /* Si sobran features cerca de Lima → asignar como Lima Provincias */
+      candidates.forEach(feat => {
+        if (FEATURE_TO_DEPT[feat.idx]) return;
+        const distLima = haversine([feat.lon, feat.lat], GEO_CENTERS['Lima']);
+        if (distLima < 150 && !assigned.has('Lima Provincias')) {
+          FEATURE_TO_DEPT[feat.idx] = 'Lima Provincias';
+          assigned.add('Lima Provincias');
+        }
+      });
+
+      /* Log de diagnóstico */
+      console.log('Departamentos mapeados:', Object.values(FEATURE_TO_DEPT).sort());
+      const unmatched = candidates.filter(f => !FEATURE_TO_DEPT[f.idx]);
+      if (unmatched.length) {
+        console.warn('Features sin asignar:', unmatched.map(f => ({
+          idx: f.idx, lon: f.lon.toFixed(2), lat: f.lat.toFixed(2)
+        })));
+      }
     }
-  });
 
-  /* Handle Lima Provincias: if there are unmatched features near Lima */
-  candidates.forEach(feat=>{
-    if(FEAT_MAP[feat.idx])return;
-    const distLima=haversine([feat.lon,feat.lat],GEO_CENTERS['Lima']);
-    if(distLima<150&&!assigned.has('Lima Provincias')){
-      FEAT_MAP[feat.idx]='Lima Provincias';
-      assigned.add('Lima Provincias');
+    /** Obtiene el departamento asignado a un feature por su índice */
+    function getDeptByIndex(featureData, index) {
+      return FEATURE_TO_DEPT[index] || null;
     }
-  });
 
-  console.log('GeoMatch results:',Object.entries(FEAT_MAP).map(([i,d])=>d));
-  const unmatched=candidates.filter(f=>!FEAT_MAP[f.idx]);
-  if(unmatched.length)console.warn('Unmatched features:',unmatched.map(f=>({idx:f.idx,lon:f.lon.toFixed(2),lat:f.lat.toFixed(2)})));
-}
+    /** Abreviaciones para etiquetas del mapa */
+    const DEPT_ABBR = {
+      'Lima':'LIM', 'Callao':'CAL', 'Áncash':'ANC', 'Arequipa':'AQP',
+      'Ayacucho':'AYA', 'Cajamarca':'CAJ', 'Cusco':'CUS', 'Huancavelica':'HCV',
+      'Huánuco':'HCO', 'Ica':'ICA', 'Junín':'JUN', 'La Libertad':'LAL',
+      'Lambayeque':'LAM', 'Loreto':'LOR', 'Madre de Dios':'MDD', 'Moquegua':'MOQ',
+      'Pasco':'PAS', 'Piura':'PIU', 'Puno':'PUN', 'San Martín':'SMR',
+      'Tacna':'TAC', 'Tumbes':'TUM', 'Ucayali':'UCA', 'Amazonas':'AMA',
+      'Apurímac':'APU', 'Lima Provincias':'LPR'
+    };
 
-function mtch(feat,idx){return FEAT_MAP[idx]||null}
 
-/* Label abbreviations */
-const ABBR={'Lima':'LIM','Callao':'CAL','Áncash':'ANC','Arequipa':'AQP','Ayacucho':'AYA','Cajamarca':'CAJ','Cusco':'CUS','Huancavelica':'HCV','Huánuco':'HCO','Ica':'ICA','Junín':'JUN','La Libertad':'LAL','Lambayeque':'LAM','Loreto':'LOR','Madre de Dios':'MDD','Moquegua':'MOQ','Pasco':'PAS','Piura':'PIU','Puno':'PUN','San Martín':'SMR','Tacna':'TAC','Tumbes':'TUM','Ucayali':'UCA','Amazonas':'AMA','Apurímac':'APU','Lima Provincias':'LPR'};
+    /* ==========================================================
+       RENDERIZADO: BARRA NACIONAL
+       ========================================================== */
+    (function renderNationalBar() {
+      const barEl  = document.getElementById('nationalBar');
+      const gridEl = document.getElementById('nationalGrid');
 
-/* ═══════════════ NATIONAL BAR ═══════════════ */
-(function(){
-  const t=document.getElementById('nT'),g=document.getElementById('nG');
-  NAT.forEach((c,i)=>{
-    const s=document.createElement('div');s.className='nb__seg';
-    s.style.width=c.v+'%';s.style.background=gc(c.n);s.style.animationDelay=(i*.1)+'s';
-    s.style.transformOrigin='left';
-    s.title=c.n+(C[c.n]?.p?' — '+C[c.n].p:'')+': '+c.v+'%';
-    t.appendChild(s);
-  });
-  NAT.forEach((c,i)=>{
-    const card=document.createElement('div');card.className='nb__card';
-    card.style.animationDelay=(i*.05)+'s';
-    const color=gc(c.n);
-    card.innerHTML=
-      '<div class="nb__card-color" style="background:'+color+'"></div>'+
-      '<div class="nb__card-info">'+
-        '<div class="nb__card-name">'+gs(c.n)+'</div>'+
-        '<div class="nb__card-party">'+(C[c.n]?.p||'Otros candidatos')+'</div>'+
-        '<div class="nb__card-bar"><div class="nb__card-barfill" style="width:'+(c.v/NAT[0].v*100).toFixed(0)+'%;background:'+color+';animation-delay:'+(i*.08)+'s"></div></div>'+
-      '</div>'+
-      '<div class="nb__card-pct" style="color:'+color+'">'+c.v+'%</div>';
-    card.title=c.n+(C[c.n]?.p?' — '+C[c.n].p:'');
-    g.appendChild(card);
-  });
-})();
+      /* Barra proporcional de colores */
+      NATIONAL_RESULTS.forEach((c, i) => {
+        const seg = document.createElement('div');
+        seg.className = 'national__bar-segment';
+        seg.style.width = c.pct + '%';
+        seg.style.background = getColor(c.name);
+        seg.style.animationDelay = (i * 0.1) + 's';
+        seg.style.transformOrigin = 'left';
+        seg.title = `${c.name} — ${CANDIDATES[c.name]?.party || ''}: ${c.pct}%`;
+        barEl.appendChild(seg);
+      });
 
-/* ═══════════════ MAP ═══════════════ */
-const tt=document.getElementById('tt');
+      /* Tarjetas de candidatos */
+      NATIONAL_RESULTS.forEach((c, i) => {
+        const color = getColor(c.name);
+        const card = document.createElement('div');
+        card.className = 'national__card';
+        card.title = `${c.name} — ${CANDIDATES[c.name]?.party || ''}`;
+        card.innerHTML =
+          `<div class="national__card-color" style="background:${color}"></div>` +
+          `<div class="national__card-info">` +
+            `<div class="national__card-name">${getShortName(c.name)}</div>` +
+            `<div class="national__card-party">${CANDIDATES[c.name]?.party || 'Otros candidatos'}</div>` +
+            `<div class="national__card-bar"><div class="national__card-barfill" style="width:${(c.pct / NATIONAL_RESULTS[0].pct * 100).toFixed(0)}%;background:${color};animation-delay:${i * 0.08}s"></div></div>` +
+          `</div>` +
+          `<div class="national__card-pct" style="color:${color}">${c.pct}%</div>`;
+        gridEl.appendChild(card);
+      });
+    })();
 
-d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json').then(topo=>{
-  const feat=topojson.feature(topo,topo.objects.per).features;
-  const ctn=document.getElementById('mapC'),w=ctn.clientWidth,h=Math.max(500,w*1.05);
-  const pr=d3.geoMercator().center([-75.5,-9.5]).scale(w*2.9).translate([w/2,h*0.47]);
-  const pa=d3.geoPath(pr);
 
-  /* Build geographic matching */
-  buildGeoMatch(feat,pr);
+    /* ==========================================================
+       RENDERIZADO: MAPA DEL PERÚ (D3 + TopoJSON)
+       ========================================================== */
+    const tooltipEl = document.getElementById('tooltip');
 
-  const svg=d3.select('#mapC').append('svg').attr('viewBox','0 0 '+w+' '+h).attr('preserveAspectRatio','xMidYMid meet');
+    d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json').then(topo => {
+      const features = topojson.feature(topo, topo.objects.per).features;
+      const container = document.getElementById('map-container');
+      const width = container.clientWidth;
+      const height = Math.max(500, width * 1.05);
 
-  const paths=svg.selectAll('path').data(feat).join('path').attr('d',pa).attr('class','dp')
-    .attr('fill',(d,i)=>{const dk=mtch(d,i);return dk&&D[dk]?gc(D[dk][0][0]):'#E0E0E0'})
-    .attr('data-dept',(d,i)=>mtch(d,i)||'')
-    .style('opacity',0)
-    .on('mouseenter',function(ev,d){
-      const i=feat.indexOf(d);const dk=mtch(d,i);if(!dk||!D[dk])return;
-      const r=D[dk],dn=DN[dk]||dk;
-      tt.innerHTML='<div class="tt__n">'+dn+'</div><div class="tt__w"><span class="tt__wd" style="background:'+gc(r[0][0])+'"></span><b>'+r[0][0]+'</b><span style="margin-left:auto;font-family:var(--font-d);font-weight:700">'+r[0][1]+'%</span></div><div class="tt__h">Clic para ver los '+r.length+' candidatos</div>';
-      tt.classList.add('v');
-    })
-    .on('mousemove',function(ev){const rc=document.querySelector('.map-card').getBoundingClientRect();tt.style.left=(ev.clientX-rc.left+15)+'px';tt.style.top=(ev.clientY-rc.top-10)+'px'})
-    .on('mouseleave',()=>tt.classList.remove('v'))
-    .on('click',function(ev,d){
-      const i=feat.indexOf(d);const dk=mtch(d,i);if(!dk)return;
-      svg.selectAll('.dp').classed('active',false);d3.select(this).classed('active',true);
-      document.querySelectorAll('.dc').forEach(c=>c.classList.remove('act'));
-      const ch=document.querySelector('[data-dc="'+dk+'"]');if(ch)ch.classList.add('act');
-      openModal(dk);
+      /* Proyección centrada en el Perú */
+      const projection = d3.geoMercator()
+        .center([-75.5, -9.5])
+        .scale(width * 2.9)
+        .translate([width / 2, height * 0.47]);
+
+      const pathGenerator = d3.geoPath(projection);
+
+      /* Ejecutar el matching geográfico */
+      buildGeoMatch(features, projection);
+
+      const svg = d3.select('#map-container')
+        .append('svg')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+      /* Dibujar polígonos de departamentos */
+      const paths = svg.selectAll('path')
+        .data(features)
+        .join('path')
+        .attr('d', pathGenerator)
+        .attr('class', 'dept-path')
+        .attr('fill', (d, i) => {
+          const dept = getDeptByIndex(d, i);
+          return dept && DEPT_DATA[dept] ? getColor(DEPT_DATA[dept][0][0]) : '#E0E0E0';
+        })
+        .attr('data-dept', (d, i) => getDeptByIndex(d, i) || '')
+        .style('opacity', 0)
+
+        /* Tooltip al pasar el mouse */
+        .on('mouseenter', function(event, d) {
+          const idx = features.indexOf(d);
+          const dept = getDeptByIndex(d, idx);
+          if (!dept || !DEPT_DATA[dept]) return;
+
+          const results = DEPT_DATA[dept];
+          const displayName = DISPLAY_NAMES[dept] || dept;
+
+          tooltipEl.innerHTML =
+            `<div class="tooltip__name">${displayName}</div>` +
+            `<div class="tooltip__winner">` +
+              `<span class="tooltip__winner-dot" style="background:${getColor(results[0][0])}"></span>` +
+              `<b>${results[0][0]}</b>` +
+              `<span style="margin-left:auto;font-family:var(--font-display);font-weight:700">${results[0][1]}%</span>` +
+            `</div>` +
+            `<div class="tooltip__hint">Clic para ver los ${results.length} candidatos</div>`;
+          tooltipEl.classList.add('visible');
+        })
+        .on('mousemove', function(event) {
+          const rect = document.querySelector('.map-card').getBoundingClientRect();
+          tooltipEl.style.left = (event.clientX - rect.left + 15) + 'px';
+          tooltipEl.style.top  = (event.clientY - rect.top - 10) + 'px';
+        })
+        .on('mouseleave', () => tooltipEl.classList.remove('visible'))
+
+        /* Abrir modal al hacer clic */
+        .on('click', function(event, d) {
+          const idx = features.indexOf(d);
+          const dept = getDeptByIndex(d, idx);
+          if (!dept) return;
+
+          svg.selectAll('.dept-path').classed('active', false);
+          d3.select(this).classed('active', true);
+
+          document.querySelectorAll('.dept-chip').forEach(c => c.classList.remove('active'));
+          const chip = document.querySelector(`[data-dept-chip="${dept}"]`);
+          if (chip) chip.classList.add('active');
+
+          openModal(dept);
+        });
+
+      /* ----- Animación de rompecabezas al cargar ----- */
+      paths.each(function(d, i) {
+        const el = d3.select(this);
+        const randX = (Math.random() - 0.5) * 300;
+        const randY = (Math.random() - 0.5) * 300;
+        const randR = (Math.random() - 0.5) * 30;
+
+        el.style('transform', `translate(${randX}px, ${randY}px) rotate(${randR}deg)`)
+          .style('transition', `all 1s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 40}ms`);
+
+        setTimeout(() => {
+          el.style('opacity', 1)
+            .style('transform', 'translate(0,0) rotate(0deg)');
+        }, 100);
+      });
+
+      /* ----- Etiquetas de departamentos ----- */
+      setTimeout(() => {
+        svg.selectAll('text.dept-label')
+          .data(features)
+          .join('text')
+          .attr('class', 'dept-label')
+          .attr('x', (d, i) => {
+            const dept = getDeptByIndex(d, i);
+            if (dept && GEO_CENTERS[dept]) return projection(GEO_CENTERS[dept])[0];
+            return pathGenerator.centroid(d)[0];
+          })
+          .attr('y', (d, i) => {
+            const dept = getDeptByIndex(d, i);
+            if (dept && GEO_CENTERS[dept]) return projection(GEO_CENTERS[dept])[1];
+            return pathGenerator.centroid(d)[1];
+          })
+          .text((d, i) => {
+            const dept = getDeptByIndex(d, i);
+            return dept ? (DEPT_ABBR[dept] || dept.substring(0, 3).toUpperCase()) : '';
+          })
+          .style('opacity', 0)
+          .transition()
+            .delay((d, i) => 800 + i * 30)
+            .duration(400)
+            .style('opacity', 1);
+      }, 200);
     });
 
-  /* Puzzle entrance animation */
-  paths.each(function(d,i){
-    const el=d3.select(this);
-    const randX=(Math.random()-.5)*300;
-    const randY=(Math.random()-.5)*300;
-    const randR=(Math.random()-.5)*30;
-    el.style('transform','translate('+randX+'px,'+randY+'px) rotate('+randR+'deg)')
-      .style('transition','all 1s cubic-bezier(.34,1.56,.64,1) '+(i*40)+'ms');
-    setTimeout(()=>{
-      el.style('opacity',1).style('transform','translate(0,0) rotate(0deg)');
-    },100);
-  });
+    /* Evento: chip del voto en el extranjero */
+    document.getElementById('extranjeroChip').addEventListener('click', () => openModal('Extranjero'));
 
-  /* Labels — positioned at real geographic centroids */
-  setTimeout(()=>{
-    svg.selectAll('text.dl').data(feat).join('text').attr('class','dl')
-      .attr('x',(d,i)=>{
-        const dk=mtch(d,i);
-        if(dk&&GEO_CENTERS[dk])return pr(GEO_CENTERS[dk])[0];
-        return pa.centroid(d)[0];
-      })
-      .attr('y',(d,i)=>{
-        const dk=mtch(d,i);
-        if(dk&&GEO_CENTERS[dk])return pr(GEO_CENTERS[dk])[1];
-        return pa.centroid(d)[1];
-      })
-      .text((d,i)=>{const dk=mtch(d,i);return dk?ABBR[dk]||dk.substring(0,3).toUpperCase():''})
-      .style('opacity',0)
-      .transition().delay((d,i)=>800+i*30).duration(400).style('opacity',1);
-  },200);
-});
 
-/* Extranjero chip */
-document.getElementById('extChip').addEventListener('click',()=>openModal('Extranjero'));
+    /* ==========================================================
+       MODAL: Detalle por departamento
+       ========================================================== */
+    const modalOverlay = document.getElementById('modalOverlay');
 
-/* ═══════════════ MODAL ═══════════════ */
-const mBg=document.getElementById('mBg');
-mBg.addEventListener('click',e=>{if(e.target===mBg)closeModal()});
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+    /* Cerrar modal al hacer clic fuera o presionar Escape */
+    modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-function closeModal(){mBg.classList.remove('open')}
+    function closeModal() { modalOverlay.classList.remove('open'); }
 
-function openModal(dk){
-  const r=D[dk];if(!r)return;
-  const dn=DN[dk]||dk,wc=gc(r[0][0]),mx=r[0][1];
-  const mH=document.getElementById('mH'),mB=document.getElementById('mB');
+    /** Abre el modal con los resultados de un departamento */
+    function openModal(deptKey) {
+      const results = DEPT_DATA[deptKey];
+      if (!results) return;
 
-  mH.innerHTML='<button class="modal__close" onclick="closeModal()">✕</button>'+
-    '<div class="modal__dn">'+dn+'</div>'+
-    '<div class="modal__dm">Conteo rápido Datum al 100% · '+r.length+' candidatos</div>'+
-    '<div class="modal__wt" style="background:'+wc+'15;color:'+wc+';border:1px solid '+wc+'30">🏆 '+gs(r[0][0])+' — '+r[0][1]+'%</div>';
+      const displayName = DISPLAY_NAMES[deptKey] || deptKey;
+      const winnerColor = getColor(results[0][0]);
+      const maxPct = results[0][1];
 
-  let html='<div class="modal__st">Todos los candidatos</div>';
-  r.forEach((x,i)=>{
-    const cc=gc(x[0]),cn=C[x[0]]||{p:'',s:x[0]};
-    const ps=i===0?'t1':i===1?'t2':i===2?'t3':'';
-    const bw=(x[1]/mx*100).toFixed(1);
-    html+='<div class="cr" style="animation-delay:'+(i*.04)+'s">'+
-      '<div class="cr__p '+ps+'">'+(i+1)+'</div>'+
-      '<div class="cr__i"><div class="cr__n"><span class="cr__nd" style="background:'+cc+'"></span>'+x[0]+'</div>'+
-      '<div class="cr__pt">'+(cn.p||'')+'</div></div>'+
-      '<div class="cr__pw"><div class="cr__pc" style="color:'+cc+'">'+x[1]+'%</div>'+
-      '<div class="cr__br"><div class="cr__bf" style="width:'+bw+'%;background:'+cc+';animation-delay:'+(i*.06)+'s"></div></div></div></div>';
-  });
+      const headerEl = document.getElementById('modalHeader');
+      const bodyEl   = document.getElementById('modalBody');
 
-  /* Visual chart */
-  html+='<div class="modal__st">Distribución visual</div><div style="display:flex;gap:3px;height:130px;align-items:flex-end;padding:0 4px">';
-  r.forEach((x,i)=>{
-    if(x[0]==='Otros')return;
-    const cc=gc(x[0]),hh=Math.max(4,(x[1]/mx*100)).toFixed(1);
-    html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0">'+
-      '<span style="font-family:var(--font-d);font-size:.6rem;font-weight:700;color:'+cc+'">'+x[1]+'%</span>'+
-      '<div style="width:100%;height:'+hh+'%;background:'+cc+';border-radius:5px 5px 2px 2px;transform:scaleY(0);transform-origin:bottom;animation:barVIn .5s var(--spring) '+(i*.07)+'s forwards;min-height:3px"></div>'+
-      '<span style="font-size:.5rem;color:var(--txm);text-align:center;line-height:1.1;overflow:hidden;max-height:2.2em">'+gs(x[0])+'</span></div>';
-  });
-  html+='</div>';
+      /* Encabezado del modal */
+      headerEl.innerHTML =
+        `<button class="modal__close" onclick="closeModal()">✕</button>` +
+        `<div class="modal__dept-name">${displayName}</div>` +
+        `<div class="modal__dept-meta">Conteo rápido Datum al 100% · ${results.length} candidatos</div>` +
+        `<div class="modal__winner-tag" style="background:${winnerColor}15;color:${winnerColor};border:1px solid ${winnerColor}30">` +
+          `🏆 ${getShortName(results[0][0])} — ${results[0][1]}%</div>`;
 
-  mB.innerHTML=html;
-  mBg.classList.add('open');
-}
+      /* Lista de candidatos */
+      let html = '<div class="modal__section-title">Todos los candidatos</div>';
 
-/* ═══════════════ DEPT GRID ═══════════════ */
-(function(){
-  const g=document.getElementById('dG');
-  Object.keys(D).sort((a,b)=>{if(a==='Extranjero')return 1;if(b==='Extranjero')return -1;return a.localeCompare(b,'es')}).forEach(dk=>{
-    const r=D[dk],cc=gc(r[0][0]),dn=DN[dk]||dk;
-    const ch=document.createElement('div');ch.className='dc';ch.setAttribute('data-dc',dk);
-    ch.innerHTML='<div class="dc__c" style="background:'+cc+'"></div>'+
-      '<div class="dc__i"><div class="dc__dn">'+(dk==='Extranjero'?'🌎 ':'')+dn+'</div>'+
-      '<div class="dc__w">'+gs(r[0][0])+' · '+(C[r[0][0]]?.p||'')+'</div></div>'+
-      '<div class="dc__p" style="color:'+cc+'">'+r[0][1]+'%</div>';
-    ch.addEventListener('click',()=>{
-      g.querySelectorAll('.dc').forEach(c=>c.classList.remove('act'));ch.classList.add('act');
-      const svg=document.querySelector('#mapC svg');
-      if(svg){d3.select('#mapC svg').selectAll('.dp').classed('active',false);
-        const mp=d3.select('#mapC svg').select('[data-dept="'+dk+'"]');if(!mp.empty())mp.classed('active',true)}
-      openModal(dk);
-    });
-    g.appendChild(ch);
-  });
-})();
+      results.forEach((entry, i) => {
+        const color = getColor(entry[0]);
+        const cand  = CANDIDATES[entry[0]] || { party: '', short: entry[0] };
+        const medal = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        const barWidth = (entry[1] / maxPct * 100).toFixed(1);
 
-/* Add vertical bar animation keyframes */
-const sty=document.createElement('style');
-sty.textContent='@keyframes barVIn{from{transform:scaleY(0)}to{transform:scaleY(1)}}';
-document.head.appendChild(sty);
-</script>
+        html +=
+          `<div class="candidate-row" style="animation-delay:${i * 0.04}s">` +
+            `<div class="candidate-row__position ${medal}">${i + 1}</div>` +
+            `<div class="candidate-row__info">` +
+              `<div class="candidate-row__name">` +
+                `<span class="candidate-row__name-dot" style="background:${color}"></span>${entry[0]}` +
+              `</div>` +
+              `<div class="candidate-row__party">${cand.party || ''}</div>` +
+            `</div>` +
+            `<div class="candidate-row__pct-wrap">` +
+              `<div class="candidate-row__pct" style="color:${color}">${entry[1]}%</div>` +
+              `<div class="candidate-row__bar">` +
+                `<div class="candidate-row__bar-fill" style="width:${barWidth}%;background:${color};animation-delay:${i * 0.06}s"></div>` +
+              `</div>` +
+            `</div>` +
+          `</div>`;
+      });
+
+      /* Gráfico de barras verticales */
+      html += '<div class="modal__section-title">Distribución visual</div>';
+      html += '<div style="display:flex;gap:3px;height:130px;align-items:flex-end;padding:0 4px">';
+
+      results.forEach((entry, i) => {
+        if (entry[0] === 'Otros') return;
+        const color = getColor(entry[0]);
+        const barHeight = Math.max(4, (entry[1] / maxPct * 100)).toFixed(1);
+
+        html +=
+          `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0">` +
+            `<span style="font-family:var(--font-display);font-size:.6rem;font-weight:700;color:${color}">${entry[1]}%</span>` +
+            `<div style="width:100%;height:${barHeight}%;background:${color};border-radius:5px 5px 2px 2px;transform:scaleY(0);transform-origin:bottom;animation:bar-vertical-in .5s var(--spring) ${i * 0.07}s forwards;min-height:3px"></div>` +
+            `<span style="font-size:.5rem;color:var(--color-text-muted);text-align:center;line-height:1.1;overflow:hidden;max-height:2.2em">${getShortName(entry[0])}</span>` +
+          `</div>`;
+      });
+
+      html += '</div>';
+
+      bodyEl.innerHTML = html;
+      modalOverlay.classList.add('open');
+    }
+
+
+    /* ==========================================================
+       RENDERIZADO: GRILLA DE DEPARTAMENTOS
+       ========================================================== */
+    (function renderDeptGrid() {
+      const gridEl = document.getElementById('deptGridItems');
+
+      /* Ordenar alfabéticamente, Extranjero al final */
+      const sortedDepts = Object.keys(DEPT_DATA).sort((a, b) => {
+        if (a === 'Extranjero') return 1;
+        if (b === 'Extranjero') return -1;
+        return a.localeCompare(b, 'es');
+      });
+
+      sortedDepts.forEach(deptKey => {
+        const results = DEPT_DATA[deptKey];
+        const color = getColor(results[0][0]);
+        const displayName = DISPLAY_NAMES[deptKey] || deptKey;
+
+        const chip = document.createElement('div');
+        chip.className = 'dept-chip';
+        chip.setAttribute('data-dept-chip', deptKey);
+        chip.innerHTML =
+          `<div class="dept-chip__color" style="background:${color}"></div>` +
+          `<div class="dept-chip__info">` +
+            `<div class="dept-chip__name">${deptKey === 'Extranjero' ? '🌎 ' : ''}${displayName}</div>` +
+            `<div class="dept-chip__winner">${getShortName(results[0][0])} · ${CANDIDATES[results[0][0]]?.party || ''}</div>` +
+          `</div>` +
+          `<div class="dept-chip__pct" style="color:${color}">${results[0][1]}%</div>`;
+
+        chip.addEventListener('click', () => {
+          /* Resaltar chip seleccionado */
+          gridEl.querySelectorAll('.dept-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+
+          /* Resaltar departamento en el mapa */
+          const svg = document.querySelector('#map-container svg');
+          if (svg) {
+            d3.select('#map-container svg').selectAll('.dept-path').classed('active', false);
+            const mapPath = d3.select('#map-container svg').select(`[data-dept="${deptKey}"]`);
+            if (!mapPath.empty()) mapPath.classed('active', true);
+          }
+
+          openModal(deptKey);
+        });
+
+        gridEl.appendChild(chip);
+      });
+    })();
+
+
+    /* ==========================================================
+       ANIMACIÓN ADICIONAL: barras verticales del modal
+       ========================================================== */
+    const dynamicStyle = document.createElement('style');
+    dynamicStyle.textContent = '@keyframes bar-vertical-in { from { transform: scaleY(0); } to { transform: scaleY(1); } }';
+    document.head.appendChild(dynamicStyle);
+  </script>
+
 </body>
 </html>
