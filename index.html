@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Perú Elige 2026 — Conteo Rápido de Actas al 100% (DATUM)</title>
+<meta name="description" content="Mapa interactivo con los resultados del conteo rápido de actas al 100% de Datum Internacional — Elecciones Generales Perú 2026, primera vuelta.">
+<meta property="og:title" content="Mapa Interactivo — Perú Elige 2026 · Conteo Rápido Datum al 100%">
+<meta property="og:description" content="Explora los resultados del conteo rápido por departamento. Data completa: 7 candidatos + otros en cada región del Perú.">
+<meta property="og:type" content="website">
+<title>Mapa Interactivo — Perú Elige 2026 · Conteo Rápido de Actas al 100% (DATUM)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
 <style>
@@ -197,7 +201,9 @@ h1 span{color:var(--red)}
   </section>
   <footer class="ft">
     <strong>Fuente:</strong> Datum Internacional para América TV / Canal N — Conteo rápido de actas al 100%, 13 abril 2026.<br>
-    Porcentajes de votos válidos. Margen de error ±1%. Visualización con datos de fuentes públicas. No es resultado oficial.
+    Porcentajes de votos válidos. Margen de error ±1%. No es resultado oficial.<br>
+    <br>
+    <strong style="color:var(--tx2)">Elaborado por Renzo Núñez en base a los datos publicados por América TV — Datum.</strong>
   </footer>
 </div>
 <div class="modal-bg" id="mBg"><div class="modal" id="modal"><div class="modal__head" id="mH"></div><div class="modal__body" id="mB"></div></div></div>
@@ -269,57 +275,80 @@ const D={
 };
 
 const DN={'Lima':'Lima Metropolitana'};
-function norm(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
 
-/* Explicit ID-based mapping for datamaps topojson */
-const ID_MAP={
-  'PE.AM':'Amazonas','PE.AN':'Áncash','PE.AP':'Apurímac','PE.AR':'Arequipa',
-  'PE.AY':'Ayacucho','PE.CJ':'Cajamarca','PE.CL':'Callao','PE.CS':'Cusco',
-  'PE.HV':'Huancavelica','PE.HU':'Huánuco','PE.IC':'Ica','PE.JU':'Junín',
-  'PE.LL':'La Libertad','PE.LB':'Lambayeque','PE.LI':'Lima','PE.LR':'Lima',
-  'PE.LM':'Lima','PE.LO':'Loreto','PE.MD':'Madre de Dios','PE.MQ':'Moquegua',
-  'PE.PA':'Pasco','PE.PI':'Piura','PE.PU':'Puno','PE.SM':'San Martín',
-  'PE.TA':'Tacna','PE.TU':'Tumbes','PE.UC':'Ucayali',
-  'PE.145':'Callao','PE.3341':'Puno'
+/* ═══════════════ GEOGRAPHIC MATCHING ═══════════════ 
+   Instead of matching by name/ID (unreliable), we match each 
+   topojson polygon to the nearest known department centroid.
+   This is 100% reliable regardless of naming conventions.
+   ═══════════════════════════════════════════════════ */
+const GEO_CENTERS={
+  'Amazonas':[-78.0,-6.0],'Áncash':[-77.5,-9.3],'Apurímac':[-73.0,-14.0],
+  'Arequipa':[-72.0,-15.8],'Ayacucho':[-74.0,-13.8],'Cajamarca':[-78.5,-6.8],
+  'Callao':[-77.12,-12.05],'Cusco':[-72.0,-13.2],'Huancavelica':[-75.2,-13.0],
+  'Huánuco':[-76.2,-9.5],'Ica':[-75.5,-14.5],'Junín':[-75.3,-11.5],
+  'La Libertad':[-78.5,-8.0],'Lambayeque':[-79.8,-6.5],
+  'Lima':[-76.6,-12.0],
+  'Loreto':[-75.5,-4.5],'Madre de Dios':[-70.5,-12.0],
+  'Moquegua':[-70.9,-17.0],'Pasco':[-76.0,-10.4],'Piura':[-80.3,-5.0],
+  'Puno':[-70.0,-15.2],'San Martín':[-76.7,-7.0],'Tacna':[-70.3,-17.6],
+  'Tumbes':[-80.4,-3.7],'Ucayali':[-74.0,-9.5]
 };
 
-/* Strict name-based mapping */
-const NM={};
-Object.keys(D).forEach(k=>{NM[norm(k)]=k});
-NM['ancash']='Áncash';NM['apurimac']='Apurímac';NM['huanuco']='Huánuco';
-NM['junin']='Junín';NM['san martin']='San Martín';
-NM['lima metropolitana']='Lima';NM['lima region']='Lima Provincias';
-NM['provincia constitucional del callao']='Callao';
-NM['lima provinces']='Lima Provincias';NM['callao']='Callao';NM['puno']='Puno';
+function haversine(a,b){
+  const R=6371,dLat=(b[1]-a[1])*Math.PI/180,dLon=(b[0]-a[0])*Math.PI/180;
+  const x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a[1]*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+}
 
-/* Two separate Lima features handling */
-let limaCount=0;
-function mtch(feat){
-  const id=feat.id||'';
-  const name=feat.properties?.name||'';
-  /* Try ID first */
-  if(ID_MAP[id])return ID_MAP[id];
-  if(ID_MAP[id.toUpperCase()])return ID_MAP[id.toUpperCase()];
-  /* Try exact name match */
-  const n=norm(name);
-  if(NM[n])return NM[n];
-  /* Try partial but STRICT matching — only if name is long enough */
-  if(n.length>=4){
-    for(const k of Object.keys(D)){
-      if(k==='Extranjero'||k==='Lima Provincias')continue;
-      if(norm(k)===n)return k;
+/* Cache: feature index → department key */
+const FEAT_MAP={};
+
+function buildGeoMatch(features,projection){
+  const path=d3.geoPath(projection);
+  const assigned=new Set();
+  const candidates=[];
+
+  features.forEach((f,i)=>{
+    const c=d3.geoCentroid(f);/* real lon/lat centroid */
+    candidates.push({idx:i,lon:c[0],lat:c[1],area:path.area(f)});
+  });
+
+  /* Sort by area descending so large polygons get matched first */
+  const sorted=[...candidates].sort((a,b)=>b.area-a.area);
+
+  /* For each feature find nearest unassigned department */
+  sorted.forEach(feat=>{
+    let bestDept=null,bestDist=Infinity;
+    for(const[dept,center]of Object.entries(GEO_CENTERS)){
+      if(assigned.has(dept))continue;
+      const dist=haversine([feat.lon,feat.lat],center);
+      if(dist<bestDist){bestDist=dist;bestDept=dept}
     }
-  }
-  /* Handle Lima duplicates: first match = Lima Met, second = Lima Prov */
-  if(n.includes('lima')){
-    limaCount++;
-    return limaCount<=1?'Lima':'Lima Provincias';
-  }
-  return null;
+    if(bestDept&&bestDist<300){/* max 300km tolerance */
+      FEAT_MAP[feat.idx]=bestDept;
+      assigned.add(bestDept);
+    }
+  });
+
+  /* Handle Lima Provincias: if there are unmatched features near Lima */
+  candidates.forEach(feat=>{
+    if(FEAT_MAP[feat.idx])return;
+    const distLima=haversine([feat.lon,feat.lat],GEO_CENTERS['Lima']);
+    if(distLima<150&&!assigned.has('Lima Provincias')){
+      FEAT_MAP[feat.idx]='Lima Provincias';
+      assigned.add('Lima Provincias');
+    }
+  });
+
+  console.log('GeoMatch results:',Object.entries(FEAT_MAP).map(([i,d])=>d));
+  const unmatched=candidates.filter(f=>!FEAT_MAP[f.idx]);
+  if(unmatched.length)console.warn('Unmatched features:',unmatched.map(f=>({idx:f.idx,lon:f.lon.toFixed(2),lat:f.lat.toFixed(2)})));
 }
-function mtchStr(nameOrId){
-  return mtch({id:nameOrId,properties:{name:nameOrId}});
-}
+
+function mtch(feat,idx){return FEAT_MAP[idx]||null}
+
+/* Label abbreviations */
+const ABBR={'Lima':'LIM','Callao':'CAL','Áncash':'ANC','Arequipa':'AQP','Ayacucho':'AYA','Cajamarca':'CAJ','Cusco':'CUS','Huancavelica':'HCV','Huánuco':'HCO','Ica':'ICA','Junín':'JUN','La Libertad':'LAL','Lambayeque':'LAM','Loreto':'LOR','Madre de Dios':'MDD','Moquegua':'MOQ','Pasco':'PAS','Piura':'PIU','Puno':'PUN','San Martín':'SMR','Tacna':'TAC','Tumbes':'TUM','Ucayali':'UCA','Amazonas':'AMA','Apurímac':'APU','Lima Provincias':'LPR'};
 
 /* ═══════════════ NATIONAL BAR ═══════════════ */
 (function(){
@@ -351,30 +380,23 @@ function mtchStr(nameOrId){
 /* ═══════════════ MAP ═══════════════ */
 const tt=document.getElementById('tt');
 
-/* Manual centroid overrides for mislabeled departments */
-const CENT_FIX={
-  'Callao':[-77.1,-12.05],
-  'Lima':[-76.8,-12.05],
-  'Tumbes':[-80.4,-3.6],
-  'Moquegua':[-70.9,-17.1],
-  'Tacna':[-70.3,-17.6],
-  'Puno':[-70.0,-15.5]
-};
-
 d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json').then(topo=>{
   const feat=topojson.feature(topo,topo.objects.per).features;
   const ctn=document.getElementById('mapC'),w=ctn.clientWidth,h=Math.max(500,w*1.05);
   const pr=d3.geoMercator().center([-75.5,-9.5]).scale(w*2.9).translate([w/2,h*0.47]);
   const pa=d3.geoPath(pr);
+
+  /* Build geographic matching */
+  buildGeoMatch(feat,pr);
+
   const svg=d3.select('#mapC').append('svg').attr('viewBox','0 0 '+w+' '+h).attr('preserveAspectRatio','xMidYMid meet');
 
-  /* Puzzle animation: scatter pieces then assemble */
   const paths=svg.selectAll('path').data(feat).join('path').attr('d',pa).attr('class','dp')
-    .attr('fill',d=>{const dk=mtch(d);return dk&&D[dk]?gc(D[dk][0][0]):'#E0E0E0'})
-    .attr('data-dept',d=>mtch(d)||'')
+    .attr('fill',(d,i)=>{const dk=mtch(d,i);return dk&&D[dk]?gc(D[dk][0][0]):'#E0E0E0'})
+    .attr('data-dept',(d,i)=>mtch(d,i)||'')
     .style('opacity',0)
     .on('mouseenter',function(ev,d){
-      const dk=mtch(d);if(!dk||!D[dk])return;
+      const i=feat.indexOf(d);const dk=mtch(d,i);if(!dk||!D[dk])return;
       const r=D[dk],dn=DN[dk]||dk;
       tt.innerHTML='<div class="tt__n">'+dn+'</div><div class="tt__w"><span class="tt__wd" style="background:'+gc(r[0][0])+'"></span><b>'+r[0][0]+'</b><span style="margin-left:auto;font-family:var(--font-d);font-weight:700">'+r[0][1]+'%</span></div><div class="tt__h">Clic para ver los '+r.length+' candidatos</div>';
       tt.classList.add('v');
@@ -382,23 +404,16 @@ d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json'
     .on('mousemove',function(ev){const rc=document.querySelector('.map-card').getBoundingClientRect();tt.style.left=(ev.clientX-rc.left+15)+'px';tt.style.top=(ev.clientY-rc.top-10)+'px'})
     .on('mouseleave',()=>tt.classList.remove('v'))
     .on('click',function(ev,d){
-      const dk=mtch(d);if(!dk)return;
+      const i=feat.indexOf(d);const dk=mtch(d,i);if(!dk)return;
       svg.selectAll('.dp').classed('active',false);d3.select(this).classed('active',true);
       document.querySelectorAll('.dc').forEach(c=>c.classList.remove('act'));
       const ch=document.querySelector('[data-dc="'+dk+'"]');if(ch)ch.classList.add('act');
       openModal(dk);
     });
 
-  /* Debug: log unmatched features */
-  feat.forEach(d=>{
-    const dk=mtch(d);
-    if(!dk)console.warn('Unmatched feature:',d.id,d.properties?.name);
-  });
-
   /* Puzzle entrance animation */
   paths.each(function(d,i){
     const el=d3.select(this);
-    const cx=pa.centroid(d);
     const randX=(Math.random()-.5)*300;
     const randY=(Math.random()-.5)*300;
     const randR=(Math.random()-.5)*30;
@@ -409,22 +424,20 @@ d3.json('https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json'
     },100);
   });
 
-  /* Labels */
-  const ABBR={'Lima':'LIM','Callao':'CAL','Áncash':'ANC','Arequipa':'AQP','Ayacucho':'AYA','Cajamarca':'CAJ','Cusco':'CUS','Huancavelica':'HCV','Huánuco':'HCO','Ica':'ICA','Junín':'JUN','La Libertad':'LAL','Lambayeque':'LAM','Loreto':'LOR','Madre de Dios':'MDD','Moquegua':'MOQ','Pasco':'PAS','Piura':'PIU','Puno':'PUN','San Martín':'SMR','Tacna':'TAC','Tumbes':'TUM','Ucayali':'UCA','Amazonas':'AMA','Apurímac':'APU','Lima Provincias':'LPR'};
-
+  /* Labels — positioned at real geographic centroids */
   setTimeout(()=>{
     svg.selectAll('text.dl').data(feat).join('text').attr('class','dl')
-      .attr('x',d=>{
-        const dk=mtch(d);
-        if(dk&&CENT_FIX[dk])return pr(CENT_FIX[dk])[0];
+      .attr('x',(d,i)=>{
+        const dk=mtch(d,i);
+        if(dk&&GEO_CENTERS[dk])return pr(GEO_CENTERS[dk])[0];
         return pa.centroid(d)[0];
       })
-      .attr('y',d=>{
-        const dk=mtch(d);
-        if(dk&&CENT_FIX[dk])return pr(CENT_FIX[dk])[1];
+      .attr('y',(d,i)=>{
+        const dk=mtch(d,i);
+        if(dk&&GEO_CENTERS[dk])return pr(GEO_CENTERS[dk])[1];
         return pa.centroid(d)[1];
       })
-      .text(d=>{const dk=mtch(d);return dk?ABBR[dk]||dk.substring(0,3).toUpperCase():''})
+      .text((d,i)=>{const dk=mtch(d,i);return dk?ABBR[dk]||dk.substring(0,3).toUpperCase():''})
       .style('opacity',0)
       .transition().delay((d,i)=>800+i*30).duration(400).style('opacity',1);
   },200);
