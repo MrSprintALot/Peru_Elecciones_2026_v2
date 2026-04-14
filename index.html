@@ -80,6 +80,19 @@
     .kpi-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
     .kpi-val.blue{color:var(--c-rla)}.kpi-val.red{color:var(--c-sanch)}.kpi-val.green{color:var(--c-nieto)}
 
+    /* ══════════════ 5b. PROBABILITY BARS ══════════════ */
+    .prob-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px 18px;margin-bottom:16px;opacity:0;animation:fadeUp .5s ease .35s forwards}
+    .prob-title{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+    .prob-bars{display:flex;gap:16px;flex-wrap:wrap}
+    .prob-item{flex:1;min-width:120px;display:flex;align-items:center;gap:8px}
+    .prob-name{font-size:11px;font-weight:600;min-width:75px;white-space:nowrap}
+    .prob-track{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;min-width:60px}
+    .prob-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.25,.8,.25,1);
+      animation:barGrow 1.2s cubic-bezier(.25,.8,.25,1) forwards;transform-origin:left}
+    @keyframes barGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+    .prob-pct{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;min-width:36px;text-align:right}
+
     /* ══════════════ 6. GRID ══════════════ */
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
     @media(max-width:900px){.grid{grid-template-columns:1fr}}
@@ -191,14 +204,55 @@
        TAB 1: ONPE EN VIVO
   ══════════════════════════════════════════════ -->
   <div class="tab-content active" id="tab-onpe">
-    <!-- KPIs -->
-    <div class="kpis">
-      <div class="kpi"><div class="kpi-label">Actas</div><div class="kpi-val" id="kpiActas">73.37%</div></div>
-      <div class="kpi"><div class="kpi-label">Brecha RLA-Nieto</div><div class="kpi-val blue" id="kpiBrechaRN">0.84pp</div></div>
-      <div class="kpi"><div class="kpi-label">Brecha Nieto-Sánch</div><div class="kpi-val green" id="kpiBrechaNS">0.32pp</div></div>
-      <div class="kpi"><div class="kpi-label">RLA prob.</div><div class="kpi-val blue">55%</div></div>
-      <div class="kpi"><div class="kpi-label">Nieto prob.</div><div class="kpi-val green">22%</div></div>
-      <div class="kpi"><div class="kpi-label">Sánchez prob.</div><div class="kpi-val red">18%</div></div>
+    <!-- KPIs: Top 5 candidates -->
+    <div class="kpis" id="kpiCandidates">
+      <div class="kpi" style="border-top:3px solid var(--c-fuji)">
+        <div class="kpi-label">Fujimori</div>
+        <div class="kpi-val" style="color:var(--c-fuji)" id="kpiFuji">16.91%</div>
+      </div>
+      <div class="kpi" style="border-top:3px solid var(--c-rla)">
+        <div class="kpi-label">López Aliaga</div>
+        <div class="kpi-val blue" id="kpiRla">12.92%</div>
+      </div>
+      <div class="kpi" style="border-top:3px solid var(--c-nieto)">
+        <div class="kpi-label">Nieto</div>
+        <div class="kpi-val green" id="kpiNieto">11.96%</div>
+      </div>
+      <div class="kpi" style="border-top:3px solid var(--c-sanch)">
+        <div class="kpi-label">Sánchez</div>
+        <div class="kpi-val red" id="kpiSanch">9.83%</div>
+      </div>
+      <div class="kpi" style="border-top:3px solid var(--c-belm)">
+        <div class="kpi-label">Belmont</div>
+        <div class="kpi-val" style="color:var(--c-belm)" id="kpiBelm">9.98%</div>
+      </div>
+    </div>
+
+    <!-- Probability of passing to second round -->
+    <div class="prob-section">
+      <div class="prob-title">Probabilidad de pase a segunda vuelta</div>
+      <div class="prob-bars">
+        <div class="prob-item">
+          <div class="prob-name" style="color:var(--c-rla)">López Aliaga</div>
+          <div class="prob-track"><div class="prob-fill" style="width:55%;background:var(--c-rla)"></div></div>
+          <div class="prob-pct" style="color:var(--c-rla)">55%</div>
+        </div>
+        <div class="prob-item">
+          <div class="prob-name" style="color:var(--c-nieto)">Nieto</div>
+          <div class="prob-track"><div class="prob-fill" style="width:22%;background:var(--c-nieto)"></div></div>
+          <div class="prob-pct" style="color:var(--c-nieto)">22%</div>
+        </div>
+        <div class="prob-item">
+          <div class="prob-name" style="color:var(--c-sanch)">Sánchez</div>
+          <div class="prob-track"><div class="prob-fill" style="width:18%;background:var(--c-sanch)"></div></div>
+          <div class="prob-pct" style="color:var(--c-sanch)">18%</div>
+        </div>
+        <div class="prob-item">
+          <div class="prob-name" style="color:var(--c-belm)">Belmont</div>
+          <div class="prob-track"><div class="prob-fill" style="width:5%;background:var(--c-belm)"></div></div>
+          <div class="prob-pct" style="color:var(--c-belm)">5%</div>
+        </div>
+      </div>
     </div>
 
     <!-- Legend -->
@@ -801,7 +855,11 @@ async function refreshFromONPE() {
 
     /* Update UI */
     document.getElementById('badgePct').textContent = 'ONPE ' + natPct.toFixed(2) + '%';
-    document.getElementById('kpiActas').textContent = natPct.toFixed(2) + '%';
+    if (document.getElementById('kpiFuji')) document.getElementById('kpiFuji').textContent = (natCands.fuji||0).toFixed(2) + '%';
+    if (document.getElementById('kpiRla')) document.getElementById('kpiRla').textContent = (natCands.rla||0).toFixed(2) + '%';
+    if (document.getElementById('kpiNieto')) document.getElementById('kpiNieto').textContent = (natCands.nieto||0).toFixed(2) + '%';
+    if (document.getElementById('kpiSanch')) document.getElementById('kpiSanch').textContent = (natCands.sanch||0).toFixed(2) + '%';
+    if (document.getElementById('kpiBelm')) document.getElementById('kpiBelm').textContent = (natCands.belm||0).toFixed(2) + '%';
     const now = new Date();
     document.getElementById('lastUpdate').textContent =
       'Actualizado ' + now.toLocaleString('es-PE') + ' · Data en vivo desde ONPE';

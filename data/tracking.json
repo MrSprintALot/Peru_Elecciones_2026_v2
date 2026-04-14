@@ -1,0 +1,28 @@
+{
+  "lastUpdate": "2026-04-14T05:47:19",
+  "nationalPct": 73.37,
+  "cuts": [
+    { "pct": 56.00, "fujimori": 16.939, "rla": 14.257, "nieto": 12.672, "belmont": 9.895, "sanchez": 8.255 },
+    { "pct": 56.60, "fujimori": 16.932, "rla": 14.212, "nieto": 12.652, "belmont": 9.902, "sanchez": 8.293 },
+    { "pct": 56.85, "fujimori": 16.927, "rla": 14.185, "nieto": 12.641, "belmont": 9.905, "sanchez": 8.310 },
+    { "pct": 57.83, "fujimori": 16.907, "rla": 14.085, "nieto": 12.602, "belmont": 9.923, "sanchez": 8.390 },
+    { "pct": 59.32, "fujimori": 16.887, "rla": 13.950, "nieto": 12.540, "belmont": 9.933, "sanchez": 8.510 },
+    { "pct": 63.31, "fujimori": 16.908, "rla": 13.629, "nieto": 12.410, "belmont": 9.942, "sanchez": 8.775 },
+    { "pct": 65.62, "fujimori": 16.937, "rla": 13.465, "nieto": 12.330, "belmont": 9.927, "sanchez": 8.957 },
+    { "pct": 66.83, "fujimori": 16.937, "rla": 13.396, "nieto": 12.280, "belmont": 9.926, "sanchez": 9.094 },
+    { "pct": 68.56, "fujimori": 16.922, "rla": 13.253, "nieto": 12.180, "belmont": 9.929, "sanchez": 9.351 },
+    { "pct": 73.37, "fujimori": 16.914, "rla": 12.915, "nieto": 11.958, "belmont": 9.979, "sanchez": 9.831 }
+  ],
+  "projection": {
+    "pct": 100,
+    "fujimori": 16.67,
+    "rla": 11.87,
+    "nieto": 11.03,
+    "sanchez": 10.71,
+    "belmont": 9.81
+  },
+  "references": {
+    "datum": { "rla": 12.9, "sanchez": 9.4, "nieto": 11.6, "belmont": 10.1, "fujimori": 16.8 },
+    "ipsos": { "rla": 11.3, "sanchez": 12.4, "nieto": 10.7, "belmont": 10.2, "fujimori": 17.1 }
+  }
+}
