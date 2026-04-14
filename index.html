@@ -118,7 +118,12 @@
     .kpi:nth-child(3){animation-delay:.15s}.kpi:nth-child(4){animation-delay:.2s}
     .kpi:nth-child(5){animation-delay:.25s}.kpi:nth-child(6){animation-delay:.3s}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-    .kpi-label{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;font-weight:500}
+
+    /* Candidate avatar + label row */
+    .kpi-header{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+    .kpi-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;
+      border:2px solid var(--border);background:var(--bg-alt)}
+    .kpi-label{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;font-weight:500}
     .kpi-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
     .kpi-val.blue{color:var(--c-rla)}.kpi-val.red{color:var(--c-sanch)}.kpi-val.green{color:var(--c-nieto)}
 
@@ -289,6 +294,7 @@
       .kpi{min-width:unset;padding:8px 10px}
       .kpi-val{font-size:16px}
       .kpi-label{font-size:9px}
+      .kpi-avatar{width:26px;height:26px}
 
       /* Probability bars: vertical stack */
       .prob-section{padding:10px 12px}
@@ -345,6 +351,7 @@
       .hero-pct-sign{font-size:24px}
       .kpis{grid-template-columns:1fr 1fr}
       .kpi-val{font-size:14px}
+      .kpi-avatar{width:22px;height:22px}
       .proj-diff{display:none}
       .prob-name{min-width:55px}
     }
@@ -675,15 +682,17 @@ let topoData = null;
    CANDIDATE CONFIG — Single source of truth for names, keys, colors
 ══════════════════════════════════════════════════════════ */
 const CANDIDATE_CONFIG = [
-  { key: 'fuji',  trackKey: 'fujimori', label: 'Fujimori',      color: 'var(--c-fuji)',  colorBg: 'var(--c-fuji-bg)' },
-  { key: 'rla',   trackKey: 'rla',      label: 'López Aliaga',  color: 'var(--c-rla)',   colorBg: 'var(--c-rla-bg)'  },
-  { key: 'nieto', trackKey: 'nieto',    label: 'Nieto',          color: 'var(--c-nieto)', colorBg: 'var(--c-nieto-bg)'},
-  { key: 'sanch', trackKey: 'sanchez',  label: 'Sánchez',        color: 'var(--c-sanch)', colorBg: 'var(--c-sanch-bg)'},
-  { key: 'belm',  trackKey: 'belmont',  label: 'Belmont',        color: 'var(--c-belm)',  colorBg: 'var(--c-belm-bg)' }
+  { key: 'fuji',  trackKey: 'fujimori', label: 'Fujimori',      color: 'var(--c-fuji)',  colorBg: 'var(--c-fuji-bg)',  img: '10001088' },
+  { key: 'rla',   trackKey: 'rla',      label: 'López Aliaga',  color: 'var(--c-rla)',   colorBg: 'var(--c-rla-bg)',   img: '07845838' },
+  { key: 'nieto', trackKey: 'nieto',    label: 'Nieto',          color: 'var(--c-nieto)', colorBg: 'var(--c-nieto-bg)', img: '06506278' },
+  { key: 'sanch', trackKey: 'sanchez',  label: 'Sánchez',        color: 'var(--c-sanch)', colorBg: 'var(--c-sanch-bg)', img: '16002918' },
+  { key: 'belm',  trackKey: 'belmont',  label: 'Belmont',        color: 'var(--c-belm)',  colorBg: 'var(--c-belm-bg)',  img: '09177250' }
 ];
+const ONPE_IMG_BASE = 'https://resultadoelectoral.onpe.gob.pe/assets/img-reales/candidatos/';
 
 /**
  * renderKPIs — Generates KPI cards sorted by current %, highest first.
+ * Includes candidate avatar photo (rounded, from ONPE CDN).
  * @param {Object} values — {fuji: 16.88, rla: 12.6, nieto: 11.7, sanch: 10.5, belm: 10.0}
  *                          If null, renders skeletons.
  */
@@ -702,7 +711,10 @@ function renderKPIs(values) {
       ? `<span class="kpi-num" data-key="${c.key}">${c.pct.toFixed(3)}%</span>`
       : `<span class="kpi-num" data-key="${c.key}"><span class="skel"></span></span>`;
     return `<div class="kpi" data-candidate="${c.key}" style="border-top:3px solid ${c.color};animation-delay:${(i * 0.05 + 0.05).toFixed(2)}s">
-      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-header">
+        <img class="kpi-avatar" src="${ONPE_IMG_BASE}${c.img}.jpg" alt="${c.label}" loading="lazy" style="border-color:${c.color}">
+        <div class="kpi-label">${c.label}</div>
+      </div>
       <div class="kpi-val" style="color:${c.color}">${valHtml}<span class="trend" data-trend-key="${c.trackKey}"></span></div>
     </div>`;
   }).join('');
