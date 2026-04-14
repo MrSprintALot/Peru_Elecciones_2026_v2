@@ -440,55 +440,13 @@
        TAB 1: ONPE EN VIVO
   ══════════════════════════════════════════════ -->
   <div class="tab-content active" id="tab-onpe">
-    <!-- KPIs: Top 5 candidates -->
-    <div class="kpis" id="kpiCandidates">
-      <div class="kpi" style="border-top:3px solid var(--c-fuji)">
-        <div class="kpi-label">Fujimori</div>
-        <div class="kpi-val" style="color:var(--c-fuji)"><span id="kpiFuji"><span class="skel"></span></span><span class="trend" id="trendFuji"></span></div>
-      </div>
-      <div class="kpi" style="border-top:3px solid var(--c-rla)">
-        <div class="kpi-label">López Aliaga</div>
-        <div class="kpi-val blue"><span id="kpiRla"><span class="skel"></span></span><span class="trend" id="trendRla"></span></div>
-      </div>
-      <div class="kpi" style="border-top:3px solid var(--c-nieto)">
-        <div class="kpi-label">Nieto</div>
-        <div class="kpi-val green"><span id="kpiNieto"><span class="skel"></span></span><span class="trend" id="trendNieto"></span></div>
-      </div>
-      <div class="kpi" style="border-top:3px solid var(--c-sanch)">
-        <div class="kpi-label">Sánchez</div>
-        <div class="kpi-val red"><span id="kpiSanch"><span class="skel"></span></span><span class="trend" id="trendSanch"></span></div>
-      </div>
-      <div class="kpi" style="border-top:3px solid var(--c-belm)">
-        <div class="kpi-label">Belmont</div>
-        <div class="kpi-val" style="color:var(--c-belm)"><span id="kpiBelm"><span class="skel"></span></span><span class="trend" id="trendBelm"></span></div>
-      </div>
-    </div>
+    <!-- KPIs: Top 5 candidates (rendered dynamically, sorted by %) -->
+    <div class="kpis" id="kpiCandidates"></div>
 
     <!-- Probability of passing to second round -->
     <div class="prob-section">
       <div class="prob-title">Probabilidad de pase a segunda vuelta</div>
-      <div class="prob-bars">
-        <div class="prob-item">
-          <div class="prob-name" style="color:var(--c-rla)">López Aliaga</div>
-          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-rla)"></div></div>
-          <div class="prob-pct" style="color:var(--c-rla)"><span class="skel" style="width:30px;height:14px"></span></div>
-        </div>
-        <div class="prob-item">
-          <div class="prob-name" style="color:var(--c-nieto)">Nieto</div>
-          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-nieto)"></div></div>
-          <div class="prob-pct" style="color:var(--c-nieto)"><span class="skel" style="width:30px;height:14px"></span></div>
-        </div>
-        <div class="prob-item">
-          <div class="prob-name" style="color:var(--c-sanch)">Sánchez</div>
-          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-sanch)"></div></div>
-          <div class="prob-pct" style="color:var(--c-sanch)"><span class="skel" style="width:30px;height:14px"></span></div>
-        </div>
-        <div class="prob-item">
-          <div class="prob-name" style="color:var(--c-belm)">Belmont</div>
-          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-belm)"></div></div>
-          <div class="prob-pct" style="color:var(--c-belm)"><span class="skel" style="width:30px;height:14px"></span></div>
-        </div>
-      </div>
+      <div class="prob-bars" id="probBars"></div>
     </div>
 
     <!-- Legend -->
@@ -714,6 +672,71 @@ const TOPO_URL = 'https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.t
 let topoData = null;
 
 /* ══════════════════════════════════════════════════════════
+   CANDIDATE CONFIG — Single source of truth for names, keys, colors
+══════════════════════════════════════════════════════════ */
+const CANDIDATE_CONFIG = [
+  { key: 'fuji',  trackKey: 'fujimori', label: 'Fujimori',      color: 'var(--c-fuji)',  colorBg: 'var(--c-fuji-bg)' },
+  { key: 'rla',   trackKey: 'rla',      label: 'López Aliaga',  color: 'var(--c-rla)',   colorBg: 'var(--c-rla-bg)'  },
+  { key: 'nieto', trackKey: 'nieto',    label: 'Nieto',          color: 'var(--c-nieto)', colorBg: 'var(--c-nieto-bg)'},
+  { key: 'sanch', trackKey: 'sanchez',  label: 'Sánchez',        color: 'var(--c-sanch)', colorBg: 'var(--c-sanch-bg)'},
+  { key: 'belm',  trackKey: 'belmont',  label: 'Belmont',        color: 'var(--c-belm)',  colorBg: 'var(--c-belm-bg)' }
+];
+
+/**
+ * renderKPIs — Generates KPI cards sorted by current %, highest first.
+ * @param {Object} values — {fuji: 16.88, rla: 12.6, nieto: 11.7, sanch: 10.5, belm: 10.0}
+ *                          If null, renders skeletons.
+ */
+function renderKPIs(values) {
+  const container = document.getElementById('kpiCandidates');
+  if (!container) return;
+
+  /* Build array with current values and sort descending */
+  const sorted = CANDIDATE_CONFIG.map(c => ({
+    ...c,
+    pct: values ? (values[c.key] || values[c.trackKey] || 0) : 0
+  })).sort((a, b) => b.pct - a.pct);
+
+  container.innerHTML = sorted.map((c, i) => {
+    const valHtml = values
+      ? `<span class="kpi-num" data-key="${c.key}">${c.pct.toFixed(3)}%</span>`
+      : `<span class="kpi-num" data-key="${c.key}"><span class="skel"></span></span>`;
+    return `<div class="kpi" data-candidate="${c.key}" style="border-top:3px solid ${c.color};animation-delay:${(i * 0.05 + 0.05).toFixed(2)}s">
+      <div class="kpi-label">${c.label}</div>
+      <div class="kpi-val" style="color:${c.color}">${valHtml}<span class="trend" data-trend-key="${c.trackKey}"></span></div>
+    </div>`;
+  }).join('');
+}
+
+/**
+ * renderProbBars — Generates probability bars sorted by probability %, highest first.
+ * Excludes Fujimori (1st place assured).
+ * @param {Object} probs — {rla: 46, nieto: 23, sanch: 24, belm: 7}
+ *                          If null, renders skeletons.
+ */
+function renderProbBars(probs) {
+  const container = document.getElementById('probBars');
+  if (!container) return;
+
+  /* Filter out Fujimori, sort by probability descending */
+  const sorted = CANDIDATE_CONFIG
+    .filter(c => c.key !== 'fuji')
+    .map(c => ({ ...c, prob: probs ? (probs[c.key] || 0) : 0 }))
+    .sort((a, b) => b.prob - a.prob);
+
+  container.innerHTML = sorted.map(c => {
+    const pctHtml = probs
+      ? `<div class="prob-pct" style="color:${c.color}" data-prob-key="${c.key}">${c.prob}%</div>`
+      : `<div class="prob-pct" style="color:${c.color}" data-prob-key="${c.key}"><span class="skel" style="width:30px;height:14px"></span></div>`;
+    return `<div class="prob-item" data-candidate="${c.key}">
+      <div class="prob-name" style="color:${c.color}">${c.label}</div>
+      <div class="prob-track"><div class="prob-fill" style="width:${probs ? c.prob : 0}%;background:${c.color}" data-fill-key="${c.key}"></div></div>
+      ${pctHtml}
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
    TAB SWITCHING
 ══════════════════════════════════════════════════════════ */
 /* ══════════════════════════════════════════════════════════
@@ -758,25 +781,20 @@ function updateTrendArrows() {
   const N = Math.min(3, realCuts.length - 1);
   const recent = realCuts.slice(-N - 1);
 
-  const candidates = [
-    {key:'fujimori', elId:'trendFuji'},
-    {key:'rla',      elId:'trendRla'},
-    {key:'nieto',    elId:'trendNieto'},
-    {key:'sanchez',  elId:'trendSanch'},
-    {key:'belmont',  elId:'trendBelm'}
-  ];
+  /* Find trend elements by data attribute (works with dynamic KPIs) */
+  const trackKeys = ['fujimori','rla','nieto','sanchez','belmont'];
 
   const arrowUp = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 8h5v8h6v-8h5z"/></svg>';
   const arrowDown = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l8-8h-5V4H9v8H4z"/></svg>';
   const arrowFlat = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h13l-4-4 1.4-1.4L20.8 12l-6.4 6.4L13 17l4-4H4z"/></svg>';
 
-  candidates.forEach(c => {
-    const el = document.getElementById(c.elId);
+  trackKeys.forEach(key => {
+    const el = document.querySelector(`[data-trend-key="${key}"]`);
     if (!el) return;
 
     let totalChange = 0;
     for (let i = 1; i < recent.length; i++) {
-      totalChange += (recent[i][c.key] || 0) - (recent[i-1][c.key] || 0);
+      totalChange += (recent[i][key] || 0) - (recent[i-1][key] || 0);
     }
     const avgChange = totalChange / N;
 
@@ -813,7 +831,8 @@ function highlightHotMover() {
   const first = realCuts[Math.max(0, realCuts.length - 3)];
   const last = realCuts[realCuts.length - 1];
 
-  const kpiMap = {fujimori:0, rla:1, nieto:2, sanchez:3, belmont:4};
+  /* Map tracking keys to short keys used in data-candidate attributes */
+  const trackToShort = {fujimori:'fuji', rla:'rla', nieto:'nieto', sanchez:'sanch', belmont:'belm'};
   const keys = ['fujimori','rla','nieto','sanchez','belmont'];
   let maxDelta = 0, maxKey = null;
 
@@ -825,8 +844,8 @@ function highlightHotMover() {
   /* Nobody went up → no glow */
   if (!maxKey || maxDelta <= 0) return;
 
-  const cards = document.querySelectorAll('.kpi');
-  const targetCard = cards[kpiMap[maxKey]];
+  /* Find card by data-candidate attribute (works with dynamic sorted KPIs) */
+  const targetCard = document.querySelector(`.kpi[data-candidate="${trackToShort[maxKey]}"]`);
   if (!targetCard) return;
 
   /* Clear previous timeout so it doesn't kill this glow */
@@ -906,22 +925,21 @@ async function renderWithEmbeddedData() {
 
   showHeroFallback();
 
-  /* KPIs FIRST — instant, no dependencies */
+  /* KPIs FIRST — instant, no dependencies, sorted by % */
   const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
   if (lastCut) {
-    const kpiMap = {kpiFuji:'fujimori', kpiRla:'rla', kpiNieto:'nieto', kpiSanch:'sanchez', kpiBelm:'belmont'};
-    for (const [id, key] of Object.entries(kpiMap)) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = (lastCut[key] || 0).toFixed(3) + '%';
-    }
+    renderKPIs({fuji: lastCut.fujimori, rla: lastCut.rla, nieto: lastCut.nieto, sanch: lastCut.sanchez, belm: lastCut.belmont});
+  } else {
+    renderKPIs(null); /* Render skeletons */
   }
   updateTrendArrows();
 
-  /* Projection */
+  /* Projection + Probability bars */
   try {
     const projection = runProjection(ONPE_REGIONS);
     const initPct = lastCut ? lastCut.pct : 75;
     const probs = calcProbabilities(projection, initPct);
+    renderProbBars(probs); /* Render probability bars sorted by prob % */
     updateProjectionUI(projection, probs);
   } catch(err) { console.error('Projection error:', err); }
 
@@ -1473,15 +1491,16 @@ async function refreshFromONPE() {
     } else {
       Object.assign(lastCut, newCut);
     }
-    highlightHotMover();
+    /* Note: highlightHotMover moved after renderKPIs below */
 
     /* 3. Update regions */
     ONPE_REGIONS.length = 0;
     allRegions.forEach(r => ONPE_REGIONS.push(r));
 
-    /* 4. Run projection */
+    /* 4. Run projection + re-render probability bars */
     const projection = runProjection(ONPE_REGIONS);
     const probs = calcProbabilities(projection, natPct);
+    renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs);
 
     /* 5. Hero count-up */
@@ -1497,12 +1516,9 @@ async function refreshFromONPE() {
       })(t0);
     } catch(e) { console.error('Hero error:', e); }
 
-    /* 6. KPIs */
-    const kpiMap = {kpiFuji:'fuji', kpiRla:'rla', kpiNieto:'nieto', kpiSanch:'sanch', kpiBelm:'belm'};
-    for (const [id, key] of Object.entries(kpiMap)) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = (natCands[key]||0).toFixed(3) + '%';
-    }
+    /* 6. KPIs — re-render sorted by current % */
+    renderKPIs(natCands);
+    highlightHotMover(); /* Must run AFTER renderKPIs regenerates the cards */
     document.getElementById('lastUpdate').textContent =
       new Date().toLocaleString('es-PE', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) +
       ' · ' + allRegions.length + ' regiones · En vivo' +
@@ -1657,18 +1673,7 @@ function updateProjectionUI(projection, probs) {
   projection.forEach(p => { projMap[trackKeyMap[p.key]] = parseFloat(p.pct.toFixed(2)); });
   Object.assign(TRACKING.projection, projMap);
 
-  /* Update probability bars */
-  const barMap = {rla: 0, nieto: 1, sanch: 2, belm: 3};
-  const probBars = document.querySelectorAll('.prob-item');
-  for (const [key, idx] of Object.entries(barMap)) {
-    if (probBars[idx]) {
-      const pct = probs[key] || 0;
-      const fill = probBars[idx].querySelector('.prob-fill');
-      const label = probBars[idx].querySelector('.prob-pct');
-      if (fill) fill.style.width = pct + '%';
-      if (label) label.textContent = pct + '%';
-    }
-  }
+  /* Note: Probability bars are now rendered by renderProbBars() before this function is called */
 
   /* Update projection summary table */
   const sorted = [...projection].sort((a, b) => b.pct - a.pct);
