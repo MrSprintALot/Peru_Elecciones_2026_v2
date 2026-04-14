@@ -750,19 +750,18 @@ function showHeroFallback() {
 }
 
 (async function init() {
-  /* Loading-first approach: show skeletons, fetch fresh data, then render everything */
+  /*
+   * Strategy: render embedded data FAST (< 500ms),
+   * then refresh from Worker in background.
+   * Skeletons only show for the brief render time.
+   */
 
+  /* 1. Render everything with embedded data NOW */
+  await renderWithEmbeddedData();
+
+  /* 2. If Worker configured, refresh in background (will overwrite embedded data) */
   if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
-    /* Worker configured — fetch first, render after */
-    try {
-      await refreshFromONPE();
-    } catch(e) {
-      console.error('Init refresh failed, falling back to embedded data:', e);
-      renderWithEmbeddedData();
-    }
-  } else {
-    /* No Worker — render with embedded data immediately */
-    renderWithEmbeddedData();
+    refreshFromONPE().catch(e => console.error('Background refresh failed:', e));
   }
 })();
 
