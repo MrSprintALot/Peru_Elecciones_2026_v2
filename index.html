@@ -119,6 +119,18 @@
     .chart-container{position:relative;width:100%;height:400px}
     @media(max-width:900px){.chart-container{height:300px}}
 
+    /* ══════════════ 8b. PROJECTION SUMMARY ══════════════ */
+    .proj-summary{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+    .proj-row{display:flex;align-items:center;gap:4px;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.03)}
+    .proj-row:last-child{border-bottom:none}
+    .proj-header{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.3px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:2px}
+    .proj-pos{width:28px;font-family:'DM Mono',monospace;font-weight:600;color:var(--tx3)}
+    .proj-name{flex:1;font-weight:600;min-width:80px}
+    .proj-current{width:70px;text-align:right;font-family:'DM Mono',monospace;color:var(--tx2)}
+    .proj-arrow{width:20px;text-align:center;color:var(--tx3);font-size:10px}
+    .proj-final{width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:700}
+    .proj-diff{width:80px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx3)}
+
     /* ══════════════ 9. LEGEND ══════════════ */
     .legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;opacity:0;animation:fadeUp .5s ease .15s forwards}
     .legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2)}
@@ -273,6 +285,22 @@
       <div class="card">
         <div class="card-title">Evolución del conteo + Proyección al 100%</div>
         <div class="chart-container"><canvas id="trackingChart"></canvas></div>
+        <!-- Projection summary inside chart card -->
+        <div class="proj-summary" id="projSummary">
+          <div class="proj-row proj-header">
+            <span class="proj-pos">Pos</span>
+            <span class="proj-name">Candidato</span>
+            <span class="proj-current">ONPE actual</span>
+            <span class="proj-arrow">→</span>
+            <span class="proj-final">Proyección 100%</span>
+            <span class="proj-diff">Δ vs anterior</span>
+          </div>
+          <div class="proj-row" id="proj1"><span class="proj-pos">1°</span><span class="proj-name" style="color:var(--c-fuji)">Fujimori</span><span class="proj-current">16.91%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-fuji)">16.67%</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj2"><span class="proj-pos">2°</span><span class="proj-name" style="color:var(--c-rla)">López Aliaga</span><span class="proj-current">12.92%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-rla)">11.87%</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj3"><span class="proj-pos">3°</span><span class="proj-name" style="color:var(--c-nieto)">Nieto</span><span class="proj-current">11.96%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-nieto)">11.03%</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj4"><span class="proj-pos">4°</span><span class="proj-name" style="color:var(--c-sanch)">Sánchez</span><span class="proj-current">9.83%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-sanch)">10.71%</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj5"><span class="proj-pos">5°</span><span class="proj-name" style="color:var(--c-belm)">Belmont</span><span class="proj-current">9.98%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-belm)">9.81%</span><span class="proj-diff">—</span></div>
+        </div>
       </div>
     </div>
 
@@ -479,9 +507,16 @@ function switchTab(id) {
     document.getElementById('mapOnpe').innerHTML = '<p style="color:var(--c-sanch);padding:20px;text-align:center">Error cargando mapa: '+err.message+'<br><small style="color:var(--tx3)">Si abriste el archivo localmente, prueba con un servidor HTTP local o sube a GitHub Pages</small></p>';
   }
 
-  /* 3. Datum map renders lazily on tab switch — see switchTab() */
+  /* 3. Run initial projection on embedded data */
+  try {
+    const projection = runProjection(ONPE_REGIONS);
+    const probs = calcProbabilities(projection);
+    updateProjectionUI(projection, probs);
+  } catch(err) { console.error('Initial projection error:', err); }
 
-  /* 4. Auto-refresh if Worker is configured */
+  /* 4. Datum map renders lazily on tab switch — see switchTab() */
+
+  /* 5. Auto-refresh if Worker is configured */
   if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
     setTimeout(() => refreshFromONPE(), 800); /* Slight delay so initial render is visible first */
   }
@@ -652,40 +687,88 @@ function renderTrackingChart() {
     }
   };
 
+  /* Calculate dynamic Y-axis range from data */
+  const allYvals = [];
+  cuts.forEach(c => keys.forEach(k => allYvals.push(c[k])));
+  keys.forEach(k => allYvals.push(proj[k]));
+  const yMin = Math.floor(Math.min(...allYvals) - 1);
+  const yMax = Math.ceil(Math.max(...allYvals) + 1);
+
+  /* Plugin: draw final projected % at endpoints */
+  const endpointLabels = {
+    id:'endLabels',
+    afterDatasetsDraw(chart) {
+      const ctx3 = chart.ctx;
+      ctx3.save();
+      ctx3.font = 'bold 11px "DM Mono", monospace';
+      chart.data.datasets.forEach((ds, di) => {
+        if (!ds.label.includes('→')) return;
+        const meta = chart.getDatasetMeta(di);
+        if (!meta.visible) return;
+        const lastPt = meta.data[meta.data.length - 1];
+        if (!lastPt) return;
+        const val = ds.data[ds.data.length - 1].y;
+        ctx3.fillStyle = ds.borderColor;
+        ctx3.textAlign = 'left';
+        ctx3.fillText(val.toFixed(2) + '%', lastPt.x + 10, lastPt.y + 4);
+      });
+      ctx3.restore();
+    }
+  };
+
   window._trackingChart = new Chart(ctx, {
-    type:'scatter', data:{datasets}, plugins:[refPlugin],
+    type:'scatter', data:{datasets}, plugins:[refPlugin, endpointLabels],
     options:{
       responsive:true, maintainAspectRatio:false, showLine:true,
       animation:{
         duration:1500,
         easing:'easeOutQuart',
         delay:function(ctx2){
-          /* Stagger animation per dataset */
           return ctx2.datasetIndex * 150 + ctx2.dataIndex * 50;
         }
       },
-      interaction:{mode:'nearest',intersect:false,axis:'x'},
+      interaction:{mode:'index',intersect:false},
       plugins:{
         legend:{display:false},
         tooltip:{
           backgroundColor:'#1e2230',titleColor:'#e8eaed',bodyColor:'#9aa0ab',
-          borderColor:'rgba(255,255,255,.1)',borderWidth:1,padding:10,
-          titleFont:{family:'"DM Sans"',size:11,weight:600},
-          bodyFont:{family:'"DM Mono"',size:10},cornerRadius:8,
+          borderColor:'rgba(255,255,255,.1)',borderWidth:1,padding:12,bodySpacing:4,
+          titleFont:{family:'"DM Sans"',size:12,weight:600},
+          bodyFont:{family:'"DM Mono"',size:11},cornerRadius:8,
           filter:item=>!item.dataset.label.includes('→'),
           callbacks:{
-            title:items=>items.length?'Actas: '+items[0].parsed.x.toFixed(1)+'%':'',
-            label:ctx2=>'  '+ctx2.dataset.label+': '+ctx2.parsed.y.toFixed(3)+'%'
+            title:items=> {
+              if (!items.length) return '';
+              const x = items[0].parsed.x;
+              return x === 100 ? 'PROYECCIÓN AL 100%' : 'ONPE al ' + x.toFixed(1) + '% de actas';
+            },
+            label:ctx2=> {
+              const name = ctx2.dataset.label;
+              const y = ctx2.parsed.y;
+              return '  ' + name + ':  ' + y.toFixed(3) + '%';
+            },
+            afterBody:items=> {
+              if (!items.length) return [];
+              /* Show gap between RLA and Sánchez */
+              const vals = {};
+              items.forEach(it => { vals[it.dataset.label] = it.parsed.y; });
+              const lines = [];
+              if (vals['López Aliaga'] && vals['Nieto'])
+                lines.push('  ─ Brecha RLA→Nieto: ' + (vals['López Aliaga'] - vals['Nieto']).toFixed(3) + 'pp');
+              if (vals['López Aliaga'] && vals['Sánchez'])
+                lines.push('  ─ Brecha RLA→Sánchez: ' + (vals['López Aliaga'] - vals['Sánchez']).toFixed(3) + 'pp');
+              return lines;
+            }
           }
         }
       },
       scales:{
-        x:{type:'linear',min:54,max:103,
+        x:{type:'linear',min:54,max:106,
           grid:{color:'rgba(255,255,255,.04)'},border:{color:'rgba(255,255,255,.08)'},
           ticks:{color:'#5f6673',font:{family:'"DM Mono"',size:10},stepSize:5,
-            callback:v=>v===100?'100%':v+'%'},
+            callback:v=>v===100?'100%':v>100?'':v+'%'},
           title:{display:true,text:'% actas ONPE',color:'#5f6673',font:{family:'"DM Sans"',size:11}}},
-        y:{min:7.5,max:17.5,
+        y:{min:yMin,max:yMax,
           grid:{color:'rgba(255,255,255,.04)'},border:{color:'rgba(255,255,255,.08)'},
           ticks:{color:'#5f6673',font:{family:'"DM Mono"',size:10},stepSize:1,
             callback:v=>v+'%'},
@@ -846,7 +929,13 @@ async function refreshFromONPE() {
     ONPE_REGIONS.length = 0;
     newRegions.forEach(r => ONPE_REGIONS.push(r));
 
-    /* 5. Re-render */
+    /* 5. Run projection engine */
+    setStatus('Calculando proyección...', '');
+    const projection = runProjection(ONPE_REGIONS);
+    const probs = calcProbabilities(projection);
+    updateProjectionUI(projection, probs);
+
+    /* 6. Re-render */
     setStatus('Redibujando...', '');
     document.getElementById('mapOnpe').innerHTML = '';
     if (window._trackingChart) window._trackingChart.destroy();
@@ -864,7 +953,7 @@ async function refreshFromONPE() {
     document.getElementById('lastUpdate').textContent =
       'Actualizado ' + now.toLocaleString('es-PE') + ' · Data en vivo desde ONPE';
 
-    setStatus('✓ Actualizado al ' + natPct.toFixed(2) + '% (' + newRegions.length + ' regiones)', 'ok');
+    setStatus('✓ ONPE ' + natPct.toFixed(2) + '% · ' + newRegions.length + ' regiones · Proyección recalculada · Próximo refresh en 10 min', 'ok');
 
   } catch (err) {
     console.error('Refresh error:', err);
@@ -875,6 +964,165 @@ async function refreshFromONPE() {
 }
 
 /* Init is now at the top — see switchTab / init section */
+
+/* ══════════════════════════════════════════════════════════
+   PROJECTION ENGINE
+   Calculates projected final results from current regional data.
+   Ports the Python projection logic to client-side JS.
+══════════════════════════════════════════════════════════ */
+function runProjection(regions) {
+  const KEYS = ['fuji','rla','nieto','belm','sanch'];
+
+  const totActual = [0,0,0,0,0];
+  const totPend = [0,0,0,0,0];
+  let totalVV = 0;
+
+  regions.forEach(r => {
+    if (!r.pct || r.pct <= 0) return;
+    const vvTotal = r.vv / (r.pct / 100);
+    const vvPend = vvTotal - r.vv;
+
+    /* Rural adjustment: less counted = more rural pending */
+    let factors;
+    if (r.pct < 50)      factors = [0.95, 0.92, 0.95, 1.04, 1.08];
+    else if (r.pct < 65)  factors = [0.98, 0.95, 0.97, 1.02, 1.05];
+    else if (r.pct < 80)  factors = [0.99, 0.98, 0.99, 1.01, 1.02];
+    else                   factors = [1.00, 1.00, 1.00, 1.00, 1.00];
+
+    const pcts = [r.fuji, r.rla, r.nieto, r.belm, r.sanch];
+    const votos = pcts.map(p => (r.vv * p / 100));
+
+    KEYS.forEach((k, i) => {
+      totActual[i] += votos[i];
+      totPend[i] += vvPend * (pcts[i] / 100) * factors[i];
+    });
+    totalVV += r.vv;
+  });
+
+  /* Estimate total valid votes at 100% */
+  const currentNatPct = regions.reduce((s,r) => s + r.pct * (r.vv || 0), 0) /
+                         regions.reduce((s,r) => s + (r.vv || 0), 0) || 73;
+  const vvNational = totalVV / (currentNatPct / 100);
+
+  /* Final results */
+  const finals = KEYS.map((k, i) => ({
+    key: k,
+    actual: totActual[i],
+    pending: totPend[i],
+    total: totActual[i] + totPend[i],
+    pct: (totActual[i] + totPend[i]) / vvNational * 100
+  })).sort((a, b) => b.pct - a.pct);
+
+  return finals;
+}
+
+/* ══════════════════════════════════════════════════════════
+   PROBABILITY CALCULATOR
+   Based on projected margins and convergence rate
+══════════════════════════════════════════════════════════ */
+function calcProbabilities(projection) {
+  /* Find the second-place candidates (exclude fujimori who is 1st) */
+  const contenders = projection.filter(p => p.key !== 'fuji');
+  if (contenders.length < 2) return {};
+
+  const leader = contenders[0];
+  const probs = {};
+
+  /* Base probability from projected margin */
+  contenders.forEach(c => {
+    const margin = leader.pct - c.pct;
+    if (c.key === leader.key) {
+      /* Leader gets base 45% + bonus for margin over others */
+      probs[c.key] = Math.min(85, 45 + margin * 0 + (contenders[1] ? (c.pct - contenders[1].pct) * 10 : 20));
+    } else {
+      /* Challengers: probability decreases with margin from leader */
+      probs[c.key] = Math.max(2, 40 - margin * 12);
+    }
+  });
+
+  /* Normalize to ~100% (excluding Fujimori) */
+  const total = Object.values(probs).reduce((s, v) => s + v, 0);
+  for (const k in probs) probs[k] = Math.round(probs[k] / total * 100);
+
+  return probs;
+}
+
+/* ══════════════════════════════════════════════════════════
+   UPDATE PROJECTION UI
+   Updates chart, KPIs, and probability bars
+══════════════════════════════════════════════════════════ */
+function updateProjectionUI(projection, probs) {
+  const trackKeyMap = {fuji:'fujimori', rla:'rla', nieto:'nieto', belm:'belmont', sanch:'sanchez'};
+  const labelMap = {fuji:'Fujimori', rla:'López Aliaga', nieto:'Nieto', sanch:'Sánchez', belm:'Belmont'};
+  const colorMap = {fuji:'var(--c-fuji)', rla:'var(--c-rla)', nieto:'var(--c-nieto)', sanch:'var(--c-sanch)', belm:'var(--c-belm)'};
+
+  /* Update TRACKING.projection */
+  const projMap = {};
+  projection.forEach(p => { projMap[trackKeyMap[p.key]] = parseFloat(p.pct.toFixed(2)); });
+  Object.assign(TRACKING.projection, projMap);
+
+  /* Update probability bars */
+  const barMap = {rla: 0, nieto: 1, sanch: 2, belm: 3};
+  const probBars = document.querySelectorAll('.prob-item');
+  for (const [key, idx] of Object.entries(barMap)) {
+    if (probBars[idx]) {
+      const pct = probs[key] || 0;
+      const fill = probBars[idx].querySelector('.prob-fill');
+      const label = probBars[idx].querySelector('.prob-pct');
+      if (fill) fill.style.width = pct + '%';
+      if (label) label.textContent = pct + '%';
+    }
+  }
+
+  /* Update projection summary table */
+  const sorted = [...projection].sort((a, b) => b.pct - a.pct);
+  const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
+
+  sorted.forEach((p, i) => {
+    const row = document.getElementById('proj' + (i + 1));
+    if (!row) return;
+    const currentKey = trackKeyMap[p.key];
+    const currentVal = lastCut ? (lastCut[currentKey] || 0) : 0;
+    const diff = p.pct - currentVal;
+    const diffStr = diff > 0 ? '▲ ' + diff.toFixed(2) : diff < 0 ? '▼ ' + Math.abs(diff).toFixed(2) : '—';
+    const diffColor = diff > 0 ? 'var(--c-nieto)' : diff < 0 ? 'var(--c-sanch)' : 'var(--tx3)';
+
+    row.innerHTML = `<span class="proj-pos">${i+1}°</span>` +
+      `<span class="proj-name" style="color:${colorMap[p.key]}">${labelMap[p.key]}</span>` +
+      `<span class="proj-current">${currentVal.toFixed(2)}%</span>` +
+      `<span class="proj-arrow">→</span>` +
+      `<span class="proj-final" style="color:${colorMap[p.key]}">${p.pct.toFixed(2)}%</span>` +
+      `<span class="proj-diff" style="color:${diffColor}">${diffStr}</span>`;
+  });
+
+  /* Update ref card */
+  const projCard = document.querySelector('.ref-card:first-child');
+  if (projCard) {
+    const top4 = sorted.filter(s => s.key !== 'fuji').slice(0, 4);
+    projCard.innerHTML = `<strong>Proyección dinámica</strong>
+      ${top4.map(c => labelMap[c.key] + ' ' + c.pct.toFixed(2) + '%').join(' · ')}
+      <div><span class="tag ok">Auto-calculado · ${new Date().toLocaleTimeString('es-PE')}</span></div>`;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   AUTO-REFRESH TIMER (every 10 minutes)
+══════════════════════════════════════════════════════════ */
+let autoRefreshInterval = null;
+
+function startAutoRefresh(minutes) {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+  autoRefreshInterval = setInterval(() => {
+    console.log('[AutoRefresh] Refreshing at ' + new Date().toLocaleTimeString());
+    refreshFromONPE();
+  }, minutes * 60 * 1000);
+  console.log('[AutoRefresh] Started — every ' + minutes + ' minutes');
+}
+
+/* Start auto-refresh if Worker is configured */
+if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
+  startAutoRefresh(10);
+}
 
 </script>
 </body>
