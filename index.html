@@ -110,7 +110,11 @@
     .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;overflow:hidden;
       opacity:0;animation:fadeUp .6s ease forwards;animation-delay:.2s}
     .card:nth-child(2){animation-delay:.35s}
-    .card-title{font-size:13px;font-weight:600;margin-bottom:12px;color:var(--tx2)}
+    .card-title{font-size:13px;font-weight:600;margin-bottom:8px;color:var(--tx2)}
+    /* Vote counters in map card */
+    .vote-counters{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+    .vote-counter{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)}
+    .vote-counter strong{color:var(--tx1);font-family:'DM Mono',monospace;font-size:12px}
 
     /* ══════════════ 7. MAP ══════════════ */
     .map-container{position:relative;width:100%;aspect-ratio:3/4;max-height:500px}
@@ -172,6 +176,11 @@
     .modal-cand{flex:1;font-size:13px;font-weight:500}
     .modal-pct{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;min-width:55px;text-align:right}
     .modal-bar{height:6px;border-radius:3px;transition:width .6s cubic-bezier(.25,.8,.25,1)}
+    /* Modal vote stats */
+    .modal-stats{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding:10px 12px;
+      background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)}
+    .modal-stat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx2)}
+    .modal-stat strong{color:var(--tx1);font-family:'DM Mono',monospace}
 
     /* ══════════════ 11. FOOTER CARDS ══════════════ */
     .ref-cards{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
@@ -400,6 +409,16 @@
     <div class="grid">
       <div class="card">
         <div class="card-title">Mapa — Ganador por departamento (ONPE parcial)</div>
+        <div class="vote-counters" id="voteCounters">
+          <div class="vote-counter">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-nieto)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>Contabilizados: <strong id="vcContados">—</strong></span>
+          </div>
+          <div class="vote-counter">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Por contabilizar: <strong id="vcPendientes">—</strong></span>
+          </div>
+        </div>
         <div class="map-container" id="mapOnpe"></div>
         <!-- Region progress grid -->
         <div class="region-grid" id="regionGrid"></div>
@@ -609,6 +628,27 @@ function switchTab(id) {
 /* ══════════════════════════════════════════════════════════
    INIT
 ══════════════════════════════════════════════════════════ */
+
+/* Update Extranjero — now rendered inside SVG, no separate HTML element needed */
+function updateExtranjero() {
+  /* Globe is re-drawn on each renderMap call, nothing to update here */
+}
+
+/* Update national vote counters */
+function updateVoteCounters() {
+  let totalVV = 0, totalEst = 0;
+  ONPE_REGIONS.forEach(r => {
+    if (!r.vv || !r.pct) return;
+    totalVV += r.vv;
+    totalEst += Math.round(r.vv / (r.pct / 100));
+  });
+  const pend = totalEst - totalVV;
+  const el1 = document.getElementById('vcContados');
+  const el2 = document.getElementById('vcPendientes');
+  if (el1) el1.textContent = totalVV.toLocaleString('es-PE');
+  if (el2) el2.textContent = '~' + pend.toLocaleString('es-PE');
+}
+
 (async function init() {
   /* 1. Render tracking chart first (no external deps) */
   try {
@@ -624,6 +664,8 @@ function switchTab(id) {
       name:r.name, pct:r.pct, fuji:r.fuji, rla:r.rla, nieto:r.nieto, belm:r.belm, sanch:r.sanch
     }));
     await renderMap('mapOnpe', onpeMapData, 'ONPE parcial');
+    updateExtranjero();
+    updateVoteCounters();
   } catch(err) {
     console.error('Map error:', err);
     document.getElementById('mapOnpe').innerHTML = '<p style="color:var(--c-sanch);padding:20px;text-align:center">Error cargando mapa: '+err.message+'<br><small style="color:var(--tx3)">Si abriste el archivo localmente, prueba con un servidor HTTP local o sube a GitHub Pages</small></p>';
@@ -655,6 +697,23 @@ function showModal(regionName, data, source) {
   const maxPct = entries[0].pct || 1;
 
   let html = '';
+
+  /* Vote count stats */
+  if (data.vv && data.pct) {
+    const vvTotal = Math.round(data.vv / (data.pct / 100));
+    const vvPend = vvTotal - data.vv;
+    html += `<div class="modal-stats">
+      <div class="modal-stat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-nieto)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        <span><strong>${data.vv.toLocaleString('es-PE')}</strong> votos contabilizados</span>
+      </div>
+      <div class="modal-stat">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-sanch)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span><strong>~${vvPend.toLocaleString('es-PE')}</strong> votos por contabilizar</span>
+      </div>
+    </div>`;
+  }
+
   entries.forEach(e => {
     const c = CAND_CONFIG[e.key];
     html += `<div class="modal-row">
@@ -805,6 +864,55 @@ async function renderMap(containerId, regionsData, source) {
         .style('opacity', 0).style('animation', 'fadeUp .4s ease ' + delay + ' forwards');
     }
   });
+
+  /* ── Extranjero "island" globe in the Pacific Ocean ── */
+  const ext = regionsData.find(r => r.name === 'Extranjero');
+  if (ext && ext.pct !== undefined) {
+    const gx = W * 0.14, gy = H * 0.58, gr = W < 400 ? 16 : 22;
+    const extG = svg.append('g').attr('class','ext-globe')
+      .style('cursor','pointer').style('opacity', 0)
+      .style('animation', 'fadeUp .6s ease 2s forwards');
+
+    /* Ocean ripple */
+    extG.append('circle').attr('cx', gx).attr('cy', gy).attr('r', gr + 4)
+      .attr('fill', 'none').attr('stroke', 'rgba(74,144,217,.15)').attr('stroke-width', 1.5);
+
+    /* Globe background */
+    const winnerKey = getWinner(ext);
+    const winColor = CAND_CONFIG[winnerKey].color;
+    extG.append('circle').attr('cx', gx).attr('cy', gy).attr('r', gr)
+      .attr('fill', winColor).attr('opacity', .2)
+      .attr('stroke', winColor).attr('stroke-width', 1.5);
+
+    /* Globe meridians/parallels */
+    const globeG = extG.append('g').attr('transform', `translate(${gx},${gy})`);
+    globeG.append('ellipse').attr('rx', gr * 0.45).attr('ry', gr * 0.9)
+      .attr('fill', 'none').attr('stroke', winColor).attr('stroke-width', .7).attr('opacity', .5);
+    globeG.append('line').attr('x1', -gr).attr('x2', gr).attr('y1', 0).attr('y2', 0)
+      .attr('stroke', winColor).attr('stroke-width', .5).attr('opacity', .4);
+    globeG.append('line').attr('x1', -gr * .85).attr('x2', gr * .85).attr('y1', -gr * .5).attr('y2', -gr * .5)
+      .attr('stroke', winColor).attr('stroke-width', .4).attr('opacity', .3);
+    globeG.append('line').attr('x1', -gr * .85).attr('x2', gr * .85).attr('y1', gr * .5).attr('y2', gr * .5)
+      .attr('stroke', winColor).attr('stroke-width', .4).attr('opacity', .3);
+
+    /* % label below globe */
+    const fSize = W < 400 ? 7 : 9;
+    extG.append('text').attr('x', gx).attr('y', gy + gr + 12)
+      .attr('text-anchor', 'middle').attr('font-size', fSize + 'px')
+      .attr('font-family', '"DM Mono", monospace').attr('font-weight', 700)
+      .attr('fill', '#fff')
+      .attr('paint-order', 'stroke').attr('stroke', '#0f1117').attr('stroke-width', 2)
+      .text(Math.round(ext.pct) + '%');
+
+    /* "Extranjero" label */
+    extG.append('text').attr('x', gx).attr('y', gy + gr + 22)
+      .attr('text-anchor', 'middle').attr('font-size', (fSize - 1.5) + 'px')
+      .attr('font-family', '"DM Sans", sans-serif').attr('font-weight', 500)
+      .attr('fill', 'rgba(255,255,255,.5)').text('Extranjero');
+
+    /* Click → modal */
+    extG.on('click', () => showModal('Extranjero', ext, source));
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1121,6 +1229,8 @@ async function refreshFromONPE() {
     if (window._trackingChart) window._trackingChart.destroy();
     await renderMap('mapOnpe', ONPE_REGIONS, 'ONPE parcial');
     renderTrackingChart();
+    updateExtranjero();
+    updateVoteCounters();
 
     /* Update UI */
     document.getElementById('heroPct').innerHTML = natPct.toFixed(2) + '<span class="hero-pct-sign">%</span>';
