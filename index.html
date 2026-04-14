@@ -45,6 +45,22 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx1);min-height:100vh}
 
+    /* ══════════════ 2b. SKELETON LOADING ══════════════ */
+    .skel{display:inline-block;width:60px;height:18px;border-radius:4px;background:var(--bg-alt);
+      position:relative;overflow:hidden;vertical-align:middle}
+    .skel::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+      animation:shimmer 1.5s ease-in-out infinite}
+    .skel-wide{width:100px}
+    .skel-bar{display:block;width:100%;height:8px;border-radius:4px;background:var(--bg-alt);
+      position:relative;overflow:hidden}
+    .skel-bar::after{content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+      animation:shimmer 1.5s ease-in-out infinite}
+    .map-loading,.chart-loading{display:flex;align-items:center;justify-content:center;
+      width:100%;height:100%;color:var(--tx3);font-size:12px;gap:8px}
+    .map-loading svg,.chart-loading svg{animation:spin 1.5s linear infinite;opacity:.5}
+
     /* ══════════════ 3. HERO HEADER ══════════════ */
     .container{max-width:1200px;margin:0 auto;padding:16px 20px}
     .hero{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
@@ -408,23 +424,23 @@
     <div class="kpis" id="kpiCandidates">
       <div class="kpi" style="border-top:3px solid var(--c-fuji)">
         <div class="kpi-label">Fujimori</div>
-        <div class="kpi-val" style="color:var(--c-fuji)" id="kpiFuji">16.91%</div>
+        <div class="kpi-val" style="color:var(--c-fuji)" id="kpiFuji"><span class="skel"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-rla)">
         <div class="kpi-label">López Aliaga</div>
-        <div class="kpi-val blue" id="kpiRla">12.92%</div>
+        <div class="kpi-val blue" id="kpiRla"><span class="skel"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-nieto)">
         <div class="kpi-label">Nieto</div>
-        <div class="kpi-val green" id="kpiNieto">11.96%</div>
+        <div class="kpi-val green" id="kpiNieto"><span class="skel"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-sanch)">
         <div class="kpi-label">Sánchez</div>
-        <div class="kpi-val red" id="kpiSanch">9.83%</div>
+        <div class="kpi-val red" id="kpiSanch"><span class="skel"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-belm)">
         <div class="kpi-label">Belmont</div>
-        <div class="kpi-val" style="color:var(--c-belm)" id="kpiBelm">9.98%</div>
+        <div class="kpi-val" style="color:var(--c-belm)" id="kpiBelm"><span class="skel"></span></div>
       </div>
     </div>
 
@@ -434,23 +450,23 @@
       <div class="prob-bars">
         <div class="prob-item">
           <div class="prob-name" style="color:var(--c-rla)">López Aliaga</div>
-          <div class="prob-track"><div class="prob-fill" style="width:55%;background:var(--c-rla)"></div></div>
-          <div class="prob-pct" style="color:var(--c-rla)">55%</div>
+          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-rla)"></div></div>
+          <div class="prob-pct" style="color:var(--c-rla)"><span class="skel" style="width:30px;height:14px"></span></div>
         </div>
         <div class="prob-item">
           <div class="prob-name" style="color:var(--c-nieto)">Nieto</div>
-          <div class="prob-track"><div class="prob-fill" style="width:22%;background:var(--c-nieto)"></div></div>
-          <div class="prob-pct" style="color:var(--c-nieto)">22%</div>
+          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-nieto)"></div></div>
+          <div class="prob-pct" style="color:var(--c-nieto)"><span class="skel" style="width:30px;height:14px"></span></div>
         </div>
         <div class="prob-item">
           <div class="prob-name" style="color:var(--c-sanch)">Sánchez</div>
-          <div class="prob-track"><div class="prob-fill" style="width:18%;background:var(--c-sanch)"></div></div>
-          <div class="prob-pct" style="color:var(--c-sanch)">18%</div>
+          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-sanch)"></div></div>
+          <div class="prob-pct" style="color:var(--c-sanch)"><span class="skel" style="width:30px;height:14px"></span></div>
         </div>
         <div class="prob-item">
           <div class="prob-name" style="color:var(--c-belm)">Belmont</div>
-          <div class="prob-track"><div class="prob-fill" style="width:5%;background:var(--c-belm)"></div></div>
-          <div class="prob-pct" style="color:var(--c-belm)">5%</div>
+          <div class="prob-track"><div class="prob-fill" style="width:0%;background:var(--c-belm)"></div></div>
+          <div class="prob-pct" style="color:var(--c-belm)"><span class="skel" style="width:30px;height:14px"></span></div>
         </div>
       </div>
     </div>
@@ -478,13 +494,24 @@
             <span>Por contabilizar: <strong id="vcPendientes">—</strong></span>
           </div>
         </div>
-        <div class="map-container" id="mapOnpe"></div>
+        <div class="map-container" id="mapOnpe">
+          <div class="map-loading" id="mapLoader">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            Cargando mapa...
+          </div>
+        </div>
         <!-- Region progress grid -->
         <div class="region-grid" id="regionGrid"></div>
       </div>
       <div class="card">
         <div class="card-title">Evolución del conteo + Proyección al 100%</div>
-        <div class="chart-container"><canvas id="trackingChart"></canvas></div>
+        <div class="chart-container" id="chartContainer">
+          <div class="chart-loading" id="chartLoader">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            Cargando gráfico...
+          </div>
+          <canvas id="trackingChart" style="display:none"></canvas>
+        </div>
         <!-- External tooltip panel (replaces hover tooltip on mobile) -->
         <div class="chart-tooltip-panel" id="chartTooltipPanel">
           <div class="ctp-title" id="ctpTitle">Toca un punto del gráfico</div>
@@ -500,11 +527,11 @@
             <span class="proj-final">Proyección 100%</span>
             <span class="proj-diff">Δ vs anterior</span>
           </div>
-          <div class="proj-row" id="proj1"><span class="proj-pos">1°</span><span class="proj-name" style="color:var(--c-fuji)">Fujimori</span><span class="proj-current">16.91%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-fuji)">16.67%</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj2"><span class="proj-pos">2°</span><span class="proj-name" style="color:var(--c-rla)">López Aliaga</span><span class="proj-current">12.92%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-rla)">11.87%</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj3"><span class="proj-pos">3°</span><span class="proj-name" style="color:var(--c-nieto)">Nieto</span><span class="proj-current">11.96%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-nieto)">11.03%</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj4"><span class="proj-pos">4°</span><span class="proj-name" style="color:var(--c-sanch)">Sánchez</span><span class="proj-current">9.83%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-sanch)">10.71%</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj5"><span class="proj-pos">5°</span><span class="proj-name" style="color:var(--c-belm)">Belmont</span><span class="proj-current">9.98%</span><span class="proj-arrow">→</span><span class="proj-final" style="color:var(--c-belm)">9.81%</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj1"><span class="proj-pos">1°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj2"><span class="proj-pos">2°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj3"><span class="proj-pos">3°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj4"><span class="proj-pos">4°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj5"><span class="proj-pos">5°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
         </div>
       </div>
     </div>
@@ -723,45 +750,66 @@ function showHeroFallback() {
 }
 
 (async function init() {
-  /* 1. Render tracking chart first (no external deps) */
-  try {
-    renderTrackingChart();
-  } catch(err) {
-    console.error('Chart error:', err);
-    document.querySelector('.chart-container').innerHTML = '<p style="color:var(--c-sanch);padding:20px">Error en gráfico: '+err.message+'</p>';
-  }
+  /* Loading-first approach: show skeletons, fetch fresh data, then render everything */
 
-  /* 2. Render ONPE map (requires TopoJSON fetch) */
+  if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
+    /* Worker configured — fetch first, render after */
+    try {
+      await refreshFromONPE();
+    } catch(e) {
+      console.error('Init refresh failed, falling back to embedded data:', e);
+      renderWithEmbeddedData();
+    }
+  } else {
+    /* No Worker — render with embedded data immediately */
+    renderWithEmbeddedData();
+  }
+})();
+
+/* Fallback: render everything with embedded data */
+async function renderWithEmbeddedData() {
+  showHeroFallback();
+
+  /* Chart */
   try {
+    const loader = document.getElementById('chartLoader');
+    const canvas = document.getElementById('trackingChart');
+    if (loader) loader.style.display = 'none';
+    if (canvas) canvas.style.display = 'block';
+    renderTrackingChart();
+  } catch(err) { console.error('Chart error:', err); }
+
+  /* Map */
+  try {
+    document.getElementById('mapOnpe').innerHTML = '';
     const onpeMapData = ONPE_REGIONS.map(r => ({
       name:r.name, pct:r.pct, fuji:r.fuji, rla:r.rla, nieto:r.nieto, belm:r.belm, sanch:r.sanch
     }));
     await renderMap('mapOnpe', onpeMapData, 'ONPE parcial');
-    updateExtranjero();
     updateVoteCounters();
   } catch(err) {
     console.error('Map error:', err);
-    document.getElementById('mapOnpe').innerHTML = '<p style="color:var(--c-sanch);padding:20px;text-align:center">Error cargando mapa: '+err.message+'<br><small style="color:var(--tx3)">Si abriste el archivo localmente, prueba con un servidor HTTP local o sube a GitHub Pages</small></p>';
+    document.getElementById('mapOnpe').innerHTML = '<p style="color:var(--c-sanch);padding:20px;text-align:center">Error: '+err.message+'</p>';
   }
 
-  /* 3. Run initial projection on embedded data */
+  /* KPIs from embedded data */
+  const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
+  if (lastCut) {
+    const kpiMap = {kpiFuji:'fujimori', kpiRla:'rla', kpiNieto:'nieto', kpiSanch:'sanchez', kpiBelm:'belmont'};
+    for (const [id, key] of Object.entries(kpiMap)) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = (lastCut[key] || 0).toFixed(2) + '%';
+    }
+  }
+
+  /* Projection */
   try {
     const projection = runProjection(ONPE_REGIONS);
-    const initPct = TRACKING.cuts.length ? TRACKING.cuts[TRACKING.cuts.length-1].pct : 75;
+    const initPct = lastCut ? lastCut.pct : 75;
     const probs = calcProbabilities(projection, initPct);
     updateProjectionUI(projection, probs);
-  } catch(err) { console.error('Initial projection error:', err); }
-
-  /* 4. Datum map renders lazily on tab switch — see switchTab() */
-
-  /* 5. Auto-refresh if Worker is configured */
-  if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
-    setTimeout(() => refreshFromONPE(), 800); /* Slight delay so initial render is visible first */
-  } else {
-    /* No Worker — show embedded data immediately */
-    showHeroFallback();
-  }
-})();
+  } catch(err) { console.error('Projection error:', err); }
+}
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
 
@@ -1354,14 +1402,21 @@ async function refreshFromONPE() {
     document.getElementById('lastUpdate').textContent =
       new Date().toLocaleString('es-PE', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) + ' · ' + newRegions.length + ' regiones · En vivo';
 
-    /* 8. Re-render map & chart */
+    /* 8. Re-render map & chart — clear loaders */
     setStatus('Redibujando...', '');
     document.getElementById('mapOnpe').innerHTML = '';
+    const chartLoader = document.getElementById('chartLoader');
+    const chartCanvas = document.getElementById('trackingChart');
+    if (chartLoader) chartLoader.style.display = 'none';
+    if (chartCanvas) chartCanvas.style.display = 'block';
     if (window._trackingChart) window._trackingChart.destroy();
     await renderMap('mapOnpe', ONPE_REGIONS, 'ONPE parcial');
     renderTrackingChart();
     updateExtranjero();
     updateVoteCounters();
+
+    /* Remove any remaining skeletons */
+    document.querySelectorAll('.skel').forEach(s => s.remove());
 
     setStatus('✓ ONPE ' + natPct.toFixed(2) + '% · ' + newRegions.length + ' regiones · Proyección recalculada', 'ok');
     /* Restart countdown timer */
@@ -1370,8 +1425,8 @@ async function refreshFromONPE() {
   } catch (err) {
     console.error('Refresh error:', err);
     setStatus('✗ ' + err.message + ' — mostrando data embebida', 'err');
-    /* Fallback: show embedded data in hero */
-    showHeroFallback();
+    /* Full fallback render with embedded data */
+    if (typeof renderWithEmbeddedData === 'function') renderWithEmbeddedData();
   } finally {
     btn.classList.remove('loading'); btn.disabled = false;
   }
