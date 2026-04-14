@@ -1401,31 +1401,34 @@ function runProjection(regions) {
    Based on projected margins and convergence rate
 ══════════════════════════════════════════════════════════ */
 function calcProbabilities(projection, nationalPct) {
-  /* Find the second-place candidates (exclude fujimori who is 1st) */
   const contenders = projection.filter(p => p.key !== 'fuji');
   if (contenders.length < 2) return {};
 
   const leader = contenders[0];
+  const second = contenders[1];
   const probs = {};
 
   /*
    * Factor de certeza: amplifica las brechas según % contado.
-   *   50% → ×1 (mucha incertidumbre)
-   *   75% → ×3
-   *   90% → ×9
-   *   99% → ×99 (casi seguro)
+   *   50% → ×1, 75% → ×3, 90% → ×9, 99% → ×99
    */
   const pct = Math.max(50, nationalPct || 75);
   const remaining = Math.max(1, 100 - pct);
   const certainty = pct / remaining;
+
+  /* Margen del líder vs segundo lugar */
+  const leaderMargin = leader.pct - second.pct;
+  const leaderEffective = leaderMargin * certainty;
 
   contenders.forEach(c => {
     const margin = leader.pct - c.pct;
     const effectiveMargin = margin * certainty;
 
     if (c.key === leader.key) {
-      probs[c.key] = Math.min(98, 50 + effectiveMargin * 5);
+      /* Líder: 50 + bonus por su ventaja sobre el 2° lugar */
+      probs[c.key] = Math.min(98, 50 + leaderEffective * 5);
     } else {
+      /* Retadores: penalizados por distancia al líder */
       probs[c.key] = Math.max(1, 50 - effectiveMargin * 5);
     }
   });
