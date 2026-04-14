@@ -135,7 +135,7 @@
     .trend.down svg{animation-name:arrowBounceDown}
     @keyframes arrowBounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
     /* Hot mover glow */
-    .kpi.hot-mover{border-color:#2ECDA7 !important;box-shadow:0 0 15px 4px rgba(46,205,167,.4);animation:heartbeat .7s ease-in-out infinite}
+    .kpi.hot-mover{opacity:1;border-color:#2ECDA7 !important;box-shadow:0 0 15px 4px rgba(46,205,167,.4);animation:heartbeat .7s ease-in-out 5}
     @keyframes heartbeat{
       0%,100%{transform:scale(1);box-shadow:0 0 10px 2px rgba(46,205,167,.3)}
       50%{transform:scale(1.04);box-shadow:0 0 22px 6px rgba(46,205,167,.5)}
@@ -804,6 +804,7 @@ function updateTrendArrows() {
 }
 
 /* Highlight the candidate rising the most (based on last 3 real tracking cuts) */
+let _hotMoverTimeout = null;
 function highlightHotMover() {
   /* Filter out projection cuts (pct >= 99) */
   const realCuts = TRACKING.cuts.filter(c => c.pct < 99);
@@ -828,13 +829,15 @@ function highlightHotMover() {
   const targetCard = cards[kpiMap[maxKey]];
   if (!targetCard) return;
 
-  /* If same card already glowing, don't restart animation */
-  if (targetCard.classList.contains('hot-mover')) return;
+  /* Clear previous timeout so it doesn't kill this glow */
+  if (_hotMoverTimeout) clearTimeout(_hotMoverTimeout);
 
-  /* Remove from any other card, apply to winner */
+  /* Remove from any card, apply to winner */
   document.querySelectorAll('.kpi.hot-mover').forEach(el => el.classList.remove('hot-mover'));
   targetCard.classList.add('hot-mover');
-  setTimeout(() => targetCard.classList.remove('hot-mover'), 3000);
+
+  /* Remove after animation completes (5 pulses × 0.7s = 3.5s + buffer) */
+  _hotMoverTimeout = setTimeout(() => targetCard.classList.remove('hot-mover'), 4000);
 }
 
 /* Update national vote counters */
