@@ -426,6 +426,11 @@ function switchTab(id) {
   }
 
   /* 3. Datum map renders lazily on tab switch — see switchTab() */
+
+  /* 4. Auto-refresh if Worker is configured */
+  if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
+    setTimeout(() => refreshFromONPE(), 800); /* Slight delay so initial render is visible first */
+  }
 })();
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
@@ -641,7 +646,35 @@ function renderTrackingChart() {
    Calls the ONPE API directly. Works if CORS allows it.
    If blocked, shows instructions for manual update.
 ══════════════════════════════════════════════════════════ */
-const ONPE_BASE = 'https://resultadoelectoral.onpe.gob.pe/presentacion-backend';
+/* ══════════════════════════════════════════════════════════
+   CLOUDFLARE WORKER PROXY CONFIG
+   ═══════════════════════════════════════════════════════
+   ▼▼▼ CAMBIAR ESTA URL POR LA DE TU WORKER DESPLEGADO ▼▼▼
+══════════════════════════════════════════════════════════ */
+const WORKER_URL = 'https://onpe-proxy.renzonunez-af.workers.dev';
+/* ══════════════════════════════════════════════════════════
+   Si no tienes worker aún, usa '' (vacío) y la data
+   embebida se mostrará. Cuando despliegues el worker,
+   pon tu URL aquí y la página se actualizará sola.
+══════════════════════════════════════════════════════════ */
+
+const ONPE_DIRECT = 'https://resultadoelectoral.onpe.gob.pe/presentacion-backend';
+
+/* Helper: intenta Worker primero, fallback a ONPE directo */
+async function apiFetch(proxyPath, onpePath, params) {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  /* Intenta Worker */
+  if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
+    try {
+      const resp = await fetch(WORKER_URL + proxyPath + qs);
+      if (resp.ok) return resp.json();
+    } catch(e) { console.warn('Worker failed, trying direct:', e.message); }
+  }
+  /* Fallback: ONPE directo (funciona si mismo dominio o CORS habilitado) */
+  const resp = await fetch(ONPE_DIRECT + onpePath + qs);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return resp.json();
+}
 const DEPT_UBIGEOS = [
   {u:'010000',n:'Amazonas'},{u:'020000',n:'Áncash'},{u:'030000',n:'Apurímac'},
   {u:'040000',n:'Arequipa'},{u:'050000',n:'Ayacucho'},{u:'060000',n:'Cajamarca'},
@@ -665,20 +698,17 @@ function setStatus(msg, cls) {
 async function refreshFromONPE() {
   const btn = document.getElementById('refreshBtn');
   btn.classList.add('loading'); btn.disabled = true;
-  setStatus('Conectando con ONPE...', '');
+  setStatus('Conectando...', '');
 
   try {
     /* 1. National totals + candidates */
-    setStatus('Obteniendo datos nacionales...', '');
-    const [natResp, candResp] = await Promise.all([
-      fetch(ONPE_BASE + '/resumen-general/totales?idEleccion=10&tipoFiltro=eleccion'),
-      fetch(ONPE_BASE + '/eleccion-presidencial/participantes-ubicacion-geografica-nombre?idEleccion=10&tipoFiltro=eleccion')
+    setStatus('Datos nacionales...', '');
+    const [natData, candData] = await Promise.all([
+      apiFetch('/api/totals', '/resumen-general/totales', {idEleccion:10, tipoFiltro:'eleccion'}),
+      apiFetch('/api/candidates', '/eleccion-presidencial/participantes-ubicacion-geografica-nombre', {idEleccion:10, tipoFiltro:'eleccion'})
     ]);
-    const natData = await natResp.json();
-    const candData = await candResp.json();
     const natPct = natData.data.actasContabilizadas;
 
-    /* Parse national candidates */
     const natCands = {};
     candData.data.filter(c => c.porcentajeVotosValidos).forEach(c => {
       TOP5.forEach((name, i) => {
@@ -687,20 +717,24 @@ async function refreshFromONPE() {
       });
     });
 
-    /* Add to tracking if new cut */
+    /* Add new tracking cut if different enough */
     const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
     if (Math.abs(natPct - lastCut.pct) > 0.3) {
       TRACKING.cuts.push({
-        pct: natPct,
-        fujimori: natCands.fuji || lastCut.fujimori,
-        rla: natCands.rla || lastCut.rla,
-        nieto: natCands.nieto || lastCut.nieto,
-        belmont: natCands.belm || lastCut.belmont,
-        sanchez: natCands.sanch || lastCut.sanchez
+        pct: natPct, fujimori: natCands.fuji||lastCut.fujimori,
+        rla: natCands.rla||lastCut.rla, nieto: natCands.nieto||lastCut.nieto,
+        belmont: natCands.belm||lastCut.belmont, sanchez: natCands.sanch||lastCut.sanchez
+      });
+    } else {
+      /* Update last cut */
+      Object.assign(lastCut, {
+        pct: natPct, fujimori: natCands.fuji||lastCut.fujimori,
+        rla: natCands.rla||lastCut.rla, nieto: natCands.nieto||lastCut.nieto,
+        belmont: natCands.belm||lastCut.belmont, sanchez: natCands.sanch||lastCut.sanchez
       });
     }
 
-    /* 2. Department data (parallel batches of 5) */
+    /* 2. Department data (batches of 5) */
     const newRegions = [];
     for (let i = 0; i < DEPT_UBIGEOS.length; i += 5) {
       const batch = DEPT_UBIGEOS.slice(i, i + 5);
@@ -708,10 +742,12 @@ async function refreshFromONPE() {
 
       const results = await Promise.all(batch.map(async d => {
         const [cr, tr] = await Promise.all([
-          fetch(ONPE_BASE + '/eleccion-presidencial/participantes-ubicacion-geografica-nombre?tipoFiltro=ubigeo_nivel_01&idAmbitoGeografico=1&ubigeoNivel1=' + d.u + '&idEleccion=10'),
-          fetch(ONPE_BASE + '/resumen-general/totales?idAmbitoGeografico=1&idEleccion=10&tipoFiltro=ubigeo_nivel_01&idUbigeoDepartamento=' + d.u)
+          apiFetch('/api/candidates', '/eleccion-presidencial/participantes-ubicacion-geografica-nombre',
+            {tipoFiltro:'ubigeo_nivel_01', idAmbitoGeografico:1, ubigeoNivel1:d.u, idEleccion:10}),
+          apiFetch('/api/totals', '/resumen-general/totales',
+            {idAmbitoGeografico:1, idEleccion:10, tipoFiltro:'ubigeo_nivel_01', idUbigeoDepartamento:d.u})
         ]);
-        return { dept: d, cands: await cr.json(), tots: await tr.json() };
+        return { dept: d, cands: cr, tots: tr };
       }));
 
       results.forEach(r => {
@@ -732,12 +768,13 @@ async function refreshFromONPE() {
     }
 
     /* 3. Extranjero */
-    setStatus('Obteniendo voto exterior...', '');
-    const [exCR, exTR] = await Promise.all([
-      fetch(ONPE_BASE + '/eleccion-presidencial/participantes-ubicacion-geografica-nombre?tipoFiltro=ambito_geografico&idAmbitoGeografico=2&idEleccion=10'),
-      fetch(ONPE_BASE + '/resumen-general/totales?idAmbitoGeografico=2&idEleccion=10&tipoFiltro=ambito_geografico')
+    setStatus('Voto exterior...', '');
+    const [exCands, exTots] = await Promise.all([
+      apiFetch('/api/candidates', '/eleccion-presidencial/participantes-ubicacion-geografica-nombre',
+        {tipoFiltro:'ambito_geografico', idAmbitoGeografico:2, idEleccion:10}),
+      apiFetch('/api/totals', '/resumen-general/totales',
+        {idAmbitoGeografico:2, idEleccion:10, tipoFiltro:'ambito_geografico'})
     ]);
-    const exCands = await exCR.json(), exTots = await exTR.json();
     const exC = {};
     exCands.data.filter(c => c.porcentajeVotosValidos).forEach(c => {
       TOP5.forEach((name, idx) => {
@@ -772,12 +809,8 @@ async function refreshFromONPE() {
     setStatus('✓ Actualizado al ' + natPct.toFixed(2) + '% (' + newRegions.length + ' regiones)', 'ok');
 
   } catch (err) {
-    console.error('ONPE refresh error:', err);
-    if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
-      setStatus('✗ CORS bloqueado — usa el agente de Chrome para actualizar, o abre desde la ONPE directamente', 'err');
-    } else {
-      setStatus('✗ Error: ' + err.message, 'err');
-    }
+    console.error('Refresh error:', err);
+    setStatus('✗ ' + err.message + ' — mostrando data embebida', 'err');
   } finally {
     btn.classList.remove('loading'); btn.disabled = false;
   }
