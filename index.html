@@ -122,6 +122,28 @@
     .kpi-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
     .kpi-val.blue{color:var(--c-rla)}.kpi-val.red{color:var(--c-sanch)}.kpi-val.green{color:var(--c-nieto)}
 
+    /* ══════════════ 5a. TREND ARROWS ══════════════ */
+    .trend{display:inline-flex;flex-direction:row;gap:0;margin-left:4px;vertical-align:middle}
+    .trend svg{width:10px;height:10px;margin:0 -1px;filter:drop-shadow(0 0 2px currentColor)}
+    .trend.up{color:#2ECDA7}
+    .trend.down{color:#E04848}
+    .trend.flat{color:var(--tx3)}
+    .trend svg:nth-child(1){animation:arrowBounce .8s ease-in-out infinite}
+    .trend svg:nth-child(2){animation:arrowBounce .8s ease-in-out .15s infinite}
+    .trend svg:nth-child(3){animation:arrowBounce .8s ease-in-out .3s infinite}
+    @keyframes arrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+    .trend.down svg{animation-name:arrowBounceDown}
+    @keyframes arrowBounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
+    /* Hot mover glow */
+    .kpi.hot-mover{animation:hotGlow 2s ease-out forwards}
+    @keyframes hotGlow{
+      0%{box-shadow:0 0 0 0 rgba(46,205,167,.6);border-color:var(--c-nieto)}
+      25%{box-shadow:0 0 20px 4px rgba(46,205,167,.3);border-color:var(--c-nieto)}
+      50%{box-shadow:0 0 10px 2px rgba(46,205,167,.15);border-color:var(--c-nieto)}
+      100%{box-shadow:none;border-color:var(--border)}
+    }
+    .kpi.hot-mover .kpi-label::after{content:' 🔥';font-size:10px}
+
     /* ══════════════ 5b. PROBABILITY BARS ══════════════ */
     .prob-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
       padding:14px 18px;margin-bottom:16px;opacity:0;animation:fadeUp .5s ease .35s forwards}
@@ -424,23 +446,23 @@
     <div class="kpis" id="kpiCandidates">
       <div class="kpi" style="border-top:3px solid var(--c-fuji)">
         <div class="kpi-label">Fujimori</div>
-        <div class="kpi-val" style="color:var(--c-fuji)" id="kpiFuji"><span class="skel"></span></div>
+        <div class="kpi-val" style="color:var(--c-fuji)"><span id="kpiFuji"><span class="skel"></span></span><span class="trend" id="trendFuji"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-rla)">
         <div class="kpi-label">López Aliaga</div>
-        <div class="kpi-val blue" id="kpiRla"><span class="skel"></span></div>
+        <div class="kpi-val blue"><span id="kpiRla"><span class="skel"></span></span><span class="trend" id="trendRla"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-nieto)">
         <div class="kpi-label">Nieto</div>
-        <div class="kpi-val green" id="kpiNieto"><span class="skel"></span></div>
+        <div class="kpi-val green"><span id="kpiNieto"><span class="skel"></span></span><span class="trend" id="trendNieto"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-sanch)">
         <div class="kpi-label">Sánchez</div>
-        <div class="kpi-val red" id="kpiSanch"><span class="skel"></span></div>
+        <div class="kpi-val red"><span id="kpiSanch"><span class="skel"></span></span><span class="trend" id="trendSanch"></span></div>
       </div>
       <div class="kpi" style="border-top:3px solid var(--c-belm)">
         <div class="kpi-label">Belmont</div>
-        <div class="kpi-val" style="color:var(--c-belm)" id="kpiBelm"><span class="skel"></span></div>
+        <div class="kpi-val" style="color:var(--c-belm)"><span id="kpiBelm"><span class="skel"></span></span><span class="trend" id="trendBelm"></span></div>
       </div>
     </div>
 
@@ -726,6 +748,100 @@ function updateExtranjero() {
   /* Globe is re-drawn on each renderMap call, nothing to update here */
 }
 
+/* ══════════════════════════════════════════════════════════
+   TREND ARROWS — Stock-market style directional indicators
+   Analyzes last 3 tracking cuts to determine trend direction
+══════════════════════════════════════════════════════════ */
+function updateTrendArrows() {
+  const cuts = TRACKING.cuts;
+  if (cuts.length < 2) return;
+
+  const N = Math.min(3, cuts.length - 1); /* Last 3 cuts */
+  const recent = cuts.slice(-N - 1); /* Need N+1 points for N deltas */
+
+  const candidates = [
+    {key:'fujimori', elId:'trendFuji'},
+    {key:'rla',      elId:'trendRla'},
+    {key:'nieto',    elId:'trendNieto'},
+    {key:'sanchez',  elId:'trendSanch'},
+    {key:'belmont',  elId:'trendBelm'}
+  ];
+
+  /* SVG arrow templates */
+  const arrowUp = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 8h5v8h6v-8h5z"/></svg>';
+  const arrowDown = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l8-8h-5V4H9v8H4z"/></svg>';
+  const arrowFlat = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h13l-4-4 1.4-1.4L20.8 12l-6.4 6.4L13 17l4-4H4z"/></svg>';
+
+  candidates.forEach(c => {
+    const el = document.getElementById(c.elId);
+    if (!el) return;
+
+    /* Calculate average change over last N cuts */
+    let totalChange = 0;
+    for (let i = 1; i < recent.length; i++) {
+      totalChange += (recent[i][c.key] || 0) - (recent[i-1][c.key] || 0);
+    }
+    const avgChange = totalChange / N; /* pp per cut */
+
+    /* Determine direction and intensity */
+    const absChange = Math.abs(avgChange);
+    let arrows = 0, direction = 'flat';
+
+    if (absChange < 0.01) {
+      direction = 'flat';
+      arrows = 0;
+    } else if (absChange < 0.08) {
+      direction = avgChange > 0 ? 'up' : 'down';
+      arrows = 1;
+    } else if (absChange < 0.2) {
+      direction = avgChange > 0 ? 'up' : 'down';
+      arrows = 2;
+    } else {
+      direction = avgChange > 0 ? 'up' : 'down';
+      arrows = 3;
+    }
+
+    /* Render */
+    el.className = 'trend ' + direction;
+    if (arrows === 0) {
+      el.innerHTML = arrowFlat;
+    } else {
+      const arrow = direction === 'up' ? arrowUp : arrowDown;
+      el.innerHTML = arrow.repeat(arrows);
+    }
+  });
+}
+
+/* Highlight the candidate with the biggest upward move */
+function highlightHotMover(prevCut, newCut) {
+  if (!prevCut || !newCut) return;
+  if (Math.abs(prevCut.pct - newCut.pct) < 0.1) return; /* No real change */
+
+  const kpiMap = {fujimori:0, rla:1, nieto:2, sanchez:3, belmont:4};
+  const keys = ['fujimori','rla','nieto','sanchez','belmont'];
+  let maxDelta = 0, maxKey = null;
+
+  keys.forEach(k => {
+    const delta = (newCut[k]||0) - (prevCut[k]||0);
+    if (delta > maxDelta) { maxDelta = delta; maxKey = k; }
+  });
+
+  /* Only highlight if there's a meaningful upward move */
+  if (!maxKey || maxDelta < 0.02) return;
+
+  /* Remove previous hot-mover */
+  document.querySelectorAll('.kpi.hot-mover').forEach(el => el.classList.remove('hot-mover'));
+
+  /* Apply to the winning card */
+  const idx = kpiMap[maxKey];
+  const cards = document.querySelectorAll('.kpi');
+  if (cards[idx]) {
+    cards[idx].classList.add('hot-mover');
+    /* Auto-remove after animation */
+    setTimeout(() => cards[idx].classList.remove('hot-mover'), 2500);
+  }
+}
+
 /* Update national vote counters */
 function updateVoteCounters() {
   let totalVV = 0, totalEst = 0;
@@ -777,7 +893,11 @@ async function renderWithEmbeddedData() {
         console.log('[Cache] localStorage: ' + data.natPct + '% from ' + data.savedAt);
         ONPE_REGIONS.length = 0;
         data.regions.forEach(r => ONPE_REGIONS.push(r));
-        if (data.natCut) {
+        /* Restore full tracking history if available */
+        if (data.trackingCuts && data.trackingCuts.length > TRACKING.cuts.length) {
+          TRACKING.cuts.length = 0;
+          data.trackingCuts.forEach(c => TRACKING.cuts.push(c));
+        } else if (data.natCut) {
           const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
           if (Math.abs(data.natCut.pct - lastCut.pct) > 0.3) TRACKING.cuts.push(data.natCut);
           else Object.assign(lastCut, data.natCut);
@@ -785,6 +905,21 @@ async function renderWithEmbeddedData() {
       }
     }
   } catch(e) { /* localStorage unavailable */ }
+
+  /* Try KV tracking history (shared across all users) */
+  try {
+    if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
+      const resp = await fetch(WORKER_URL + '/api/tracking');
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.cuts && data.cuts.length > TRACKING.cuts.length) {
+          console.log('[KV] Loaded ' + data.cuts.length + ' cuts from server');
+          TRACKING.cuts.length = 0;
+          data.cuts.forEach(c => TRACKING.cuts.push(c));
+        }
+      }
+    }
+  } catch(e) { console.warn('[KV] Tracking fetch failed:', e); }
 
   showHeroFallback();
 
@@ -805,6 +940,7 @@ async function renderWithEmbeddedData() {
     }));
     await renderMap('mapOnpe', onpeMapData, 'ONPE parcial');
     updateVoteCounters();
+    updateTrendArrows();
   } catch(err) {
     console.error('Map error:', err);
     document.getElementById('mapOnpe').innerHTML = '<p style="color:var(--c-sanch);padding:20px;text-align:center">Error: '+err.message+'</p>';
@@ -827,6 +963,13 @@ async function renderWithEmbeddedData() {
     const probs = calcProbabilities(projection, initPct);
     updateProjectionUI(projection, probs);
   } catch(err) { console.error('Projection error:', err); }
+
+  /* Hot-mover on first load — compare last 2 tracking cuts */
+  if (TRACKING.cuts.length >= 2) {
+    const prev = TRACKING.cuts[TRACKING.cuts.length - 2];
+    const curr = TRACKING.cuts[TRACKING.cuts.length - 1];
+    setTimeout(() => highlightHotMover(prev, curr), 600); /* Delay so KPIs render first */
+  }
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
@@ -1327,6 +1470,7 @@ async function refreshFromONPE() {
 
     /* 2. Update tracking */
     const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
+    const prevCutSnapshot = {...lastCut}; /* Save for hot-mover comparison */
     const newCut = {
       pct: natPct, fujimori: natCands.fuji||0, rla: natCands.rla||0,
       nieto: natCands.nieto||0, belmont: natCands.belm||0, sanchez: natCands.sanch||0
@@ -1336,6 +1480,7 @@ async function refreshFromONPE() {
     } else {
       Object.assign(lastCut, newCut);
     }
+    highlightHotMover(prevCutSnapshot, newCut);
 
     /* 3. Update regions */
     ONPE_REGIONS.length = 0;
@@ -1382,6 +1527,7 @@ async function refreshFromONPE() {
     renderTrackingChart();
     updateExtranjero();
     updateVoteCounters();
+    updateTrendArrows();
     document.querySelectorAll('.skel').forEach(s => s.remove());
 
     setStatus('✓ ONPE ' + natPct.toFixed(2) + '% · ' + allRegions.length + ' reg · Proyección recalculada', 'ok');
@@ -1391,7 +1537,8 @@ async function refreshFromONPE() {
       localStorage.setItem('onpe_cache', JSON.stringify({
         natPct, regions: allRegions, savedAt: new Date().toISOString(),
         natCut: {pct:natPct, fujimori:natCands.fuji||0, rla:natCands.rla||0,
-          nieto:natCands.nieto||0, belmont:natCands.belm||0, sanchez:natCands.sanch||0}
+          nieto:natCands.nieto||0, belmont:natCands.belm||0, sanchez:natCands.sanch||0},
+        trackingCuts: TRACKING.cuts.slice(-15) /* Last 15 cuts for trends */
       }));
     } catch(e) { /* localStorage full or unavailable */ }
 
@@ -1564,7 +1711,7 @@ function updateProjectionUI(projection, probs) {
 /* ══════════════════════════════════════════════════════════
    AUTO-REFRESH + COUNTDOWN TIMER (every 5 minutes)
 ══════════════════════════════════════════════════════════ */
-const REFRESH_MINUTES = 5;
+const REFRESH_MINUTES = 10;
 let autoRefreshInterval = null;
 let countdownInterval = null;
 let countdownSeconds = REFRESH_MINUTES * 60;
