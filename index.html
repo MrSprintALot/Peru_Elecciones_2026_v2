@@ -1772,6 +1772,27 @@ async function refreshFromONPE() {
 function runProjection(regions) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
 
+  /*
+   * Empirical marginal factors per department.
+   * Calculated from observed marginal rates between 80% and 87.8% snapshots.
+   * Each ratio = (candidate's % in marginal votes) / (candidate's accumulated average).
+   * Values >1 mean the candidate performs BETTER in late-counted (rural) votes.
+   * Applied at 70% weight to avoid overfitting (blend with 1.0 baseline).
+   * s = Sánchez factor, r = RLA factor.
+   */
+  const EF = {
+    'amazonas':{s:1.483,r:0.809},'ancash':{s:0.950,r:1.016},'apurimac':{s:1.011,r:0.715},
+    'arequipa':{s:1.000,r:1.075},'ayacucho':{s:1.425,r:0.505},'cajamarca':{s:1.071,r:0.886},
+    'callao':{s:1.000,r:1.000},'cusco':{s:2.000,r:0.500},'huancavelica':{s:1.171,r:0.830},
+    'huanuco':{s:1.655,r:0.500},'ica':{s:1.186,r:0.953},'junin':{s:1.792,r:0.764},
+    'la libertad':{s:2.000,r:0.500},'lambayeque':{s:1.867,r:0.520},'lima':{s:1.953,r:0.688},
+    'loreto':{s:1.540,r:1.071},'madre de dios':{s:1.226,r:0.813},'moquegua':{s:1.000,r:1.000},
+    'pasco':{s:1.503,r:0.752},'piura':{s:1.712,r:0.618},'puno':{s:1.055,r:0.835},
+    'san martin':{s:1.076,r:0.965},'tacna':{s:1.358,r:0.620},'tumbes':{s:1.000,r:1.000},
+    'ucayali':{s:1.669,r:0.992},'extranjero':{s:1.152,r:0.983},
+  };
+  const DAMP = 0.7; /* 70% empirical, 30% baseline (1.0) */
+
   const totActual = [0,0,0,0,0];
   const totPend = [0,0,0,0,0];
   let totalVV = 0;
@@ -1781,18 +1802,16 @@ function runProjection(regions) {
     const vvTotal = r.vv / (r.pct / 100);
     const vvPend = vvTotal - r.vv;
 
-    /* Rural adjustment: less counted = more rural pending.
-     * Order: [fuji, rla, nieto, belm, sanch]
-     * Factors recalibrated against empirical marginal rates observed
-     * between the 80% and 87.8% snapshots. Observed boost:
-     * Sánchez +55% vs avg, RLA -23% vs avg in marginal votes.
-     * Applied conservatively (50% of observed boost) to avoid overfitting. */
-    let factors;
-    if (r.pct < 50)       factors = [0.88, 0.80, 0.88, 1.08, 1.25];
-    else if (r.pct < 65)  factors = [0.92, 0.85, 0.92, 1.06, 1.18];
-    else if (r.pct < 80)  factors = [0.95, 0.90, 0.95, 1.04, 1.12];
-    else if (r.pct < 90)  factors = [0.98, 0.94, 0.98, 1.02, 1.08];
-    else                   factors = [1.00, 0.98, 1.00, 1.00, 1.03];
+    /* Look up empirical factors for this department */
+    const nameKey = (r.name || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') /* strip accents */
+      .replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u');
+    const ef = EF[nameKey] || {s:1.0, r:1.0};
+
+    /* Dampen: blend empirical with baseline. Order: [fuji, rla, nieto, belm, sanch] */
+    const rlaF = 1.0 + (ef.r - 1.0) * DAMP;
+    const sanF = 1.0 + (ef.s - 1.0) * DAMP;
+    const factors = [1.0, rlaF, 1.0, 1.0, sanF];
 
     const pcts = [r.fuji, r.rla, r.nieto, r.belm, r.sanch];
     const votos = pcts.map(p => (r.vv * p / 100));
@@ -1818,32 +1837,9 @@ function runProjection(regions) {
     pct: (totActual[i] + totPend[i]) / vvNational * 100
   })).sort((a, b) => b.pct - a.pct);
 
-  /*
-   * Trend correction: align projection with the observed per-candidate
-   * momentum from TRACKING cuts. This ensures the chart projection lines
-   * are consistent with the probability bars.
-   * Apply 20% of observed recent trend (conservative — rural factors already
-   * capture part of the effect, this avoids double-counting).
-   */
-  const trackKeyMap2 = {rla:'rla', sanch:'sanchez', nieto:'nieto', belm:'belmont', fuji:'fujimori'};
-  const realCuts = TRACKING.cuts.filter(c => c.pct < 99);
-  if (realCuts.length >= 4) {
-    /* Use last 25% of history — more recent = more predictive */
-    const backIdx = Math.max(0, Math.floor(realCuts.length * 0.75));
-    const back = realCuts[backIdx];
-    const now = realCuts[realCuts.length - 1];
-    const adv = now.pct - back.pct;
-    if (adv > 1) {
-      const natRemaining = Math.max(1, 100 - (currentNatPct || 75));
-      finals.forEach(f => {
-        const tk = trackKeyMap2[f.key];
-        if (!tk) return;
-        const rate = ((now[tk] || 0) - (back[tk] || 0)) / adv;
-        f.pct += rate * natRemaining * 0.2; /* 20% trend weight */
-      });
-      finals.sort((a, b) => b.pct - a.pct);
-    }
-  }
+  /* No trend correction needed — empirical per-department factors
+     already capture the full observed momentum from marginal rates.
+     Adding a trend on top would be double-counting. */
 
   return finals;
 }
