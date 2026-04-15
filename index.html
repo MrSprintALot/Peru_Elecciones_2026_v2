@@ -1181,11 +1181,11 @@ async function renderWithEmbeddedData() {
 
   /* Projection + Probability bars */
   try {
-    const projection = runProjection(ONPE_REGIONS);
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS);
     const initPct = lastCut ? lastCut.pct : 75;
     const probs = calcProbabilities(projection, initPct);
     renderProbBars(probs);
-    updateProjectionUI(projection, probs);
+    updateProjectionUI(projection, probs, vvNational);
   } catch(err) { console.error('Projection error:', err); }
 
   /* Hot-mover glow — AFTER reveal sequence + brief pause for dramatic effect */
@@ -1763,10 +1763,10 @@ async function refreshFromONPE() {
     allRegions.forEach(r => ONPE_REGIONS.push(r));
 
     /* 4. Run projection + re-render probability bars */
-    const projection = runProjection(ONPE_REGIONS);
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS);
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
-    updateProjectionUI(projection, probs);
+    updateProjectionUI(projection, probs, vvNational);
 
     /* 5. Hero count-up */
     try {
@@ -1859,16 +1859,21 @@ function runProjection(regions) {
    * Applied at 70% weight to avoid overfitting (blend with 1.0 baseline).
    * s = Sánchez factor, r = RLA factor.
    */
+  /*
+   * Empirical marginal factors per department.
+   * Capped at [0.5, 1.5] to limit outlier impact (with DAMP=0.5, max applied = 1.25).
+   * Previously capped at [0.5, 2.0] which gave Lima +48% boost — too aggressive.
+   */
   const EF = {
     'amazonas':{s:1.483,r:0.809},'ancash':{s:0.950,r:1.016},'apurimac':{s:1.011,r:0.715},
     'arequipa':{s:1.000,r:1.075},'ayacucho':{s:1.425,r:0.505},'cajamarca':{s:1.071,r:0.886},
-    'callao':{s:1.000,r:1.000},'cusco':{s:2.000,r:0.500},'huancavelica':{s:1.171,r:0.830},
-    'huanuco':{s:1.655,r:0.500},'ica':{s:1.186,r:0.953},'junin':{s:1.792,r:0.764},
-    'la libertad':{s:2.000,r:0.500},'lambayeque':{s:1.867,r:0.520},'lima':{s:1.953,r:0.688},
-    'loreto':{s:1.540,r:1.071},'madre de dios':{s:1.226,r:0.813},'moquegua':{s:1.000,r:1.000},
-    'pasco':{s:1.503,r:0.752},'piura':{s:1.712,r:0.618},'puno':{s:1.055,r:0.835},
+    'callao':{s:1.000,r:1.000},'cusco':{s:1.500,r:0.500},'huancavelica':{s:1.171,r:0.830},
+    'huanuco':{s:1.500,r:0.500},'ica':{s:1.186,r:0.953},'junin':{s:1.500,r:0.764},
+    'la libertad':{s:1.500,r:0.500},'lambayeque':{s:1.500,r:0.520},'lima':{s:1.500,r:0.688},
+    'loreto':{s:1.500,r:1.071},'madre de dios':{s:1.226,r:0.813},'moquegua':{s:1.000,r:1.000},
+    'pasco':{s:1.500,r:0.752},'piura':{s:1.500,r:0.618},'puno':{s:1.055,r:0.835},
     'san martin':{s:1.076,r:0.965},'tacna':{s:1.358,r:0.620},'tumbes':{s:1.000,r:1.000},
-    'ucayali':{s:1.669,r:0.992},'extranjero':{s:1.152,r:0.983},
+    'ucayali':{s:1.500,r:0.992},'extranjero':{s:1.152,r:0.983},
   };
   const DAMP = 0.5; /* 50% empirical, 50% baseline — conservative for production */
 
@@ -1959,7 +1964,7 @@ function runProjection(regions) {
      already capture the full observed momentum from marginal rates.
      Adding a trend on top would be double-counting. */
 
-  return finals;
+  return { finals, vvNational };
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -2007,7 +2012,7 @@ function calcProbabilities(projection, nationalPct) {
    §11  UI DE PROYECCIÓN — Actualiza tabla, barras y ref cards
    — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
-function updateProjectionUI(projection, probs) {
+function updateProjectionUI(projection, probs, vvNational) {
   const trackKeyMap = {fuji:'fujimori', rla:'rla', nieto:'nieto', belm:'belmont', sanch:'sanchez'};
   const labelMap = {fuji:'Fujimori', rla:'López Aliaga', nieto:'Nieto', sanch:'Sánchez', belm:'Belmont'};
   const colorMap = {fuji:'var(--c-fuji)', rla:'var(--c-rla)', nieto:'var(--c-nieto)', sanch:'var(--c-sanch)', belm:'var(--c-belm)'};
@@ -2032,10 +2037,8 @@ function updateProjectionUI(projection, probs) {
     const diffStr = diff > 0 ? '▲ ' + diff.toFixed(2) : diff < 0 ? '▼ ' + Math.abs(diff).toFixed(2) : '—';
     const diffColor = diff > 0 ? 'var(--c-nieto)' : diff < 0 ? 'var(--c-sanch)' : 'var(--tx3)';
 
-    /* Estimate total votes and gap to next candidate */
-    /* Estimate total votes from the ADJUSTED pct (includes trend correction).
-       Total VV estimated from sum of all candidates' raw totals. */
-    const totalEstVV = sorted.reduce((s, c) => s + (c.total || 0), 0) || 17000000;
+    /* Estimate total votes from projected % against NATIONAL total VV (not just top 5) */
+    const totalEstVV = vvNational || 17000000;
     const estVotes = Math.round(p.pct / 100 * totalEstVV);
     const votesStr = estVotes > 0 ? '~' + (estVotes / 1000).toFixed(0) + 'k' : '—';
     const nextCandidate = sorted[i + 1];
