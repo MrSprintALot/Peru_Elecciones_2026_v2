@@ -1246,8 +1246,24 @@ function showModal(regionName, data, source) {
 
   /* Vote count stats */
   if (data.vv && data.pct) {
-    const vvTotal = Math.round(data.vv / (data.pct / 100));
-    const vvPend = vvTotal - data.vv;
+    let vvPend;
+    const isExt = regionName.toLowerCase().includes('extranj');
+    if (isExt) {
+      /* Padrón-based blend for Extranjero */
+      const pf = data.pct / 100;
+      const eObs = data.vv / pf;
+      const eHist = 1210813 * 0.27;
+      vvPend = Math.max(0, Math.round(pf * eObs + (1 - pf) * eHist) - data.vv);
+    } else if (data.totalActas && data.contabilizadas && data.contabilizadas > 0) {
+      /* Exact integers for domestic */
+      const avg = data.vv / data.contabilizadas;
+      const jee = data.enviadasJee || 0;
+      const puras = data.totalActas - data.contabilizadas - jee;
+      vvPend = Math.round(puras * avg + jee * avg * 0.85);
+    } else {
+      const vvTotal = Math.round(data.vv / (data.pct / 100));
+      vvPend = vvTotal - data.vv;
+    }
     html += `<div class="modal-stats">
       <div class="modal-stat">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-nieto)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
