@@ -823,7 +823,7 @@ function renderKPIs(values) {
     const gapPct = above.pct - c.pct;
     const gapVotes = Math.round(gapPct / 100 * totalVV);
     const gapStr = gapVotes >= 1000 ? (gapVotes / 1000).toFixed(1) + 'k' : gapVotes.toLocaleString('es-PE');
-    return `<div class="kpi-gap">-${gapStr} vs ${i}°</div>`;
+    return `<div class="kpi-gap">~-${gapStr} vs ${i}°</div>`;
   }
 
   container.innerHTML = sorted.map((c, i) => {
@@ -1072,9 +1072,17 @@ function updateVoteCounters() {
   ONPE_REGIONS.forEach(r => {
     if (!r.vv || !r.pct) return;
     totalVV += r.vv;
-    totalEst += Math.round(r.vv / (r.pct / 100));
+    /* Use exact integers when available */
+    if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
+      const avg = r.vv / r.contabilizadas;
+      const jee = r.enviadasJee || 0;
+      const puras = r.totalActas - r.contabilizadas - jee;
+      totalEst += r.vv + puras * avg + jee * avg * 0.85;
+    } else {
+      totalEst += Math.round(r.vv / (r.pct / 100));
+    }
   });
-  const pend = totalEst - totalVV;
+  const pend = Math.round(totalEst - totalVV);
   const el1 = document.getElementById('vcContados');
   const el2 = document.getElementById('vcPendientes');
   if (el1) el1.textContent = totalVV.toLocaleString('es-PE');
@@ -1846,8 +1854,20 @@ function runProjection(regions) {
 
   regions.forEach(r => {
     if (!r.pct || r.pct <= 0) return;
-    const vvTotal = r.vv / (r.pct / 100);
-    const vvPend = vvTotal - r.vv;
+
+    /* Pending votes: use exact integers if available, else fallback to pct */
+    let vvPend;
+    if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
+      /* Exact method: integer acta counts from ONPE API */
+      const avgVVperActa = r.vv / r.contabilizadas;
+      const jee = r.enviadasJee || 0;
+      const actasPuras = r.totalActas - r.contabilizadas - jee;
+      vvPend = actasPuras * avgVVperActa + jee * avgVVperActa * 0.85;
+    } else {
+      /* Fallback: estimate from rounded percentage */
+      const vvTotal = r.vv / (r.pct / 100);
+      vvPend = vvTotal - r.vv;
+    }
 
     /* Look up empirical factors for this department */
     const nameKey = (r.name || '').toLowerCase()
@@ -1870,10 +1890,18 @@ function runProjection(regions) {
     totalVV += r.vv;
   });
 
-  /* Estimate total valid votes at 100% */
-  const currentNatPct = regions.reduce((s,r) => s + r.pct * (r.vv || 0), 0) /
-                         regions.reduce((s,r) => s + (r.vv || 0), 0) || 73;
-  const vvNational = totalVV / (currentNatPct / 100);
+  /* Estimate total valid votes at 100% — prefer exact method */
+  let vvNational;
+  const totalActasSum = regions.reduce((s, r) => s + (r.totalActas || 0), 0);
+  const contabSum = regions.reduce((s, r) => s + (r.contabilizadas || 0), 0);
+  if (totalActasSum > 0 && contabSum > 0) {
+    const avgVV = totalVV / contabSum;
+    vvNational = avgVV * totalActasSum;
+  } else {
+    const currentNatPct = regions.reduce((s,r) => s + r.pct * (r.vv || 0), 0) /
+                           regions.reduce((s,r) => s + (r.vv || 0), 0) || 73;
+    vvNational = totalVV / (currentNatPct / 100);
+  }
 
   /* Final results */
   const finals = KEYS.map((k, i) => ({
@@ -1973,7 +2001,7 @@ function updateProjectionUI(projection, probs) {
       const nextVotes = Math.round(nextCandidate.pct / 100 * totalEstVV);
       const gapVotes = estVotes - nextVotes;
       gapLabel = `<span style="font-size:9px;color:var(--tx3)">vs ${i+2}° </span>`;
-      gapStr = gapLabel + '+' + (gapVotes / 1000).toFixed(1) + 'k';
+      gapStr = gapLabel + '~+' + (gapVotes / 1000).toFixed(1) + 'k';
       gapColor = gapVotes > 50000 ? 'var(--c-nieto)' : gapVotes > 10000 ? 'var(--tx2)' : 'var(--c-sanch)';
     }
 
@@ -1985,7 +2013,7 @@ function updateProjectionUI(projection, probs) {
       `<span class="proj-name" style="color:${colorMap[p.key]}">${nameStr}</span>` +
       `<span class="proj-current">${currentVal.toFixed(2)}%</span>` +
       `<span class="proj-arrow">→</span>` +
-      `<span class="proj-final" style="color:${colorMap[p.key]}">${p.pct.toFixed(2)}%</span>` +
+      `<span class="proj-final" style="color:${colorMap[p.key]}">~${p.pct.toFixed(2)}%</span>` +
       `<span class="proj-diff" style="color:${diffColor}">${diffStr}</span>` +
       `<span class="proj-votes">${votesStr}</span>` +
       `<span class="proj-gap" style="color:${gapColor}">${gapStr}</span>`;
@@ -2000,8 +2028,8 @@ function updateProjectionUI(projection, probs) {
   const refProj = document.getElementById('refProj');
   if (refProj) {
     refProj.innerHTML = `<strong>Proyección ONPE</strong>
-      ${top4.map(c => '<span style="color:' + colorMap[c.key] + '">' + labelMap[c.key] + ' ' + c.pct.toFixed(2) + '%</span>').join(' · ')}
-      <div><span class="tag ok">Brecha 2°-5°: ${brecha}pp</span></div>`;
+      ${top4.map(c => '<span style="color:' + colorMap[c.key] + '">' + labelMap[c.key] + ' ~' + c.pct.toFixed(2) + '%</span>').join(' · ')}
+      <div><span class="tag ok">Brecha 2°-5°: ~${brecha}pp</span></div>`;
   }
 
   /* Compare projection 2nd-place vs Datum (RLA 2nd) and Ipsos (Sánchez 2nd) */
