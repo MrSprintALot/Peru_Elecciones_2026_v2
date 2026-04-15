@@ -1069,11 +1069,19 @@ function highlightHotMover() {
 /* Update national vote counters */
 function updateVoteCounters() {
   let totalVV = 0, totalEst = 0;
+  const EXT_PADRON = 1210813, EXT_PARTIC = 0.27;
   ONPE_REGIONS.forEach(r => {
     if (!r.vv || !r.pct) return;
     totalVV += r.vv;
-    /* Use exact integers when available */
-    if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
+    const isExt = (r.name || '').toLowerCase().includes('extranj');
+    if (isExt) {
+      /* Padrón-based blend for Extranjero */
+      const pf = r.pct / 100;
+      const eObs = r.vv / pf;
+      const eHist = EXT_PADRON * EXT_PARTIC;
+      totalEst += Math.round(pf * eObs + (1 - pf) * eHist);
+    } else if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
+      /* Exact integers for domestic */
       const avg = r.vv / r.contabilizadas;
       const jee = r.enviadasJee || 0;
       const puras = r.totalActas - r.contabilizadas - jee;
@@ -1852,13 +1860,32 @@ function runProjection(regions) {
   const totPend = [0,0,0,0,0];
   let totalVV = 0;
 
+  /*
+   * Extranjero special: estimate using padrón electoral + historical participation.
+   * Domestic regions: use exact integer acta counts from ONPE API.
+   * Fallback: rounded percentage method.
+   */
+  const EXTRANJERO_PADRON = 1210813; /* electores hábiles en el extranjero */
+  const EXTRANJERO_PARTIC_HIST = 0.27; /* ~27% participación histórica 1ra vuelta */
+
   regions.forEach(r => {
     if (!r.pct || r.pct <= 0) return;
 
-    /* Pending votes: use exact integers if available, else fallback to pct */
     let vvPend;
-    if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
-      /* Exact method: integer acta counts from ONPE API */
+    const isExtranjero = (r.name || '').toLowerCase().includes('extranj');
+
+    if (isExtranjero) {
+      /* Padrón-based method for Extranjero:
+         Blend: observed extrapolation + historical participation.
+         More counted → trust observed more. Less counted → trust historical more.
+         At 44.5%: ~181k pending. At 90%: converges to observed rate. */
+      const pctF = r.pct / 100;
+      const estObserved = r.vv / pctF; /* extrapolate current rate to 100% */
+      const estHistorical = EXTRANJERO_PADRON * EXTRANJERO_PARTIC_HIST; /* ~327k */
+      const totalEstVV = Math.round(pctF * estObserved + (1 - pctF) * estHistorical);
+      vvPend = Math.max(0, totalEstVV - r.vv);
+    } else if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
+      /* Exact method for domestic: integer acta counts from ONPE API */
       const avgVVperActa = r.vv / r.contabilizadas;
       const jee = r.enviadasJee || 0;
       const actasPuras = r.totalActas - r.contabilizadas - jee;
