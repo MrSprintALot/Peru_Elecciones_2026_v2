@@ -140,6 +140,9 @@
     .kpi-ghost-delta.up{color:#2ECDA7;background:rgba(46,205,167,0.12)}
     .kpi-ghost-delta.down{color:#E04848;background:rgba(224,72,72,0.12)}
     .kpi-ghost-delta.flat{color:var(--tx3);background:rgba(255,255,255,0.04)}
+    .kpi-gap{font-family:'DM Mono',monospace;font-size:11px;color:#EF9F27;margin-top:4px;
+      padding:3px 6px;background:rgba(239,159,39,.1);border-radius:4px;border:1px solid rgba(239,159,39,.2);
+      display:inline-block;font-weight:600}
 
     /* ══════════════ 5a. TREND ARROWS ══════════════ */
     .trend{display:inline-flex;flex-direction:row;gap:0;margin-left:4px;vertical-align:middle}
@@ -806,6 +809,18 @@ function renderKPIs(values) {
     </div>`;
   }
 
+  /* Estimate total valid votes for vote gap calculation */
+  const totalVV = ONPE_REGIONS.reduce((s, r) => s + (r.vv || 0), 0) || 15000000;
+
+  function voteGapHtml(c, i) {
+    if (!values || i === 0) return ''; /* 1st place has no one above */
+    const above = sorted[i - 1];
+    const gapPct = above.pct - c.pct;
+    const gapVotes = Math.round(gapPct / 100 * totalVV);
+    const gapStr = gapVotes >= 1000 ? (gapVotes / 1000).toFixed(1) + 'k' : gapVotes.toLocaleString('es-PE');
+    return `<div class="kpi-gap">-${gapStr} vs ${i}°</div>`;
+  }
+
   container.innerHTML = sorted.map((c, i) => {
     return `<div class="kpi" data-candidate="${c.key}" style="border-top:3px solid ${c.color}">
       <div class="kpi-header">
@@ -814,6 +829,7 @@ function renderKPIs(values) {
       </div>
       <div class="kpi-val" style="color:${c.color}"><span class="kpi-num" data-key="${c.key}">0.000%</span><span class="trend" data-trend-key="${c.trackKey}"></span></div>
       ${ghostHtml(c)}
+      ${voteGapHtml(c, i)}
     </div>`;
   }).join('');
 
