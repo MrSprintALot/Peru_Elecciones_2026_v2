@@ -222,7 +222,7 @@
     .proj-row:last-child{border-bottom:none}
     .proj-header{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.3px;font-weight:600;border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:2px}
     .proj-pos{width:28px;font-family:'DM Mono',monospace;font-weight:600;color:var(--tx3)}
-    .proj-name{flex:1;font-weight:600;min-width:80px}
+    .proj-name{flex:none;width:100px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .proj-current{width:70px;text-align:right;font-family:'DM Mono',monospace;color:var(--tx2)}
     .proj-arrow{width:20px;text-align:center;color:var(--tx3);font-size:10px}
     .proj-final{width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:700}
@@ -333,18 +333,21 @@
       /* Chart */
       .chart-container{height:260px}
 
-      /* Projection summary: compact */
-      .proj-summary{padding-top:8px;margin-top:10px}
-      .proj-row{font-size:11px;gap:2px;padding:4px 0}
-      .proj-pos{width:22px;font-size:11px}
-      .proj-name{font-size:11px;min-width:60px}
-      .proj-current{width:55px;font-size:10px}
-      .proj-arrow{width:14px;font-size:8px}
-      .proj-final{width:55px;font-size:11px}
-      .proj-diff{width:55px;font-size:9px}
-      .proj-votes{display:none} /* Hidden on mobile — table overflows at 406px */
-      .proj-gap{display:none}
-      .proj-header{font-size:8px}
+      /* Projection summary: horizontal scroll to show ALL columns */
+      .proj-summary{padding-top:8px;margin-top:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+        scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+      .proj-summary::after{content:'← desliza →';display:block;text-align:center;font-size:9px;
+        color:var(--tx3);padding:4px 0;opacity:.6}
+      .proj-row{font-size:11px;gap:2px;padding:4px 0;min-width:420px}
+      .proj-pos{width:20px;font-size:11px}
+      .proj-name{font-size:11px;min-width:45px;max-width:45px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none}
+      .proj-current{width:48px;font-size:10px}
+      .proj-arrow{width:12px;font-size:8px}
+      .proj-final{width:50px;font-size:11px}
+      .proj-diff{width:48px;font-size:9px}
+      .proj-votes{display:block;width:50px;font-size:9px}
+      .proj-gap{display:block;width:75px;font-size:9px}
+      .proj-header{font-size:7px;letter-spacing:0}
 
       /* Legend */
       .legend{gap:8px;margin-bottom:8px}
@@ -374,9 +377,7 @@
       .kpis{grid-template-columns:1fr 1fr}
       .kpi-val{font-size:14px}
       .kpi-avatar{width:22px;height:22px}
-      .proj-diff{display:none}
-      .proj-votes{display:none}
-      .proj-gap{display:none}
+      /* All proj columns stay visible — table scrolls horizontally */
       .prob-name{min-width:55px}
     }
 
@@ -1930,8 +1931,12 @@ function updateProjectionUI(projection, probs) {
       gapColor = gapVotes > 50000 ? 'var(--c-nieto)' : gapVotes > 10000 ? 'var(--tx2)' : 'var(--c-sanch)';
     }
 
+    const isMobile = window.innerWidth <= 600;
+    const shortLabel = {fuji:'Fuji', rla:'RLA', nieto:'Nieto', sanch:'Sánch', belm:'Belm'};
+    const nameStr = isMobile ? (shortLabel[p.key] || labelMap[p.key]) : labelMap[p.key];
+
     row.innerHTML = `<span class="proj-pos">${i+1}°</span>` +
-      `<span class="proj-name" style="color:${colorMap[p.key]}">${labelMap[p.key]}</span>` +
+      `<span class="proj-name" style="color:${colorMap[p.key]}">${nameStr}</span>` +
       `<span class="proj-current">${currentVal.toFixed(2)}%</span>` +
       `<span class="proj-arrow">→</span>` +
       `<span class="proj-final" style="color:${colorMap[p.key]}">${p.pct.toFixed(2)}%</span>` +
