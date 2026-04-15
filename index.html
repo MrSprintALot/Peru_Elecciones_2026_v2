@@ -1090,6 +1090,21 @@ async function renderWithEmbeddedData() {
     }
   } catch(e) { /* localStorage unavailable */ }
 
+  /* Deduplicate cuts: remove oscillations, keep only monotonically increasing pct */
+  if (TRACKING.cuts.length > 1) {
+    const clean = [TRACKING.cuts[0]];
+    for (let i = 1; i < TRACKING.cuts.length; i++) {
+      if (TRACKING.cuts[i].pct > clean[clean.length - 1].pct + 0.2) {
+        clean.push(TRACKING.cuts[i]);
+      }
+    }
+    if (clean.length < TRACKING.cuts.length) {
+      console.log('[Dedup] Cleaned ' + (TRACKING.cuts.length - clean.length) + ' duplicate/oscillating cuts');
+      TRACKING.cuts.length = 0;
+      clean.forEach(c => TRACKING.cuts.push(c));
+    }
+  }
+
   showHeroFallback();
 
   /* KPIs FIRST — instant, no dependencies, sorted by % */
@@ -1141,14 +1156,17 @@ async function renderWithEmbeddedData() {
   /* Fetch KV tracking in background (non-blocking, updates chart when ready) */
   if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
     fetch(WORKER_URL + '/api/tracking').then(r => r.ok ? r.json() : null).then(data => {
-      if (data?.cuts?.length > TRACKING.cuts.length) {
-        console.log('[KV] Loaded ' + data.cuts.length + ' cuts from server');
-        TRACKING.cuts.length = 0;
-        data.cuts.forEach(c => TRACKING.cuts.push(c));
-        /* Re-render chart and trends with full history */
-        if (window._trackingChart) window._trackingChart.destroy();
-        renderTrackingChart();
-        updateTrendArrows();
+      if (data?.cuts?.length > 0) {
+        /* Merge KV cuts with existing (preserve embedded history) */
+        const lastPct = TRACKING.cuts.length > 0 ? TRACKING.cuts[TRACKING.cuts.length - 1].pct : 0;
+        const newer = data.cuts.filter(c => c.pct > lastPct + 0.2);
+        if (newer.length > 0) {
+          console.log('[KV] Merged ' + newer.length + ' newer cuts from server');
+          newer.forEach(c => TRACKING.cuts.push(c));
+          if (window._trackingChart) window._trackingChart.destroy();
+          renderTrackingChart();
+          updateTrendArrows();
+        }
       }
     }).catch(e => console.warn('[KV] Tracking fetch failed:', e));
   }
@@ -1480,10 +1498,13 @@ function renderTrackingChart() {
     options:{
       responsive:true, maintainAspectRatio:false, showLine:true,
       animation:{
-        duration:1500,
+        duration:800,
         easing:'easeOutQuart',
         delay:function(ctx2){
-          return ctx2.datasetIndex * 150 + ctx2.dataIndex * 50;
+          /* Adaptive: total animation stays ~1.5s regardless of point count */
+          var maxPts = Math.max(ctx2.chart.data.datasets[0]?.data?.length || 10, 1);
+          var perPt = Math.min(50, Math.floor(1200 / maxPts));
+          return ctx2.datasetIndex * 80 + ctx2.dataIndex * perPt;
         }
       },
       interaction:{mode:'index',intersect:false},
@@ -1651,11 +1672,14 @@ async function refreshFromONPE() {
       pct: natPct, fujimori: natCands.fuji||0, rla: natCands.rla||0,
       nieto: natCands.nieto||0, belmont: natCands.belm||0, sanchez: natCands.sanch||0
     };
-    if (Math.abs(natPct - lastCut.pct) > 0.3) {
+    if (natPct > lastCut.pct + 0.35) {
+      /* Only add a new cut if conteo actually advanced (prevents oscillation) */
       TRACKING.cuts.push(newCut);
-    } else {
+    } else if (natPct >= lastCut.pct) {
+      /* Same range — update in place only if pct went up or stayed same */
       Object.assign(lastCut, newCut);
     }
+    /* If natPct < lastCut.pct, ignore (ONPE counter went backward, JEE noise) */
     /* Note: highlightHotMover moved after renderKPIs below */
 
     /* 3. Update regions */
