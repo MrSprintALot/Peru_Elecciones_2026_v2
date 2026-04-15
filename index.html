@@ -143,6 +143,11 @@
     .kpi-gap{font-family:'DM Mono',monospace;font-size:11px;color:#EF9F27;margin-top:4px;
       padding:3px 6px;background:rgba(239,159,39,.1);border-radius:4px;border:1px solid rgba(239,159,39,.2);
       display:inline-block;font-weight:600}
+    .kpi-gap.beating{animation:gapBeat .6s ease-in-out 4}
+    @keyframes gapBeat{
+      0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(239,159,39,0)}
+      50%{transform:scale(1.08);box-shadow:0 0 10px 3px rgba(239,159,39,.3)}
+    }
 
     /* ══════════════ 5a. TREND ARROWS ══════════════ */
     .trend{display:inline-flex;flex-direction:row;gap:0;margin-left:4px;vertical-align:middle}
@@ -1046,6 +1051,19 @@ function highlightHotMover() {
 
   /* Remove after animation completes (5 pulses × 0.7s = 3.5s + buffer) */
   _hotMoverTimeout = setTimeout(() => targetCard.classList.remove('hot-mover'), 4000);
+
+  /* Trigger vote-gap heartbeat AFTER hot-mover finishes — only on 3rd place (defines 2da vuelta) */
+  setTimeout(() => {
+    const kpis = document.querySelectorAll('.kpi');
+    if (kpis.length >= 3) {
+      const thirdGap = kpis[2].querySelector('.kpi-gap');
+      if (thirdGap) {
+        thirdGap.classList.remove('beating');
+        void thirdGap.offsetWidth;
+        thirdGap.classList.add('beating');
+      }
+    }
+  }, 3800);
 }
 
 /* Update national vote counters */
