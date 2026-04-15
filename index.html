@@ -1722,10 +1722,20 @@ async function refreshFromONPE() {
       updateTrendArrows();
       highlightHotMover();
     }, refreshRevealMs + 400);
+    const cacheStatus = resp1.headers.get('X-Cache') || '';
+    const cacheAge = resp1.headers.get('X-Cache-Age') || '';
+    let freshness = '';
+    if (cacheStatus === 'HIT' && cacheAge) {
+      const ageSec = parseInt(cacheAge);
+      freshness = ' · data de hace ' + (ageSec < 60 ? ageSec + 's' : Math.round(ageSec/60) + 'min');
+    } else if (cacheStatus === 'STALE') {
+      freshness = ' · data en espera de ONPE';
+    } else {
+      freshness = ' · data fresca';
+    }
     document.getElementById('lastUpdate').textContent =
       new Date().toLocaleString('es-PE', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) +
-      ' · ' + allRegions.length + ' regiones · En vivo' +
-      (resp1.headers.get('X-Cache') === 'HIT' ? ' · cache' : '');
+      ' · ' + allRegions.length + ' regiones' + freshness;
 
     /* 7. Re-render */
     setStatus('Redibujando...', '');
@@ -1983,7 +1993,7 @@ function updateProjectionUI(projection, probs) {
    Timer visual con refresh automático cada N minutos.
    — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
-const REFRESH_MINUTES = 10;
+const REFRESH_MINUTES = 3;
 let autoRefreshInterval = null;
 let countdownInterval = null;
 let countdownSeconds = REFRESH_MINUTES * 60;
