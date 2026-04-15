@@ -167,6 +167,8 @@
     .prob-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
       padding:14px 18px;margin-bottom:16px;opacity:0;animation:fadeUp .5s ease .35s forwards}
     .prob-title{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+    .prob-new{display:inline-block;font-size:9px;color:#E04848;font-weight:500;text-transform:none;letter-spacing:0;
+      border:1px solid rgba(224,72,72,.3);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
     .prob-bars{display:flex;gap:16px;flex-wrap:wrap}
     .prob-item{flex:1;min-width:180px;display:flex;align-items:center;gap:8px}
     .prob-name{font-size:11px;font-weight:600;min-width:75px;white-space:nowrap}
@@ -477,7 +479,7 @@
 
     <!-- Probability of passing to second round -->
     <div class="prob-section">
-      <div class="prob-title">Probabilidad de pase a segunda vuelta</div>
+      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Incluye tendencia rural observada al ~80% +</span></div>
       <div class="prob-bars" id="probBars"></div>
     </div>
 
