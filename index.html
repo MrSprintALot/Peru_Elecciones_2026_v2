@@ -226,7 +226,9 @@
     .proj-current{width:70px;text-align:right;font-family:'DM Mono',monospace;color:var(--tx2)}
     .proj-arrow{width:20px;text-align:center;color:var(--tx3);font-size:10px}
     .proj-final{width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:700}
-    .proj-diff{width:80px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx3)}
+    .proj-diff{width:70px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx3)}
+    .proj-votes{width:80px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2)}
+    .proj-gap{width:75px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:600}
 
     /* ══════════════ 9. LEGEND ══════════════ */
     .legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;opacity:0;animation:fadeUp .5s ease .15s forwards}
@@ -339,7 +341,9 @@
       .proj-current{width:55px;font-size:10px}
       .proj-arrow{width:14px;font-size:8px}
       .proj-final{width:55px;font-size:11px}
-      .proj-diff{width:60px;font-size:9px}
+      .proj-diff{width:55px;font-size:9px}
+      .proj-votes{width:65px;font-size:9px}
+      .proj-gap{width:60px;font-size:9px}
       .proj-header{font-size:8px}
 
       /* Legend */
@@ -371,6 +375,8 @@
       .kpi-val{font-size:14px}
       .kpi-avatar{width:22px;height:22px}
       .proj-diff{display:none}
+      .proj-votes{display:none}
+      .proj-gap{display:none}
       .prob-name{min-width:55px}
     }
 
@@ -528,13 +534,15 @@
             <span class="proj-current">ONPE actual</span>
             <span class="proj-arrow">→</span>
             <span class="proj-final">Proyección 100%</span>
+            <span class="proj-votes">Votos ~</span>
+            <span class="proj-gap">Diff ↓</span>
             <span class="proj-diff">Δ vs anterior</span>
           </div>
-          <div class="proj-row" id="proj1"><span class="proj-pos">1°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj2"><span class="proj-pos">2°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj3"><span class="proj-pos">3°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj4"><span class="proj-pos">4°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj5"><span class="proj-pos">5°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj1"><span class="proj-pos">1°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj2"><span class="proj-pos">2°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj3"><span class="proj-pos">3°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj4"><span class="proj-pos">4°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj5"><span class="proj-pos">5°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
         </div>
       </div>
     </div>
@@ -1848,54 +1856,28 @@ function runProjection(regions) {
    — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function calcProbabilities(projection, nationalPct) {
+  /*
+   * Uses the projected % from runProjection directly (which already includes
+   * trend-adjusted rural factors). No separate trend calculation — this ensures
+   * the probability bars are perfectly consistent with the projection table.
+   * Sigmoid converts projected margins into probabilities.
+   */
   const contenders = projection.filter(p => p.key !== 'fuji');
   if (contenders.length < 2) return {};
 
   const pct = Math.max(50, nationalPct || 75);
-  const remaining = Math.max(1, 100 - pct);
 
-  /*
-   * Per-candidate trend: project where each candidate will be at 100%
-   * based on their observed rate of change. Then convert the projected
-   * margin into a probability using a sigmoid function.
-   */
-  const trackKeyMap = {rla:'rla', sanch:'sanchez', nieto:'nieto', belm:'belmont'};
-  const trendRates = {};
-  const realCuts = TRACKING.cuts.filter(c => c.pct < 99);
-  if (realCuts.length >= 4) {
-    /* Use last 25% of history — recent trend is more predictive than full history */
-    const backIdx = Math.max(0, Math.floor(realCuts.length * 0.75));
-    const back = realCuts[backIdx];
-    const now = realCuts[realCuts.length - 1];
-    const adv = now.pct - back.pct;
-    if (adv > 1) {
-      Object.keys(trackKeyMap).forEach(k => {
-        const tk = trackKeyMap[k];
-        trendRates[k] = ((now[tk] || 0) - (back[tk] || 0)) / adv;
-      });
-    }
-  }
+  /* Steepness scales with counting progress: more counted = more certain */
+  const steepness = 1.0 + pct / 100; /* 50%→1.5, 75%→1.75, 90%→1.9, 95%→1.95 */
 
-  /* Project each candidate's final % (current + trend * remaining) */
-  const projected = contenders.map(c => {
-    const rate = trendRates[c.key] || 0;
-    /* Apply 25% of trend — enough to shift probabilities, not enough to dominate */
-    const finalPct = c.pct + rate * remaining * 0.25;
-    return { key: c.key, current: c.pct, rate: rate, final: finalPct };
-  }).sort((a, b) => b.final - a.final);
-
-  /*
-   * Sigmoid probability: for each candidate, probability of finishing 2nd
-   * is based on their projected margin to the projected 2nd-place candidate.
-   * Steepness scales with how much counting remains (less remaining = steeper).
-   */
-  const steepness = 1.5; /* Calibrated for 4-candidate race with margins 0-2pp */
-  const projLeader = projected[0];
+  /* Sort by projected % (already sorted from runProjection, but be safe) */
+  const sorted = [...contenders].sort((a, b) => b.pct - a.pct);
+  const leader = sorted[0];
   const probs = {};
 
-  projected.forEach(c => {
-    const marginToLeader = projLeader.final - c.final;
-    /* Sigmoid: 1 / (1 + e^(steepness * margin)) */
+  sorted.forEach(c => {
+    const marginToLeader = leader.pct - c.pct;
+    /* Sigmoid: leader gets ~50%, others drop off based on their gap */
     const prob = 1 / (1 + Math.exp(steepness * marginToLeader));
     probs[c.key] = Math.max(1, prob * 100);
   });
@@ -1936,11 +1918,28 @@ function updateProjectionUI(projection, probs) {
     const diffStr = diff > 0 ? '▲ ' + diff.toFixed(2) : diff < 0 ? '▼ ' + Math.abs(diff).toFixed(2) : '—';
     const diffColor = diff > 0 ? 'var(--c-nieto)' : diff < 0 ? 'var(--c-sanch)' : 'var(--tx3)';
 
+    /* Estimate total votes and gap to next candidate */
+    /* Estimate total votes from the ADJUSTED pct (includes trend correction).
+       Total VV estimated from sum of all candidates' raw totals. */
+    const totalEstVV = sorted.reduce((s, c) => s + (c.total || 0), 0) || 17000000;
+    const estVotes = Math.round(p.pct / 100 * totalEstVV);
+    const votesStr = estVotes > 0 ? '~' + (estVotes / 1000).toFixed(0) + 'k' : '—';
+    const nextCandidate = sorted[i + 1];
+    let gapStr = '—', gapColor = 'var(--tx3)';
+    if (nextCandidate && estVotes > 0) {
+      const nextVotes = Math.round(nextCandidate.pct / 100 * totalEstVV);
+      const gapVotes = estVotes - nextVotes;
+      gapStr = '+' + (gapVotes / 1000).toFixed(1) + 'k';
+      gapColor = gapVotes > 50000 ? 'var(--c-nieto)' : gapVotes > 10000 ? 'var(--tx2)' : 'var(--c-sanch)';
+    }
+
     row.innerHTML = `<span class="proj-pos">${i+1}°</span>` +
       `<span class="proj-name" style="color:${colorMap[p.key]}">${labelMap[p.key]}</span>` +
       `<span class="proj-current">${currentVal.toFixed(2)}%</span>` +
       `<span class="proj-arrow">→</span>` +
       `<span class="proj-final" style="color:${colorMap[p.key]}">${p.pct.toFixed(2)}%</span>` +
+      `<span class="proj-votes">${votesStr}</span>` +
+      `<span class="proj-gap" style="color:${gapColor}">${gapStr}</span>` +
       `<span class="proj-diff" style="color:${diffColor}">${diffStr}</span>`;
   });
 
