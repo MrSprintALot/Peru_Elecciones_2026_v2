@@ -1791,7 +1791,7 @@ function runProjection(regions) {
     'san martin':{s:1.076,r:0.965},'tacna':{s:1.358,r:0.620},'tumbes':{s:1.000,r:1.000},
     'ucayali':{s:1.669,r:0.992},'extranjero':{s:1.152,r:0.983},
   };
-  const DAMP = 0.7; /* 70% empirical, 30% baseline (1.0) */
+  const DAMP = 0.5; /* 50% empirical, 50% baseline — conservative for production */
 
   const totActual = [0,0,0,0,0];
   const totPend = [0,0,0,0,0];
