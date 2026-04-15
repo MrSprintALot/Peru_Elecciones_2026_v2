@@ -2,15 +2,19 @@
 <html lang="es">
 <head>
   <!--
-  ============================================================
-    PERÚ ELIGE 2026 — Dashboard Electoral Interactivo
-    ONPE en Vivo + Conteo Rápido Datum
-  ============================================================
-    Autor:    Renzo Núñez
-    Fuente:   ONPE (resultadoelectoral.onpe.gob.pe)
-              Datum Internacional — América TV / Canal N
-    Versión:  2.0
-  ============================================================
+  ╔════════════════════════════════════════════════════════════════╗
+  ║  PERÚ ELIGE 2026 — Dashboard Electoral Interactivo           ║
+  ║  Seguimiento en vivo del conteo oficial ONPE                 ║
+  ║  con proyección al 100% y conteo rápido Datum                ║
+  ╠════════════════════════════════════════════════════════════════╣
+  ║  Autor:     Renzo Núñez Berdejo                              ║
+  ║  Versión:   v44 — abril 2026                                 ║
+  ║  Fuentes:   ONPE (resultadoelectoral.onpe.gob.pe)            ║
+  ║             Datum Internacional (América TV / Canal N)       ║
+  ║             Ipsos Perú                                       ║
+  ║  Stack:     HTML/CSS/JS · D3.js · Chart.js · Cloudflare      ║
+  ║  Repo:      github.com/renzonunezaf/Elecciones_2026          ║
+  ╚════════════════════════════════════════════════════════════════╝
   -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,6 +33,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
   <style>
+    /* ╔══════════════════════════════════════════════════════╗
+       ║  Estilos — Renzo Núñez Berdejo · abril 2026        ║
+       ╚══════════════════════════════════════════════════════╝ */
+
     /* ══════════════ 1. VARIABLES ══════════════ */
     :root {
       --bg: #0f1117; --bg-card: #181b24; --bg-alt: #1e2230;
@@ -113,10 +121,9 @@
     /* ══════════════ 5. KPI STRIP ══════════════ */
     .kpis{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
     .kpi{flex:1;min-width:90px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;
-      opacity:0;animation:fadeUp .5s ease forwards}
-    .kpi:nth-child(1){animation-delay:.05s}.kpi:nth-child(2){animation-delay:.1s}
-    .kpi:nth-child(3){animation-delay:.15s}.kpi:nth-child(4){animation-delay:.2s}
-    .kpi:nth-child(5){animation-delay:.25s}.kpi:nth-child(6){animation-delay:.3s}
+      opacity:0;transform:translateY(16px) scale(0.95);transition:opacity .4s cubic-bezier(.34,1.56,.64,1), transform .4s cubic-bezier(.34,1.56,.64,1)}
+    .kpi.revealed{opacity:1;transform:translateY(0) scale(1)}
+    .kpi.flash{box-shadow:0 0 18px 3px rgba(255,255,255,.07)}
     @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
     /* Candidate avatar + label row */
@@ -125,7 +132,14 @@
       border:2px solid var(--border);background:var(--bg-alt)}
     .kpi-label{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;font-weight:500}
     .kpi-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:500}
-    .kpi-val.blue{color:var(--c-rla)}.kpi-val.red{color:var(--c-sanch)}.kpi-val.green{color:var(--c-nieto)}
+
+    /* Ghost values — previous value + delta */
+    .kpi-ghost{display:flex;align-items:center;gap:6px;margin-top:3px;min-height:16px}
+    .kpi-ghost-prev{font-family:'DM Mono',monospace;font-size:10px;color:var(--tx3);text-decoration:line-through}
+    .kpi-ghost-delta{font-family:'DM Mono',monospace;font-size:10px;padding:1px 5px;border-radius:4px}
+    .kpi-ghost-delta.up{color:#2ECDA7;background:rgba(46,205,167,0.12)}
+    .kpi-ghost-delta.down{color:#E04848;background:rgba(224,72,72,0.12)}
+    .kpi-ghost-delta.flat{color:var(--tx3);background:rgba(255,255,255,0.04)}
 
     /* ══════════════ 5a. TREND ARROWS ══════════════ */
     .trend{display:inline-flex;flex-direction:row;gap:0;margin-left:4px;vertical-align:middle}
@@ -139,11 +153,13 @@
     @keyframes arrowBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
     .trend.down svg{animation-name:arrowBounceDown}
     @keyframes arrowBounceDown{0%,100%{transform:translateY(0)}50%{transform:translateY(2px)}}
-    /* Hot mover glow */
-    .kpi.hot-mover{opacity:1;border-color:#2ECDA7 !important;box-shadow:0 0 15px 4px rgba(46,205,167,.4);animation:heartbeat .7s ease-in-out 5}
+    /* Hot mover glow — color matches the candidate (set via --glow-color in JS) */
+    .kpi.hot-mover{border-color:var(--glow-color, #2ECDA7) !important;
+      box-shadow:0 0 15px 4px var(--glow-shadow, rgba(46,205,167,.4));
+      animation:heartbeat .7s ease-in-out 5}
     @keyframes heartbeat{
-      0%,100%{transform:scale(1);box-shadow:0 0 10px 2px rgba(46,205,167,.3)}
-      50%{transform:scale(1.04);box-shadow:0 0 22px 6px rgba(46,205,167,.5)}
+      0%,100%{transform:scale(1);box-shadow:0 0 10px 2px var(--glow-shadow, rgba(46,205,167,.3))}
+      50%{transform:scale(1.04);box-shadow:0 0 22px 6px var(--glow-shadow, rgba(46,205,167,.5))}
     }
     .kpi.hot-mover .kpi-label::after{content:' 🔥';font-size:10px}
 
@@ -576,13 +592,33 @@
     </div>
   </div>
 
-  <div class="credits">Elaborado por Renzo Núñez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
+  <div class="credits">Elaborado por Renzo Núñez Berdejo · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
 </div>
 
 <script>
+/* ╔════════════════════════════════════════════════════════════════╗
+   ║  PERÚ ELIGE 2026 — JavaScript Principal                      ║
+   ║  Autor: Renzo Núñez Berdejo · abril 2026                     ║
+   ╠════════════════════════════════════════════════════════════════╣
+   ║  ÍNDICE                                                       ║
+   ║  §1   Data embebida (TRACKING, ONPE_REGIONS, DATUM_REGIONS)  ║
+   ║  §2   Sistema de candidatos (config, KPIs, prob bars)        ║
+   ║  §3   Tabs (ONPE en Vivo / Datum CR)                         ║
+   ║  §4   Utilidades UI (extranjero, hero, contadores)           ║
+   ║  §5   Trend arrows & hot mover                               ║
+   ║  §6   Mapa D3 (geo matching + renderizado)                   ║
+   ║  §7   Gráfico de evolución (Chart.js)                        ║
+   ║  §8   ONPE API & Cloudflare Worker                           ║
+   ║  §9   Motor de proyección                                    ║
+   ║  §10  Calculador de probabilidades                           ║
+   ║  §11  UI de proyección                                       ║
+   ║  §12  Auto-refresh & countdown                               ║
+   ╚════════════════════════════════════════════════════════════════╝ */
+
 /* ══════════════════════════════════════════════════════════
-   DATA — All election data embedded for portability
-   To update: replace this section or load from external JSON
+   §1  DATA — Datos electorales embebidos para carga instantánea.
+   Se actualizan con cada deploy o se sobreescriben vía Worker.
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 
 const TRACKING = {
@@ -663,42 +699,48 @@ const DATUM_REGIONS = [
 ];
 
 /* ══════════════════════════════════════════════════════════
-   CANDIDATE CONFIG
-══════════════════════════════════════════════════════════ */
-const CAND_CONFIG = {
-  fuji:  {label:'Fujimori',     color:'#E8943A', short:'Fujimori'},
-  rla:   {label:'López Aliaga', color:'#4A90D9', short:'L. Aliaga'},
-  nieto: {label:'Nieto',        color:'#2ECDA7', short:'Nieto'},
-  belm:  {label:'Belmont',      color:'#B07CD8', short:'Belmont'},
-  sanch: {label:'Sánchez',      color:'#E04848', short:'Sánchez'}
-};
-const CAND_KEYS = ['fuji','rla','nieto','belm','sanch'];
-
-/* TopoJSON source — must be declared before init runs */
-const TOPO_URL = 'https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json';
-let topoData = null;
-
-/* ══════════════════════════════════════════════════════════
-   CANDIDATE CONFIG — Single source of truth for names, keys, colors
+   §2  CANDIDATE SYSTEM
+   Configuración central de candidatos, colores, imágenes.
+   Todo el dashboard deriva de esta única fuente de verdad.
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const CANDIDATE_CONFIG = [
-  { key: 'fuji',  trackKey: 'fujimori', label: 'Fujimori',      color: 'var(--c-fuji)',  colorBg: 'var(--c-fuji-bg)',  img: '10001088' },
-  { key: 'rla',   trackKey: 'rla',      label: 'López Aliaga',  color: 'var(--c-rla)',   colorBg: 'var(--c-rla-bg)',   img: '07845838' },
-  { key: 'nieto', trackKey: 'nieto',    label: 'Nieto',          color: 'var(--c-nieto)', colorBg: 'var(--c-nieto-bg)', img: '06506278' },
-  { key: 'sanch', trackKey: 'sanchez',  label: 'Sánchez',        color: 'var(--c-sanch)', colorBg: 'var(--c-sanch-bg)', img: '16002918' },
-  { key: 'belm',  trackKey: 'belmont',  label: 'Belmont',        color: 'var(--c-belm)',  colorBg: 'var(--c-belm-bg)',  img: '09177250' }
+  { key: 'fuji',  trackKey: 'fujimori', label: 'Fujimori',     short: 'Fujimori',  color: 'var(--c-fuji)',  colorHex: '#E8943A', colorBg: 'var(--c-fuji-bg)',  img: '10001088' },
+  { key: 'rla',   trackKey: 'rla',      label: 'López Aliaga', short: 'L. Aliaga',  color: 'var(--c-rla)',   colorHex: '#4A90D9', colorBg: 'var(--c-rla-bg)',   img: '07845838' },
+  { key: 'nieto', trackKey: 'nieto',    label: 'Nieto',        short: 'Nieto',      color: 'var(--c-nieto)', colorHex: '#2ECDA7', colorBg: 'var(--c-nieto-bg)', img: '06506278' },
+  { key: 'sanch', trackKey: 'sanchez',  label: 'Sánchez',      short: 'Sánchez',    color: 'var(--c-sanch)', colorHex: '#E04848', colorBg: 'var(--c-sanch-bg)', img: '16002918' },
+  { key: 'belm',  trackKey: 'belmont',  label: 'Belmont',      short: 'Belmont',    color: 'var(--c-belm)',  colorHex: '#B07CD8', colorBg: 'var(--c-belm-bg)',  img: '09177250' }
 ];
 const ONPE_IMG_BASE = 'https://resultadoelectoral.onpe.gob.pe/assets/img-reales/candidatos/';
 
+/* Derived lookups — backwards-compatible with legacy references */
+const CAND_KEYS = CANDIDATE_CONFIG.map(c => c.key);
+const CAND_CONFIG = {};
+CANDIDATE_CONFIG.forEach(c => { CAND_CONFIG[c.key] = { label: c.label, color: c.colorHex, short: c.short }; });
+
+/* TopoJSON — fuente geográfica para el mapa de Perú */
+const TOPO_URL = 'https://cdn.jsdelivr.net/npm/datamaps@0.5.10/src/js/data/per.topo.json';
+let topoData = null;
+
+/* ── §2a  KPI Cards — renderizado dinámico ordenado por % ── */
+
+/* Previous values storage for ghost comparison */
+let _prevKpiValues = null;
+
+/* Timing constants for reveal sequence */
+const KPI_STAGGER_MS = 280;  /* Delay between each card reveal */
+const KPI_COUNTUP_MS = 550;  /* Count-up animation duration per card */
+
 /**
- * renderKPIs — Generates KPI cards sorted by current %, highest first.
- * Includes candidate avatar photo (rounded, from ONPE CDN).
- * @param {Object} values — {fuji: 16.88, rla: 12.6, nieto: 11.7, sanch: 10.5, belm: 10.0}
- *                          If null, renders skeletons.
+ * renderKPIs — Genera KPI cards ordenadas de mayor a menor %.
+ * Incluye foto del candidato, count-up staggered (tipo podio),
+ * y ghost values mostrando delta vs. valor anterior.
+ * @param {Object} values — {fuji: 16.88, rla: 12.6, ...} o null para skeletons
+ * @returns {number} Duración total del reveal en ms (para coordinar hot-mover glow)
  */
 function renderKPIs(values) {
   const container = document.getElementById('kpiCandidates');
-  if (!container) return;
+  if (!container) return 0;
 
   /* Build array with current values and sort descending */
   const sorted = CANDIDATE_CONFIG.map(c => ({
@@ -706,23 +748,107 @@ function renderKPIs(values) {
     pct: values ? (values[c.key] || values[c.trackKey] || 0) : 0
   })).sort((a, b) => b.pct - a.pct);
 
+  /*
+   * Ghost comparison: finds the most meaningful previous value to compare.
+   * Handles race condition where background refresh returns near-identical
+   * data to embedded, producing ~0 delta. Falls through to TRACKING if needed.
+   */
+  function getGhostPrev(c) {
+    const trackKeyMap = {fuji:'fujimori', rla:'rla', nieto:'nieto', sanch:'sanchez', belm:'belmont'};
+
+    /* Try _prevKpiValues first (from previous refresh cycle) */
+    if (_prevKpiValues) {
+      const prev = _prevKpiValues[c.key] || _prevKpiValues[c.trackKey] || 0;
+      /* Only use it if delta is meaningful (> 0.005pp) — otherwise
+         it's likely the same data from a race condition */
+      if (prev > 0 && Math.abs(c.pct - prev) > 0.005) return prev;
+    }
+
+    /* Fall back to TRACKING: find a cut with meaningful difference */
+    if (typeof TRACKING !== 'undefined' && TRACKING.cuts && TRACKING.cuts.length >= 2) {
+      /* Walk backwards to find a cut with at least 0.005pp difference */
+      for (let i = TRACKING.cuts.length - 2; i >= 0; i--) {
+        const cut = TRACKING.cuts[i];
+        const prev = cut[trackKeyMap[c.key]] || cut[c.trackKey] || 0;
+        if (prev > 0 && Math.abs(c.pct - prev) > 0.005) return prev;
+      }
+    }
+
+    return 0; /* No meaningful comparison available */
+  }
+
+  function ghostHtml(c) {
+    if (!values) return '<div class="kpi-ghost"></div>';
+    const prev = getGhostPrev(c);
+    if (prev === 0) return '<div class="kpi-ghost"></div>';
+    const delta = c.pct - prev;
+    const cls = delta > 0 ? 'up' : 'down';
+    const sign = delta > 0 ? '+' : '';
+    return `<div class="kpi-ghost">
+      <span class="kpi-ghost-prev">${prev.toFixed(3)}%</span>
+      <span class="kpi-ghost-delta ${cls}">${sign}${delta.toFixed(3)}</span>
+    </div>`;
+  }
+
   container.innerHTML = sorted.map((c, i) => {
-    const valHtml = values
-      ? `<span class="kpi-num" data-key="${c.key}">${c.pct.toFixed(3)}%</span>`
-      : `<span class="kpi-num" data-key="${c.key}"><span class="skel"></span></span>`;
-    return `<div class="kpi" data-candidate="${c.key}" style="border-top:3px solid ${c.color};animation-delay:${(i * 0.05 + 0.05).toFixed(2)}s">
+    return `<div class="kpi" data-candidate="${c.key}" style="border-top:3px solid ${c.color}">
       <div class="kpi-header">
         <img class="kpi-avatar" src="${ONPE_IMG_BASE}${c.img}.jpg" alt="${c.label}" loading="lazy" style="border-color:${c.color}">
         <div class="kpi-label">${c.label}</div>
       </div>
-      <div class="kpi-val" style="color:${c.color}">${valHtml}<span class="trend" data-trend-key="${c.trackKey}"></span></div>
+      <div class="kpi-val" style="color:${c.color}"><span class="kpi-num" data-key="${c.key}">0.000%</span><span class="trend" data-trend-key="${c.trackKey}"></span></div>
+      ${ghostHtml(c)}
     </div>`;
   }).join('');
+
+  /* Save current values as "previous" for next render */
+  if (values) {
+    _prevKpiValues = {};
+    sorted.forEach(c => { _prevKpiValues[c.key] = c.pct; _prevKpiValues[c.trackKey] = c.pct; });
+  }
+
+  /* Staggered reveal with count-up (skip animation if no values / skeletons) */
+  if (!values) {
+    container.querySelectorAll('.kpi').forEach(el => el.classList.add('revealed'));
+    return 0;
+  }
+
+  const cards = container.querySelectorAll('.kpi');
+  const totalRevealMs = cards.length * KPI_STAGGER_MS + KPI_COUNTUP_MS;
+
+  sorted.forEach((c, i) => {
+    const card = cards[i];
+    const numEl = card.querySelector('.kpi-num');
+    if (!card || !numEl) return;
+
+    setTimeout(() => {
+      /* Reveal card with bounce transition */
+      card.classList.add('revealed');
+
+      /* Flash effect */
+      card.classList.add('flash');
+      setTimeout(() => card.classList.remove('flash'), 400);
+
+      /* Count-up animation */
+      const target = c.pct;
+      const t0 = performance.now();
+      (function tick(t) {
+        const p = Math.min((t - t0) / KPI_COUNTUP_MS, 1);
+        const ease = 1 - Math.pow(1 - p, 3); /* easeOutCubic */
+        numEl.textContent = (target * ease).toFixed(3) + '%';
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    }, i * KPI_STAGGER_MS);
+  });
+
+  return totalRevealMs;
 }
 
+/* ── §2b  Barras de probabilidad — renderizado dinámico ordenado por prob % ── */
+
 /**
- * renderProbBars — Generates probability bars sorted by probability %, highest first.
- * Excludes Fujimori (1st place assured).
+ * renderProbBars — Genera barras de probabilidad ordenadas de mayor a menor.
+ * Excluye a Fujimori (1er lugar asegurado).
  * @param {Object} probs — {rla: 46, nieto: 23, sanch: 24, belm: 7}
  *                          If null, renders skeletons.
  */
@@ -749,10 +875,8 @@ function renderProbBars(probs) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   TAB SWITCHING
-══════════════════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════════════════
-   TAB SWITCHING (with lazy render for Datum map)
+   §3  TABS — Navegación entre ONPE en Vivo y Datum CR
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 let datumRendered = false;
 function switchTab(id) {
@@ -773,17 +897,18 @@ function switchTab(id) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   INIT
+   §4  UTILIDADES UI — Funciones auxiliares de interfaz
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 
-/* Update Extranjero — now rendered inside SVG, no separate HTML element needed */
-function updateExtranjero() {
-  /* Globe is re-drawn on each renderMap call, nothing to update here */
-}
+/* Extranjero: el globo se redibuja en cada renderMap, no requiere update separado */
+function updateExtranjero() {}
 
 /* ══════════════════════════════════════════════════════════
-   TREND ARROWS — Stock-market style directional indicators
-   Analyzes last 3 tracking cuts to determine trend direction
+   §5  TREND ARROWS & HOT MOVER
+   Flechas tipo stock-market y efecto glow para el candidato
+   con mayor movimiento positivo en los últimos 3 cortes.
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function updateTrendArrows() {
   /* Filter out projection cuts (pct >= 99) */
@@ -857,14 +982,26 @@ function highlightHotMover() {
   if (!maxKey || maxDelta <= 0) return;
 
   /* Find card by data-candidate attribute (works with dynamic sorted KPIs) */
-  const targetCard = document.querySelector(`.kpi[data-candidate="${trackToShort[maxKey]}"]`);
+  const shortKey = trackToShort[maxKey];
+  const targetCard = document.querySelector(`.kpi[data-candidate="${shortKey}"]`);
   if (!targetCard) return;
+
+  /* Get candidate's color for the glow */
+  const candConfig = CANDIDATE_CONFIG.find(c => c.key === shortKey);
+  const glowHex = candConfig ? candConfig.colorHex : '#2ECDA7';
+  const r = parseInt(glowHex.slice(1,3),16), g = parseInt(glowHex.slice(3,5),16), b = parseInt(glowHex.slice(5,7),16);
 
   /* Clear previous timeout so it doesn't kill this glow */
   if (_hotMoverTimeout) clearTimeout(_hotMoverTimeout);
 
-  /* Remove from any card, apply to winner */
-  document.querySelectorAll('.kpi.hot-mover').forEach(el => el.classList.remove('hot-mover'));
+  /* Remove from any card, apply to winner with their color */
+  document.querySelectorAll('.kpi.hot-mover').forEach(el => {
+    el.classList.remove('hot-mover');
+    el.style.removeProperty('--glow-color');
+    el.style.removeProperty('--glow-shadow');
+  });
+  targetCard.style.setProperty('--glow-color', glowHex);
+  targetCard.style.setProperty('--glow-shadow', `rgba(${r},${g},${b},0.4)`);
   targetCard.classList.add('hot-mover');
 
   /* Remove after animation completes (5 pulses × 0.7s = 3.5s + buffer) */
@@ -939,24 +1076,27 @@ async function renderWithEmbeddedData() {
 
   /* KPIs FIRST — instant, no dependencies, sorted by % */
   const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
+  let revealMs = 0;
   if (lastCut) {
-    renderKPIs({fuji: lastCut.fujimori, rla: lastCut.rla, nieto: lastCut.nieto, sanch: lastCut.sanchez, belm: lastCut.belmont});
+    revealMs = renderKPIs({fuji: lastCut.fujimori, rla: lastCut.rla, nieto: lastCut.nieto, sanch: lastCut.sanchez, belm: lastCut.belmont});
   } else {
     renderKPIs(null); /* Render skeletons */
   }
-  updateTrendArrows();
+
+  /* Trend arrows appear after reveal sequence */
+  setTimeout(() => updateTrendArrows(), revealMs);
 
   /* Projection + Probability bars */
   try {
     const projection = runProjection(ONPE_REGIONS);
     const initPct = lastCut ? lastCut.pct : 75;
     const probs = calcProbabilities(projection, initPct);
-    renderProbBars(probs); /* Render probability bars sorted by prob % */
+    renderProbBars(probs);
     updateProjectionUI(projection, probs);
   } catch(err) { console.error('Projection error:', err); }
 
-  /* Hot-mover glow — called directly, appears from frame 1 */
-  highlightHotMover();
+  /* Hot-mover glow — AFTER reveal sequence + brief pause for dramatic effect */
+  setTimeout(() => highlightHotMover(), revealMs + 400);
 
   /* Chart */
   try {
@@ -1038,7 +1178,9 @@ function showModal(regionName, data, source) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   GEO MATCHING (Haversine centroid matching)
+   §6  MAPA D3 — Renderizado geográfico por departamento
+   Matching por coordenadas Haversine + TopoJSON + D3.js
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const GEO_CENTERS = {
   'Amazonas':[-78,-6],'Áncash':[-77.5,-9.3],'Apurímac':[-73,-14],'Arequipa':[-72,-15.8],
@@ -1077,9 +1219,7 @@ function getWinner(region) {
   return winner;
 }
 
-/* ══════════════════════════════════════════════════════════
-   RENDER MAP
-══════════════════════════════════════════════════════════ */
+/* ── §6b  renderMap — dibuja el mapa coroplético con D3 ── */
 async function renderMap(containerId, regionsData, source) {
   const el = document.getElementById(containerId);
   if (!el) throw new Error('Container not found: ' + containerId);
@@ -1226,7 +1366,10 @@ async function renderMap(containerId, regionsData, source) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   RENDER TRACKING CHART
+   §7  GRÁFICO DE EVOLUCIÓN — Chart.js con tracking + proyección
+   Muestra la evolución histórica del conteo con líneas
+   por candidato y un área de proyección al 100%.
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function renderTrackingChart() {
   const ctx = document.getElementById('trackingChart');
@@ -1407,22 +1550,13 @@ function renderTrackingChart() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   ONPE API AUTO-REFRESH
-   Calls the ONPE API directly. Works if CORS allows it.
-   If blocked, shows instructions for manual update.
-══════════════════════════════════════════════════════════ */
-/* ══════════════════════════════════════════════════════════
-   CLOUDFLARE WORKER PROXY CONFIG
-   ═══════════════════════════════════════════════════════
-   ▼▼▼ CAMBIAR ESTA URL POR LA DE TU WORKER DESPLEGADO ▼▼▼
+   §8  ONPE API & CLOUDFLARE WORKER
+   Proxy para la API de ONPE vía Cloudflare Worker.
+   El Worker agrega CORS, cachea respuestas y split-fetches
+   para mantenerse dentro del free tier (50 subrequests).
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const WORKER_URL = 'https://onpe-proxy.renzonunez-af.workers.dev';
-/* ══════════════════════════════════════════════════════════
-   Si no tienes worker aún, usa '' (vacío) y la data
-   embebida se mostrará. Cuando despliegues el worker,
-   pon tu URL aquí y la página se actualizará sola.
-══════════════════════════════════════════════════════════ */
-
 const ONPE_DIRECT = 'https://resultadoelectoral.onpe.gob.pe/presentacion-backend';
 
 /* Helper: intenta Worker primero, fallback a ONPE directo */
@@ -1452,8 +1586,9 @@ const DEPT_UBIGEOS = [
   {u:'250000',n:'Ucayali'}
 ];
 
+/* Nombres ONPE para matching (derivados de CANDIDATE_CONFIG) */
 const TOP5 = ['FUJIMORI','LÓPEZ ALIAGA','NIETO','BELMONT','SANCHEZ'];
-const TOP5_KEYS = ['fuji','rla','nieto','belm','sanch'];
+const TOP5_KEYS = CAND_KEYS;
 
 function setStatus(msg, cls) {
   const el = document.getElementById('refreshStatus');
@@ -1528,9 +1663,13 @@ async function refreshFromONPE() {
       })(t0);
     } catch(e) { console.error('Hero error:', e); }
 
-    /* 6. KPIs — re-render sorted by current % */
-    renderKPIs(natCands);
-    highlightHotMover(); /* Must run AFTER renderKPIs regenerates the cards */
+    /* 6. KPIs — re-render sorted by current %, with staggered reveal */
+    const refreshRevealMs = renderKPIs(natCands);
+    /* Hot-mover and trends delayed to appear AFTER the reveal sequence */
+    setTimeout(() => {
+      updateTrendArrows();
+      highlightHotMover();
+    }, refreshRevealMs + 400);
     document.getElementById('lastUpdate').textContent =
       new Date().toLocaleString('es-PE', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) +
       ' · ' + allRegions.length + ' regiones · En vivo' +
@@ -1548,7 +1687,6 @@ async function refreshFromONPE() {
     renderTrackingChart();
     updateExtranjero();
     updateVoteCounters();
-    updateTrendArrows();
     document.querySelectorAll('.skel').forEach(s => s.remove());
 
     setStatus('✓ ONPE ' + natPct.toFixed(2) + '% · ' + allRegions.length + ' reg · Proyección recalculada', 'ok');
@@ -1577,9 +1715,10 @@ async function refreshFromONPE() {
 /* Init is now at the top — see switchTab / init section */
 
 /* ══════════════════════════════════════════════════════════
-   PROJECTION ENGINE
-   Calculates projected final results from current regional data.
-   Ports the Python projection logic to client-side JS.
+   §9  MOTOR DE PROYECCIÓN
+   Estima resultados finales a partir de la data regional parcial.
+   Aplica factores de ajuste rural por nivel de conteo.
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function runProjection(regions) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
@@ -1593,11 +1732,16 @@ function runProjection(regions) {
     const vvTotal = r.vv / (r.pct / 100);
     const vvPend = vvTotal - r.vv;
 
-    /* Rural adjustment: less counted = more rural pending */
+    /* Rural adjustment: less counted = more rural pending.
+     * Order: [fuji, rla, nieto, belm, sanch]
+     * Rural areas count last in Peru → remaining votes skew heavily
+     * toward Sánchez/Belmont and away from RLA/Nieto (urban candidates).
+     * Factors calibrated against actual urban→rural progression observed. */
     let factors;
-    if (r.pct < 50)      factors = [0.95, 0.92, 0.95, 1.04, 1.08];
-    else if (r.pct < 65)  factors = [0.98, 0.95, 0.97, 1.02, 1.05];
-    else if (r.pct < 80)  factors = [0.99, 0.98, 0.99, 1.01, 1.02];
+    if (r.pct < 50)       factors = [0.93, 0.88, 0.92, 1.06, 1.15];
+    else if (r.pct < 65)  factors = [0.96, 0.92, 0.95, 1.04, 1.10];
+    else if (r.pct < 80)  factors = [0.98, 0.96, 0.98, 1.02, 1.05];
+    else if (r.pct < 90)  factors = [0.99, 0.98, 0.99, 1.01, 1.02];
     else                   factors = [1.00, 1.00, 1.00, 1.00, 1.00];
 
     const pcts = [r.fuji, r.rla, r.nieto, r.belm, r.sanch];
@@ -1628,38 +1772,35 @@ function runProjection(regions) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   PROBABILITY CALCULATOR
-   Based on projected margins and convergence rate
+   §10  CALCULADOR DE PROBABILIDADES
+   Modelo basado en márgenes proyectados × factor de certeza.
+   La asimetría del voto pendiente ya está capturada por los
+   factores rurales en runProjection (§9).
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function calcProbabilities(projection, nationalPct) {
   const contenders = projection.filter(p => p.key !== 'fuji');
   if (contenders.length < 2) return {};
 
-  const leader = contenders[0];
-  const second = contenders[1];
-  const probs = {};
-
-  /*
-   * Factor de certeza: amplifica las brechas según % contado.
-   *   50% → ×1, 75% → ×3, 90% → ×9, 99% → ×99
-   */
   const pct = Math.max(50, nationalPct || 75);
   const remaining = Math.max(1, 100 - pct);
+
+  /*
+   * Certainty factor: amplifies margins as counting progresses.
+   *   50% → ×1, 75% → ×3, 90% → ×9, 95% → ×19
+   */
   const certainty = pct / remaining;
 
-  /* Margen del líder vs segundo lugar */
-  const leaderMargin = leader.pct - second.pct;
-  const leaderEffective = leaderMargin * certainty;
+  const leader = contenders[0];
+  const probs = {};
 
   contenders.forEach(c => {
     const margin = leader.pct - c.pct;
     const effectiveMargin = margin * certainty;
 
     if (c.key === leader.key) {
-      /* Líder: 50 + bonus por su ventaja sobre el 2° lugar */
-      probs[c.key] = Math.min(98, 50 + leaderEffective * 5);
+      probs[c.key] = Math.min(98, 50 + (leader.pct - contenders[1].pct) * certainty * 5);
     } else {
-      /* Retadores: penalizados por distancia al líder */
       probs[c.key] = Math.max(1, 50 - effectiveMargin * 5);
     }
   });
@@ -1672,8 +1813,8 @@ function calcProbabilities(projection, nationalPct) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   UPDATE PROJECTION UI
-   Updates chart, KPIs, and probability bars
+   §11  UI DE PROYECCIÓN — Actualiza tabla, barras y ref cards
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function updateProjectionUI(projection, probs) {
   const trackKeyMap = {fuji:'fujimori', rla:'rla', nieto:'nieto', belm:'belmont', sanch:'sanchez'};
@@ -1719,7 +1860,9 @@ function updateProjectionUI(projection, probs) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   AUTO-REFRESH + COUNTDOWN TIMER (every 5 minutes)
+   §12  AUTO-REFRESH & COUNTDOWN
+   Timer visual con refresh automático cada N minutos.
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const REFRESH_MINUTES = 10;
 let autoRefreshInterval = null;
