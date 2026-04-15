@@ -507,11 +507,11 @@
         <div class="vote-counters" id="voteCounters">
           <div class="vote-counter">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-nieto)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            <span>Contabilizados: <strong id="vcContados">—</strong></span>
+            <span>Votos contabilizados: <strong id="vcContados">—</strong></span>
           </div>
           <div class="vote-counter">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Por contabilizar: <strong id="vcPendientes">—</strong></span>
+            <span>Votos por contabilizar (est.): <strong id="vcPendientes">—</strong></span>
           </div>
         </div>
         <div class="map-container" id="mapOnpe">
@@ -1264,6 +1264,16 @@ function showModal(regionName, data, source) {
       const vvTotal = Math.round(data.vv / (data.pct / 100));
       vvPend = vvTotal - data.vv;
     }
+    /* Actas info (exact ONPE integers) */
+    const actasInfo = (data.totalActas && data.contabilizadas)
+      ? `<div class="modal-stat" style="font-size:11px;color:var(--tx3)">
+          ${data.contabilizadas.toLocaleString('es-PE')} de ${data.totalActas.toLocaleString('es-PE')} actas${data.enviadasJee ? ' · ' + data.enviadasJee + ' en JEE' : ''}
+        </div>` : '';
+
+    /* Method note for Extranjero */
+    const methodNote = isExt
+      ? '<div style="font-size:9px;color:var(--tx3);margin-top:4px;font-style:italic">Est. con padrón electoral (1.21M) × partic. histórica</div>' : '';
+
     html += `<div class="modal-stats">
       <div class="modal-stat">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-nieto)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -1271,8 +1281,9 @@ function showModal(regionName, data, source) {
       </div>
       <div class="modal-stat">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-sanch)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        <span><strong>~${vvPend.toLocaleString('es-PE')}</strong> votos por contabilizar</span>
+        <span><strong>~${vvPend.toLocaleString('es-PE')}</strong> votos por contabilizar (est.)</span>
       </div>
+      ${actasInfo}${methodNote}
     </div>`;
   }
 
@@ -1856,13 +1867,15 @@ function runProjection(regions) {
    * Calculated from observed marginal rates between 80% and 87.8% snapshots.
    * Each ratio = (candidate's % in marginal votes) / (candidate's accumulated average).
    * Values >1 mean the candidate performs BETTER in late-counted (rural) votes.
-   * Applied at 70% weight to avoid overfitting (blend with 1.0 baseline).
+   * Applied at 50% weight (DAMP=0.5) to avoid overfitting.
    * s = Sánchez factor, r = RLA factor.
    */
   /*
    * Empirical marginal factors per department.
+   * Calculated from observed marginal rates between 80% and 88% snapshots.
    * Capped at [0.5, 1.5] to limit outlier impact (with DAMP=0.5, max applied = 1.25).
-   * Previously capped at [0.5, 2.0] which gave Lima +48% boost — too aggressive.
+   * Extranjero neutralized — padrón-based method already handles it.
+   * s = Sánchez factor, r = RLA factor.
    */
   const EF = {
     'amazonas':{s:1.483,r:0.809},'ancash':{s:0.950,r:1.016},'apurimac':{s:1.011,r:0.715},
@@ -1873,7 +1886,7 @@ function runProjection(regions) {
     'loreto':{s:1.500,r:1.071},'madre de dios':{s:1.226,r:0.813},'moquegua':{s:1.000,r:1.000},
     'pasco':{s:1.500,r:0.752},'piura':{s:1.500,r:0.618},'puno':{s:1.055,r:0.835},
     'san martin':{s:1.076,r:0.965},'tacna':{s:1.358,r:0.620},'tumbes':{s:1.000,r:1.000},
-    'ucayali':{s:1.500,r:0.992},'extranjero':{s:1.152,r:0.983},
+    'ucayali':{s:1.500,r:0.992},'extranjero':{s:1.000,r:1.000},
   };
   const DAMP = 0.5; /* 50% empirical, 50% baseline — conservative for production */
 
@@ -1938,7 +1951,7 @@ function runProjection(regions) {
     totalVV += r.vv;
   });
 
-  /* Estimate total valid votes at 100% — prefer exact method */
+  /* Estimate total valid votes at 100% — integer-based when available */
   let vvNational;
   const totalActasSum = regions.reduce((s, r) => s + (r.totalActas || 0), 0);
   const contabSum = regions.reduce((s, r) => s + (r.contabilizadas || 0), 0);
