@@ -51,7 +51,7 @@
     }
     /* ══════════════ 2. RESET ══════════════ */
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx1);min-height:100vh}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx1);min-height:100vh;overflow-x:hidden}
 
     /* ══════════════ 2b. SKELETON LOADING ══════════════ */
     .skel{display:inline-block;width:60px;height:18px;border-radius:4px;background:var(--bg-alt);
@@ -228,7 +228,7 @@
     .proj-final{width:70px;text-align:right;font-family:'DM Mono',monospace;font-weight:700}
     .proj-diff{width:70px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx3)}
     .proj-votes{width:80px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--tx2)}
-    .proj-gap{width:75px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:600}
+    .proj-gap{width:95px;text-align:right;font-family:'DM Mono',monospace;font-size:11px;font-weight:600}
 
     /* ══════════════ 9. LEGEND ══════════════ */
     .legend{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:14px;opacity:0;animation:fadeUp .5s ease .15s forwards}
@@ -342,8 +342,8 @@
       .proj-arrow{width:14px;font-size:8px}
       .proj-final{width:55px;font-size:11px}
       .proj-diff{width:55px;font-size:9px}
-      .proj-votes{width:65px;font-size:9px}
-      .proj-gap{width:60px;font-size:9px}
+      .proj-votes{display:none} /* Hidden on mobile — table overflows at 406px */
+      .proj-gap{display:none}
       .proj-header{font-size:8px}
 
       /* Legend */
@@ -534,15 +534,15 @@
             <span class="proj-current">ONPE actual</span>
             <span class="proj-arrow">→</span>
             <span class="proj-final">Proyección 100%</span>
+            <span class="proj-diff">Δ vs conteo</span>
             <span class="proj-votes">Votos ~</span>
-            <span class="proj-gap">Diff ↓</span>
-            <span class="proj-diff">Δ vs anterior</span>
+            <span class="proj-gap">Ventaja</span>
           </div>
-          <div class="proj-row" id="proj1"><span class="proj-pos">1°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj2"><span class="proj-pos">2°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj3"><span class="proj-pos">3°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj4"><span class="proj-pos">4°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
-          <div class="proj-row" id="proj5"><span class="proj-pos">5°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-votes">—</span><span class="proj-gap">—</span><span class="proj-diff">—</span></div>
+          <div class="proj-row" id="proj1"><span class="proj-pos">1°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span><span class="proj-votes">—</span><span class="proj-gap">—</span></div>
+          <div class="proj-row" id="proj2"><span class="proj-pos">2°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span><span class="proj-votes">—</span><span class="proj-gap">—</span></div>
+          <div class="proj-row" id="proj3"><span class="proj-pos">3°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span><span class="proj-votes">—</span><span class="proj-gap">—</span></div>
+          <div class="proj-row" id="proj4"><span class="proj-pos">4°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span><span class="proj-votes">—</span><span class="proj-gap">—</span></div>
+          <div class="proj-row" id="proj5"><span class="proj-pos">5°</span><span class="proj-name">—</span><span class="proj-current"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-arrow">→</span><span class="proj-final"><span class="skel" style="width:45px;height:12px"></span></span><span class="proj-diff">—</span><span class="proj-votes">—</span><span class="proj-gap">—</span></div>
         </div>
       </div>
     </div>
@@ -1921,11 +1921,12 @@ function updateProjectionUI(projection, probs) {
     const estVotes = Math.round(p.pct / 100 * totalEstVV);
     const votesStr = estVotes > 0 ? '~' + (estVotes / 1000).toFixed(0) + 'k' : '—';
     const nextCandidate = sorted[i + 1];
-    let gapStr = '—', gapColor = 'var(--tx3)';
+    let gapStr = '—', gapColor = 'var(--tx3)', gapLabel = '';
     if (nextCandidate && estVotes > 0) {
       const nextVotes = Math.round(nextCandidate.pct / 100 * totalEstVV);
       const gapVotes = estVotes - nextVotes;
-      gapStr = '+' + (gapVotes / 1000).toFixed(1) + 'k';
+      gapLabel = `<span style="font-size:9px;color:var(--tx3)">vs ${i+2}° </span>`;
+      gapStr = gapLabel + '+' + (gapVotes / 1000).toFixed(1) + 'k';
       gapColor = gapVotes > 50000 ? 'var(--c-nieto)' : gapVotes > 10000 ? 'var(--tx2)' : 'var(--c-sanch)';
     }
 
@@ -1934,9 +1935,9 @@ function updateProjectionUI(projection, probs) {
       `<span class="proj-current">${currentVal.toFixed(2)}%</span>` +
       `<span class="proj-arrow">→</span>` +
       `<span class="proj-final" style="color:${colorMap[p.key]}">${p.pct.toFixed(2)}%</span>` +
+      `<span class="proj-diff" style="color:${diffColor}">${diffStr}</span>` +
       `<span class="proj-votes">${votesStr}</span>` +
-      `<span class="proj-gap" style="color:${gapColor}">${gapStr}</span>` +
-      `<span class="proj-diff" style="color:${diffColor}">${diffStr}</span>`;
+      `<span class="proj-gap" style="color:${gapColor}">${gapStr}</span>`;
   });
 
   /* Update ref cards dynamically */
