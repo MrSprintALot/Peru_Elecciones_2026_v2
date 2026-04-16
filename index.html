@@ -487,7 +487,7 @@
 
     <!-- Probability of passing to second round -->
     <div class="prob-section">
-      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Incluye tendencia rural observada al ~80% +</span></div>
+      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Modelo v6: damping dinámico rural + urbano + exterior</span></div>
       <div class="prob-bars" id="probBars"></div>
     </div>
 
@@ -612,7 +612,7 @@
     </div>
   </div>
 
-  <div class="credits">Elaborado por Renzo Núñez Berdejo · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
+  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v6 (damping dinámico) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
 </div>
 
 <script>
@@ -1495,6 +1495,7 @@ async function renderMap(containerId, regionsData, source) {
    — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function renderTrackingChart() {
+  if (window._trackingChart) { window._trackingChart.destroy(); window._trackingChart = null; }
   const ctx = document.getElementById('trackingChart');
   const cuts = TRACKING.cuts;
   const proj = TRACKING.projection;
@@ -1854,10 +1855,11 @@ async function refreshFromONPE() {
 /* Init is now at the top — see switchTab / init section */
 
 /* ══════════════════════════════════════════════════════════
-   §9  MOTOR DE PROYECCIÓN
+   §9  MOTOR DE PROYECCIÓN v6
    Estima resultados finales a partir de la data regional parcial.
-   Aplica factores de ajuste rural por nivel de conteo.
-   — Renzo Núñez Berdejo
+   Aplica factores de ajuste con damping dinámico por región.
+   v6: Extranjero 0.95 / Lima-Callao 0.80 / >90% 0.25 / resto 0.50
+   — Basado en Renzo Núñez Berdejo, modificado por Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 function runProjection(regions) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
@@ -1877,12 +1879,11 @@ function runProjection(regions) {
    * Extranjero neutralized — padrón-based method already handles it.
    * s = Sánchez factor, r = RLA factor.
    */
- const EF = {
+  const EF = {
     // URBAN BIAS: Prioridad RLA por Extranjero (49%) y actas JEE en Lima/Callao
-    'extranjero':   { s: 0.350, r: 1.450 }, 
+    'extranjero':   { s: 0.350, r: 1.450 },
     'lima':         { s: 0.550, r: 1.250 },
     'callao':       { s: 0.600, r: 1.150 },
-    
     // RURAL SMOOTHING: Reducción de agresividad (ya se procesó el grueso)
     'amazonas':     { s: 1.150, r: 0.900 },
     'cajamarca':    { s: 1.050, r: 0.950 },
@@ -1890,7 +1891,6 @@ function runProjection(regions) {
     'puno':         { s: 1.020, r: 0.980 },
     'ayacucho':     { s: 1.150, r: 0.850 },
     'huancavelica': { s: 1.100, r: 0.900 },
-    
     // NORMALIZACIÓN: Regiones con conteo avanzado (>93%)
     'ancash':       { s: 0.980, r: 1.010 },
     'arequipa':     { s: 1.000, r: 1.020 },
@@ -1910,7 +1910,7 @@ function runProjection(regions) {
     'tumbes':       { s: 1.000, r: 1.000 },
     'ucayali':      { s: 1.100, r: 1.000 }
   };
-  const DAMP = 0.5; /* 50% empirical, 50% baseline — conservative for production */
+  /* DAMP is now DYNAMIC — see currentDamp below */
 
   const totActual = [0,0,0,0,0];
   const totPend = [0,0,0,0,0];
@@ -1958,9 +1958,22 @@ function runProjection(regions) {
       .replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u');
     const ef = EF[nameKey] || {s:1.0, r:1.0};
 
-    /* Dampen: blend empirical with baseline. Order: [fuji, rla, nieto, belm, sanch] */
-    const rlaF = 1.0 + (ef.r - 1.0) * DAMP;
-    const sanF = 1.0 + (ef.s - 1.0) * DAMP;
+    /* ═══ DAMPING DINÁMICO v6 — Rafael Vasquez ═══
+     * Extranjero: confianza casi total en factores (0.95) — RLA domina 29%+
+     * Lima/Callao: confianza alta (0.80) — actas JEE pendientes favorecen RLA
+     * Resto >90%: el acumulado ya manda, factores se reducen a 0.25
+     * Resto <90%: damping estándar 0.50
+     */
+    let currentDamp;
+    if (nameKey === 'extranjero') {
+      currentDamp = 0.95;
+    } else if (['lima', 'callao'].includes(nameKey)) {
+      currentDamp = 0.80;
+    } else {
+      currentDamp = r.pct > 90 ? 0.25 : 0.50;
+    }
+    const rlaF = 1.0 + (ef.r - 1.0) * currentDamp;
+    const sanF = 1.0 + (ef.s - 1.0) * currentDamp;
     const factors = [1.0, rlaF, 1.0, 1.0, sanF];
 
     const pcts = [r.fuji, r.rla, r.nieto, r.belm, r.sanch];
