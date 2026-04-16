@@ -2066,10 +2066,10 @@ function runProjection(regions) {
    * s = Sánchez factor, r = RLA factor.
    */
   const EF = {
-    // URBAN BIAS: Prioridad RLA por Extranjero (49%) y actas JEE en Lima/Callao
+    // URBAN BIAS: Calibrado para reflejar que el perfil urbano ya está mayormente capturado
     'extranjero':   { s: 0.350, r: 1.450 },
-    'lima':         { s: 0.550, r: 1.250 },
-    'callao':       { s: 0.600, r: 1.150 },
+    'lima':         { s: 0.700, r: 1.100 },
+    'callao':       { s: 0.750, r: 1.050 },
     // RURAL SMOOTHING: Reducción de agresividad (ya se procesó el grueso)
     'amazonas':     { s: 1.150, r: 0.900 },
     'cajamarca':    { s: 1.050, r: 0.950 },
@@ -2144,7 +2144,7 @@ function runProjection(regions) {
       .replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u');
     const ef = EF[nameKey] || {s:1.0, r:1.0};
 
-    /* ═══ DAMPING DINÁMICO v2 — Rafael Vasquez ═══
+    /* ═══ DAMPING DINÁMICO v6 — Rafael Vasquez ═══
      * Extranjero: confianza casi total en factores (0.95) — RLA domina 29%+
      * Lima/Callao: confianza alta (0.80) — actas JEE pendientes favorecen RLA
      * Resto >90%: el acumulado ya manda, factores se reducen a 0.25
