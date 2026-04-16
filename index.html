@@ -1877,16 +1877,38 @@ function runProjection(regions) {
    * Extranjero neutralized — padrón-based method already handles it.
    * s = Sánchez factor, r = RLA factor.
    */
-  const EF = {
-    'amazonas':{s:1.483,r:0.809},'ancash':{s:0.950,r:1.016},'apurimac':{s:1.011,r:0.715},
-    'arequipa':{s:1.000,r:1.075},'ayacucho':{s:1.425,r:0.505},'cajamarca':{s:1.071,r:0.886},
-    'callao':{s:1.000,r:1.000},'cusco':{s:1.500,r:0.500},'huancavelica':{s:1.171,r:0.830},
-    'huanuco':{s:1.500,r:0.500},'ica':{s:1.186,r:0.953},'junin':{s:1.500,r:0.764},
-    'la libertad':{s:1.500,r:0.500},'lambayeque':{s:1.500,r:0.520},'lima':{s:1.500,r:0.688},
-    'loreto':{s:1.500,r:1.071},'madre de dios':{s:1.226,r:0.813},'moquegua':{s:1.000,r:1.000},
-    'pasco':{s:1.500,r:0.752},'piura':{s:1.500,r:0.618},'puno':{s:1.055,r:0.835},
-    'san martin':{s:1.076,r:0.965},'tacna':{s:1.358,r:0.620},'tumbes':{s:1.000,r:1.000},
-    'ucayali':{s:1.500,r:0.992},'extranjero':{s:1.000,r:1.000},
+ const EF = {
+    // URBAN BIAS: Prioridad RLA por Extranjero (49%) y actas JEE en Lima/Callao
+    'extranjero':   { s: 0.350, r: 1.450 }, 
+    'lima':         { s: 0.550, r: 1.250 },
+    'callao':       { s: 0.600, r: 1.150 },
+    
+    // RURAL SMOOTHING: Reducción de agresividad (ya se procesó el grueso)
+    'amazonas':     { s: 1.150, r: 0.900 },
+    'cajamarca':    { s: 1.050, r: 0.950 },
+    'cusco':        { s: 1.100, r: 0.850 },
+    'puno':         { s: 1.020, r: 0.980 },
+    'ayacucho':     { s: 1.150, r: 0.850 },
+    'huancavelica': { s: 1.100, r: 0.900 },
+    
+    // NORMALIZACIÓN: Regiones con conteo avanzado (>93%)
+    'ancash':       { s: 0.980, r: 1.010 },
+    'arequipa':     { s: 1.000, r: 1.020 },
+    'apurimac':     { s: 1.000, r: 0.950 },
+    'huanuco':      { s: 1.100, r: 0.850 },
+    'ica':          { s: 1.050, r: 1.000 },
+    'junin':        { s: 1.100, r: 0.950 },
+    'la libertad':  { s: 1.100, r: 0.950 },
+    'lambayeque':   { s: 1.050, r: 0.900 },
+    'loreto':       { s: 1.100, r: 1.000 },
+    'madre de dios':{ s: 1.100, r: 0.900 },
+    'moquegua':     { s: 1.000, r: 1.000 },
+    'pasco':        { s: 1.100, r: 0.900 },
+    'piura':        { s: 1.100, r: 0.900 },
+    'san martin':   { s: 1.020, r: 0.980 },
+    'tacna':        { s: 1.150, r: 0.850 },
+    'tumbes':       { s: 1.000, r: 1.000 },
+    'ucayali':      { s: 1.100, r: 1.000 }
   };
   const DAMP = 0.5; /* 50% empirical, 50% baseline — conservative for production */
 
