@@ -404,6 +404,32 @@
     .refresh-status.ok{color:var(--c-nieto)}.refresh-status.err{color:var(--c-sanch)}
 
     /* ══════════════ 12b. STATUS BAR ══════════════ */
+    /* ══════════════ 12c. ZONA DE DEFINICIÓN BANNER ══════════════ */
+    .zona-def{background:linear-gradient(135deg, rgba(224,72,72,.12), rgba(74,144,217,.12));
+      border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:12px 18px;
+      margin-bottom:14px;text-align:center;opacity:0;animation:fadeUp .5s ease .2s forwards}
+    .zona-def-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--tx3);margin-bottom:4px}
+    .zona-def-brecha{font-family:'DM Mono',monospace;font-size:24px;font-weight:700;letter-spacing:-1px}
+    .zona-def-brecha.empate{color:#EF9F27;animation:gapBeat .8s ease-in-out 3}
+    .zona-def-brecha.definido{color:var(--c-nieto)}
+    .zona-def-sub{font-size:11px;color:var(--tx2);margin-top:4px}
+    .zona-def-names{display:flex;justify-content:center;gap:24px;margin-top:8px}
+    .zona-def-cand{font-family:'DM Mono',monospace;font-size:13px;font-weight:600}
+    .zona-def-vs{color:var(--tx3);font-size:11px;font-weight:400}
+    /* ══════════════ 12d. PENDIENTES POR ZONA ══════════════ */
+    .pend-zona{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;opacity:0;animation:fadeUp .5s ease .25s forwards}
+    .pend-zona-item{flex:1;min-width:120px;background:var(--bg-card);border:1px solid var(--border);
+      border-radius:var(--radius);padding:10px 12px;text-align:center}
+    .pend-zona-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:3px}
+    .pend-zona-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;color:var(--tx1)}
+    .pend-zona-fav{font-size:9px;margin-top:2px;font-weight:500}
+    @media(max-width:600px){
+      .zona-def-brecha{font-size:20px}
+      .zona-def-names{gap:12px}
+      .pend-zona{flex-direction:column}
+      .pend-zona-item{min-width:unset}
+      .pend-zona-val{font-size:14px}
+    }
     .status-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
       margin-bottom:12px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);
       border-radius:8px;opacity:0;animation:fadeUp .5s ease .3s forwards}
@@ -489,6 +515,38 @@
     <div class="prob-section">
       <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Modelo v6: damping dinámico rural + urbano + exterior</span></div>
       <div class="prob-bars" id="probBars"></div>
+    </div>
+
+    <!-- ZONA DE DEFINICIÓN: Brecha 2° vs 3° -->
+    <div class="zona-def" id="zonaDef">
+      <div class="zona-def-title">Brecha 2° vs 3° lugar — Define segunda vuelta</div>
+      <div class="zona-def-brecha empate" id="zonaBrecha">Calculando...</div>
+      <div class="zona-def-names" id="zonaNames"></div>
+      <div class="zona-def-sub" id="zonaSub"></div>
+    </div>
+
+    <!-- VOTOS PENDIENTES POR ZONA -->
+    <div class="pend-zona" id="pendZona">
+      <div class="pend-zona-item">
+        <div class="pend-zona-label">Lima + Callao</div>
+        <div class="pend-zona-val" id="pendLima">—</div>
+        <div class="pend-zona-fav" style="color:var(--c-rla)">Favorece RLA</div>
+      </div>
+      <div class="pend-zona-item">
+        <div class="pend-zona-label">Sierra rural</div>
+        <div class="pend-zona-val" id="pendSierra">—</div>
+        <div class="pend-zona-fav" style="color:var(--c-sanch)">Favorece Sánchez</div>
+      </div>
+      <div class="pend-zona-item">
+        <div class="pend-zona-label">Exterior</div>
+        <div class="pend-zona-val" id="pendExterior">—</div>
+        <div class="pend-zona-fav" style="color:var(--c-rla)">Favorece RLA</div>
+      </div>
+      <div class="pend-zona-item">
+        <div class="pend-zona-label">Resto país</div>
+        <div class="pend-zona-val" id="pendResto">—</div>
+        <div class="pend-zona-fav" style="color:var(--tx3)">Mixto</div>
+      </div>
     </div>
 
     <!-- Legend -->
@@ -1095,6 +1153,90 @@ function updateVoteCounters() {
   const el2 = document.getElementById('vcPendientes');
   if (el1) el1.textContent = totalVV.toLocaleString('es-PE');
   if (el2) el2.textContent = '~' + pend.toLocaleString('es-PE');
+
+  /* Also update pendientes por zona */
+  updatePendientesZona();
+}
+
+/* ═══ ZONA DE DEFINICIÓN — Banner de brecha 2° vs 3° ═══ */
+function updateZonaDef(projection, vvNational) {
+  const el = document.getElementById('zonaDef');
+  if (!el) return;
+  const labelMap = {fuji:'Fujimori', rla:'López Aliaga', nieto:'Nieto', sanch:'Sánchez', belm:'Belmont'};
+  const colorMap = {fuji:'var(--c-fuji)', rla:'var(--c-rla)', nieto:'var(--c-nieto)', sanch:'var(--c-sanch)', belm:'var(--c-belm)'};
+
+  /* Projection is already sorted by pct desc. Position 0 = Fujimori (1st), 1 = 2nd, 2 = 3rd */
+  const sorted = [...projection].sort((a, b) => b.pct - a.pct);
+  const second = sorted[1];
+  const third = sorted[2];
+  if (!second || !third) return;
+
+  const gapPct = second.pct - third.pct;
+  const totalVV = vvNational || 17000000;
+  const gapVotes = Math.round(gapPct / 100 * totalVV);
+  const isEmpate = gapVotes < 80000;
+
+  const brechaEl = document.getElementById('zonaBrecha');
+  const namesEl = document.getElementById('zonaNames');
+  const subEl = document.getElementById('zonaSub');
+
+  brechaEl.textContent = '~' + (gapVotes / 1000).toFixed(1) + 'K votos · ' + gapPct.toFixed(2) + 'pp';
+  brechaEl.className = 'zona-def-brecha ' + (isEmpate ? 'empate' : 'definido');
+
+  namesEl.innerHTML =
+    `<span class="zona-def-cand" style="color:${colorMap[second.key]}">${labelMap[second.key]} ~${second.pct.toFixed(2)}%</span>` +
+    `<span class="zona-def-vs">vs</span>` +
+    `<span class="zona-def-cand" style="color:${colorMap[third.key]}">${labelMap[third.key]} ~${third.pct.toFixed(2)}%</span>`;
+
+  subEl.textContent = isEmpate
+    ? '⚠️ EMPATE TÉCNICO — Cualquiera puede pasar a 2da vuelta'
+    : '✓ Ventaja proyectada de ' + labelMap[second.key];
+}
+
+/* ═══ VOTOS PENDIENTES POR ZONA — Distribución geográfica ═══ */
+function updatePendientesZona() {
+  const SIERRA_RURAL = ['cajamarca','amazonas','cusco','puno','ayacucho','huancavelica','huanuco','apurimac'];
+  const LIMA_CALLAO = ['lima','callao'];
+  const EXT_PADRON = 1210813, EXT_PARTIC = 0.27;
+
+  let pendLima = 0, pendSierra = 0, pendExt = 0, pendResto = 0;
+
+  ONPE_REGIONS.forEach(r => {
+    if (!r.vv || !r.pct || r.pct <= 0) return;
+    const nameKey = (r.name || '').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const isExt = nameKey.includes('extranj');
+
+    let vvPend;
+    if (isExt) {
+      const pf = r.pct / 100;
+      const eObs = r.vv / pf;
+      const eHist = EXT_PADRON * EXT_PARTIC;
+      vvPend = Math.max(0, Math.round(pf * eObs + (1 - pf) * eHist) - r.vv);
+    } else if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
+      const avg = r.vv / r.contabilizadas;
+      const jee = r.enviadasJee || 0;
+      const puras = r.totalActas - r.contabilizadas - jee;
+      vvPend = Math.round(puras * avg + jee * avg * 0.85);
+    } else {
+      vvPend = Math.round(r.vv / (r.pct / 100)) - r.vv;
+    }
+
+    if (isExt) pendExt += vvPend;
+    else if (LIMA_CALLAO.some(n => nameKey.includes(n))) pendLima += vvPend;
+    else if (SIERRA_RURAL.some(n => nameKey.includes(n))) pendSierra += vvPend;
+    else pendResto += vvPend;
+  });
+
+  const fmt = v => v >= 1000 ? '~' + (v / 1000).toFixed(0) + 'K' : '~' + v;
+  const el1 = document.getElementById('pendLima');
+  const el2 = document.getElementById('pendSierra');
+  const el3 = document.getElementById('pendExterior');
+  const el4 = document.getElementById('pendResto');
+  if (el1) el1.textContent = fmt(pendLima);
+  if (el2) el2.textContent = fmt(pendSierra);
+  if (el3) el3.textContent = fmt(pendExt);
+  if (el4) el4.textContent = fmt(pendResto);
 }
 
 /* Show embedded data in hero when Worker isn't available */
@@ -1186,6 +1328,7 @@ async function renderWithEmbeddedData() {
     const probs = calcProbabilities(projection, initPct);
     renderProbBars(probs);
     updateProjectionUI(projection, probs, vvNational);
+    updateZonaDef(projection, vvNational);
   } catch(err) { console.error('Projection error:', err); }
 
   /* Hot-mover glow — AFTER reveal sequence + brief pause for dramatic effect */
@@ -1505,24 +1648,29 @@ function renderTrackingChart() {
   const labels = ['Fujimori','López Aliaga','Nieto','Belmont','Sánchez'];
 
   const datasets = [];
+  /* Secondary candidates (Nieto idx=2, Belmont idx=3) get reduced visual weight */
+  const isSecondary = [false, false, false, true, false]; /* fuji, rla, nieto, belm, sanch */
   keys.forEach((k,i) => {
+    const bw = isSecondary[i] ? 1.5 : 2.5;
+    const pr = isSecondary[i] ? 2 : 3;
+    const bc = isSecondary[i] ? colors[i] + '88' : colors[i]; /* add alpha for secondary */
     /* Solid line */
     datasets.push({
       label: labels[i], data: cuts.map(c=>({x:c.pct, y:c[k]})),
-      borderColor:colors[i], backgroundColor:colors[i],
-      borderWidth:2.5, pointRadius:3, pointHoverRadius:5,
+      borderColor:bc, backgroundColor:colors[i],
+      borderWidth:bw, pointRadius:pr, pointHoverRadius:5,
       pointBackgroundColor:colors[i], pointBorderColor:'#181b24', pointBorderWidth:1.5,
-      tension:0.3, order:1
+      tension:0.3, order: isSecondary[i] ? 2 : 1
     });
     /* Dashed projection */
     datasets.push({
       label: labels[i]+' →',
       data: [{x:cuts[cuts.length-1].pct, y:cuts[cuts.length-1][k]}, {x:100, y:proj[k]}],
-      borderColor:colors[i], backgroundColor:colors[i],
-      borderWidth:2, borderDash:[8,5],
-      pointRadius:[0,7], pointStyle:['circle','rectRot'],
+      borderColor:bc, backgroundColor:colors[i],
+      borderWidth: isSecondary[i] ? 1.5 : 2, borderDash:[8,5],
+      pointRadius:[0, isSecondary[i] ? 5 : 7], pointStyle:['circle','rectRot'],
       pointBackgroundColor:colors[i], pointBorderColor:'#181b24', pointBorderWidth:2,
-      tension:0, order:2
+      tension:0, order: isSecondary[i] ? 3 : 2
     });
   });
 
@@ -1779,6 +1927,7 @@ async function refreshFromONPE() {
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs, vvNational);
+    updateZonaDef(projection, vvNational);
 
     /* 5. Hero count-up */
     try {
