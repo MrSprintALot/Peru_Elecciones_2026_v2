@@ -513,7 +513,7 @@
 
     <!-- Probability of passing to second round -->
     <div class="prob-section">
-      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Modelo v6: damping dinámico rural + urbano + exterior</span></div>
+      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Modelo v2: damping dinámico rural + urbano + exterior</span></div>
       <div class="prob-bars" id="probBars"></div>
     </div>
 
@@ -670,7 +670,7 @@
     </div>
   </div>
 
-  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v6 (damping dinámico) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
+  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v2 (damping dinámico) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
 </div>
 
 <script>
@@ -2041,10 +2041,10 @@ async function refreshFromONPE() {
 /* Init is now at the top — see switchTab / init section */
 
 /* ══════════════════════════════════════════════════════════
-   §9  MOTOR DE PROYECCIÓN v6
+   §9  MOTOR DE PROYECCIÓN v2
    Estima resultados finales a partir de la data regional parcial.
    Aplica factores de ajuste con damping dinámico por región.
-   v6: Extranjero 0.95 / Lima-Callao 0.80 / >90% 0.25 / resto 0.50
+   v2: Extranjero 0.95 / Lima-Callao 0.80 / >90% 0.25 / resto 0.50
    — Basado en Renzo Núñez Berdejo, modificado por Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 function runProjection(regions) {
@@ -2144,7 +2144,7 @@ function runProjection(regions) {
       .replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u');
     const ef = EF[nameKey] || {s:1.0, r:1.0};
 
-    /* ═══ DAMPING DINÁMICO v6 — Rafael Vasquez ═══
+    /* ═══ DAMPING DINÁMICO v2 — Rafael Vasquez ═══
      * Extranjero: confianza casi total en factores (0.95) — RLA domina 29%+
      * Lima/Callao: confianza alta (0.80) — actas JEE pendientes favorecen RLA
      * Resto >90%: el acumulado ya manda, factores se reducen a 0.25
