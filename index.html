@@ -592,7 +592,7 @@
         </div>
         <!-- External tooltip panel (replaces hover tooltip on mobile) -->
         <div class="chart-tooltip-panel" id="chartTooltipPanel">
-          <div class="ctp-title" id="ctpTitle">Toca un punto del gráfico</div>
+          <div class="ctp-title" id="ctpTitle">Cargando datos...</div>
           <div class="ctp-body" id="ctpBody"></div>
         </div>
         <!-- Projection summary inside chart card -->
@@ -1239,6 +1239,39 @@ function updatePendientesZona() {
   if (el4) el4.textContent = fmt(pendResto);
 }
 
+/* ═══ TOOLTIP PANEL DEFAULT — Muestra último corte actual ═══ */
+function updateTooltipPanel() {
+  const titleEl = document.getElementById('ctpTitle');
+  const bodyEl = document.getElementById('ctpBody');
+  if (!titleEl || !bodyEl) return;
+
+  const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
+  if (!lastCut) return;
+
+  const cColors = ['#E8943A','#4A90D9','#2ECDA7','#B07CD8','#E04848'];
+  const cKeys = ['fujimori','rla','nieto','belmont','sanchez'];
+  const cLabels = ['Fujimori','L. Aliaga','Nieto','Belmont','Sánchez'];
+
+  titleEl.textContent = 'ONPE al ' + lastCut.pct.toFixed(1) + '% de actas — Último corte';
+
+  let html = '';
+  cKeys.forEach((k, i) => {
+    const val = lastCut[k] || 0;
+    html += `<div class="ctp-item"><div class="ctp-dot" style="background:${cColors[i]}"></div>${cLabels[i]} <strong style="color:${cColors[i]}">${val.toFixed(2)}%</strong></div>`;
+  });
+
+  /* Brechas clave */
+  const rla = lastCut.rla || 0;
+  const sanch = lastCut.sanchez || 0;
+  const nieto = lastCut.nieto || 0;
+  const gaps = [];
+  gaps.push('RLA→Sánch: ' + (rla - sanch).toFixed(2) + 'pp');
+  gaps.push('RLA→Nieto: ' + (rla - nieto).toFixed(2) + 'pp');
+  html += `<div class="ctp-gap">${gaps.join(' · ')}</div>`;
+
+  bodyEl.innerHTML = html;
+}
+
 /* Show embedded data in hero when Worker isn't available */
 function showHeroFallback() {
   const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
@@ -1341,6 +1374,7 @@ async function renderWithEmbeddedData() {
     if (loader) loader.style.display = 'none';
     if (canvas) canvas.style.display = 'block';
     renderTrackingChart();
+    updateTooltipPanel();
   } catch(err) { console.error('Chart error:', err); }
 
   /* Map LAST — async, fetches TopoJSON (1-3s) */
@@ -1743,7 +1777,7 @@ function renderTrackingChart() {
           return ctx2.datasetIndex * 80 + ctx2.dataIndex * perPt;
         }
       },
-      interaction:{mode:'index',intersect:false},
+      interaction:{mode:'nearest', axis:'x', intersect:false},
       plugins:{
         legend:{display:false},
         tooltip:{
@@ -1758,7 +1792,7 @@ function renderTrackingChart() {
             title:items=> {
               if (!items.length) return '';
               const x = items[0].parsed.x;
-              return x === 100 ? 'PROYECCIÓN AL 100%' : 'ONPE al ' + x.toFixed(1) + '% de actas';
+              return x >= 99.5 ? 'PROYECCIÓN AL 100%' : 'ONPE al ' + x.toFixed(1) + '% de actas';
             },
             label:ctx2=> '  ' + ctx2.dataset.label + ':  ' + ctx2.parsed.y.toFixed(2) + '%',
             afterBody:items=> {
@@ -1780,11 +1814,13 @@ function renderTrackingChart() {
             const bodyEl = document.getElementById('ctpBody');
             if (!panel || !context.tooltip.dataPoints || !context.tooltip.dataPoints.length) return;
 
-            const pts = context.tooltip.dataPoints.filter(p => !p.dataset.label.includes('→'));
+            const allPts = context.tooltip.dataPoints;
+            /* Get the actual X value from the nearest point (including projection datasets) */
+            const trueX = allPts[0].parsed.x;
+            const pts = allPts.filter(p => !p.dataset.label.includes('→'));
             if (!pts.length) return;
 
-            const x = pts[0].parsed.x;
-            titleEl.textContent = x === 100 ? 'PROYECCIÓN AL 100%' : 'ONPE al ' + x.toFixed(1) + '% actas';
+            titleEl.textContent = trueX >= 99.5 ? 'PROYECCIÓN AL 100%' : 'ONPE al ' + trueX.toFixed(1) + '% actas';
 
             const cColors = ['#E8943A','#4A90D9','#2ECDA7','#B07CD8','#E04848'];
             const cLabels = ['Fujimori','L. Aliaga','Nieto','Belmont','Sánchez'];
@@ -1976,6 +2012,7 @@ async function refreshFromONPE() {
     renderTrackingChart();
     updateExtranjero();
     updateVoteCounters();
+    updateTooltipPanel();
     document.querySelectorAll('.skel').forEach(s => s.remove());
 
     setStatus('✓ ONPE ' + natPct.toFixed(2) + '% · ' + allRegions.length + ' reg · Proyección recalculada', 'ok');
