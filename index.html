@@ -513,16 +513,36 @@
 
     <!-- Probability of passing to second round -->
     <div class="prob-section">
-      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Modelo v2: damping dinámico rural + urbano + exterior</span></div>
+      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Modelo v3: damping dinámico calibrado + rango dual</span></div>
       <div class="prob-bars" id="probBars"></div>
     </div>
 
-    <!-- ZONA DE DEFINICIÓN: Brecha 2° vs 3° -->
+    <!-- ZONA DE DEFINICIÓN: Brecha 2° vs 3° con rango dual -->
     <div class="zona-def" id="zonaDef">
       <div class="zona-def-title">Brecha 2° vs 3° lugar — Define segunda vuelta</div>
       <div class="zona-def-brecha empate" id="zonaBrecha">Calculando...</div>
       <div class="zona-def-names" id="zonaNames"></div>
       <div class="zona-def-sub" id="zonaSub"></div>
+      <!-- Rango dual: neutro vs factores -->
+      <div id="zonaRango" style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border);font-size:11px;color:var(--tx2);display:none">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:6px">Rango de proyección</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div id="zonaRangoNeutro" style="text-align:center;flex:1">
+            <div style="font-size:9px;color:var(--tx3)">Perfil plano (neutro)</div>
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="zonaValNeutro">—</div>
+          </div>
+          <div style="color:var(--tx3);font-size:10px">↔</div>
+          <div id="zonaRangoFactores" style="text-align:center;flex:1">
+            <div style="font-size:9px;color:var(--tx3)">Con factores regionales</div>
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="zonaValFactores">—</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:9px;color:var(--tx3);line-height:1.4" id="zonaExplica">
+          <strong style="color:var(--tx2)">¿Qué significa?</strong> El perfil plano asume que los votos pendientes se reparten igual que los ya contados.
+          Los factores regionales ajustan por el perfil urbano/rural de cada zona (ej: Lima pendiente tiende ligeramente más urbano, sierra pendiente tiende más rural).
+          La verdad probablemente está entre ambos escenarios.
+        </div>
+      </div>
     </div>
 
     <!-- VOTOS PENDIENTES POR ZONA -->
@@ -670,7 +690,7 @@
     </div>
   </div>
 
-  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v2 (damping dinámico) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
+  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v3 (damping dinámico calibrado) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
 </div>
 
 <script>
@@ -1191,6 +1211,105 @@ function updateZonaDef(projection, vvNational) {
   subEl.textContent = isEmpate
     ? '⚠️ EMPATE TÉCNICO — Cualquiera puede pasar a 2da vuelta'
     : '✓ Ventaja proyectada de ' + labelMap[second.key];
+
+  /* ═══ RANGO DUAL: Neutral vs Con Factores ═══ */
+  const rangoEl = document.getElementById('zonaRango');
+  const valNeutro = document.getElementById('zonaValNeutro');
+  const valFactores = document.getElementById('zonaValFactores');
+  if (!rangoEl || !valNeutro || !valFactores) return;
+
+  /* Run neutral projection (no factors, pure proportional) */
+  const neutralProj = runNeutralProjection(ONPE_REGIONS);
+  if (!neutralProj) { rangoEl.style.display = 'none'; return; }
+
+  /* Find 2nd and 3rd in neutral */
+  const nSorted = [...neutralProj.finals].sort((a, b) => b.pct - a.pct);
+  const n2 = nSorted[1];
+  const n3 = nSorted[2];
+  if (!n2 || !n3) return;
+
+  const nGap = n2.pct - n3.pct;
+  const nGapVotes = Math.round(nGap / 100 * (neutralProj.vvNational || totalVV));
+  const nLeader = labelMap[n2.key];
+  const nColor = colorMap[n2.key];
+
+  /* Factored projection (already calculated = the main projection) */
+  const fLeader = labelMap[second.key];
+  const fColor = colorMap[second.key];
+
+  valNeutro.style.color = nColor;
+  valNeutro.textContent = nLeader + ' +' + (nGapVotes / 1000).toFixed(1) + 'K';
+  valFactores.style.color = fColor;
+  valFactores.textContent = fLeader + ' +' + (gapVotes / 1000).toFixed(1) + 'K';
+
+  rangoEl.style.display = 'block';
+}
+
+/* ═══ PROYECCIÓN NEUTRAL — Sin factores, perfil plano proporcional ═══
+ * Asume que los votos pendientes de cada región se reparten
+ * exactamente igual que los ya contados. Sin boost urbano ni rural.
+ * Es el escenario más conservador y neutral posible.
+ */
+function runNeutralProjection(regions) {
+  const KEYS = ['fuji','rla','nieto','belm','sanch'];
+  const EXTRANJERO_PADRON = 1210813;
+  const EXTRANJERO_PARTIC_HIST = 0.27;
+
+  const totActual = [0,0,0,0,0];
+  const totPend = [0,0,0,0,0];
+  let totalVV = 0;
+
+  regions.forEach(r => {
+    if (!r.pct || r.pct <= 0) return;
+    let vvPend;
+    const isExtranjero = (r.name || '').toLowerCase().includes('extranj');
+
+    if (isExtranjero) {
+      const pctF = r.pct / 100;
+      const estObserved = r.vv / pctF;
+      const estHistorical = EXTRANJERO_PADRON * EXTRANJERO_PARTIC_HIST;
+      const totalEstVV = Math.round(pctF * estObserved + (1 - pctF) * estHistorical);
+      vvPend = Math.max(0, totalEstVV - r.vv);
+    } else if (r.totalActas && r.contabilizadas && r.contabilizadas > 0) {
+      const avgVVperActa = r.vv / r.contabilizadas;
+      const jee = r.enviadasJee || 0;
+      const actasPuras = r.totalActas - r.contabilizadas - jee;
+      vvPend = actasPuras * avgVVperActa + jee * avgVVperActa * 0.85;
+    } else {
+      vvPend = r.vv / (r.pct / 100) - r.vv;
+    }
+
+    const pcts = [r.fuji, r.rla, r.nieto, r.belm, r.sanch];
+    const votos = pcts.map(p => (r.vv * p / 100));
+
+    /* No factors — pure proportional */
+    KEYS.forEach((k, i) => {
+      totActual[i] += votos[i];
+      totPend[i] += vvPend * (pcts[i] / 100);
+    });
+    totalVV += r.vv;
+  });
+
+  let vvNational;
+  const totalActasSum = regions.reduce((s, r) => s + (r.totalActas || 0), 0);
+  const contabSum = regions.reduce((s, r) => s + (r.contabilizadas || 0), 0);
+  if (totalActasSum > 0 && contabSum > 0) {
+    vvNational = (totalVV / contabSum) * totalActasSum;
+  } else {
+    const currentNatPct = regions.reduce((s,r) => s + r.pct * (r.vv || 0), 0) /
+                           regions.reduce((s,r) => s + (r.vv || 0), 0) || 73;
+    vvNational = totalVV / (currentNatPct / 100);
+  }
+
+  const finals = KEYS.map((k, i) => ({
+    key: k,
+    actual: totActual[i],
+    pending: totPend[i],
+    total: totActual[i] + totPend[i],
+    pct: (totActual[i] + totPend[i]) / vvNational * 100
+  })).sort((a, b) => b.pct - a.pct);
+
+  return { finals, vvNational };
 }
 
 /* ═══ VOTOS PENDIENTES POR ZONA — Distribución geográfica ═══ */
@@ -2041,10 +2160,10 @@ async function refreshFromONPE() {
 /* Init is now at the top — see switchTab / init section */
 
 /* ══════════════════════════════════════════════════════════
-   §9  MOTOR DE PROYECCIÓN v2
+   §9  MOTOR DE PROYECCIÓN v3
    Estima resultados finales a partir de la data regional parcial.
    Aplica factores de ajuste con damping dinámico por región.
-   v2: Extranjero 0.95 / Lima-Callao 0.80 / >90% 0.25 / resto 0.50
+   v3: Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50
    — Basado en Renzo Núñez Berdejo, modificado por Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 function runProjection(regions) {
@@ -2067,7 +2186,7 @@ function runProjection(regions) {
    */
   const EF = {
     // URBAN BIAS: Calibrado para reflejar que el perfil urbano ya está mayormente capturado
-    'extranjero':   { s: 0.350, r: 1.450 },
+    'extranjero':   { s: 0.350, r: 1.300 },
     'lima':         { s: 0.700, r: 1.100 },
     'callao':       { s: 0.750, r: 1.050 },
     // RURAL SMOOTHING: Reducción de agresividad (ya se procesó el grueso)
@@ -2144,17 +2263,17 @@ function runProjection(regions) {
       .replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u');
     const ef = EF[nameKey] || {s:1.0, r:1.0};
 
-    /* ═══ DAMPING DINÁMICO v2 — Rafael Vasquez ═══
-     * Extranjero: confianza casi total en factores (0.95) — RLA domina 29%+
-     * Lima/Callao: confianza alta (0.80) — actas JEE pendientes favorecen RLA
+    /* ═══ DAMPING DINÁMICO v3 — Rafael Vasquez ═══
+     * Extranjero: confianza moderada-alta (0.80) — perfil distinto pero factor reducido a 1.30
+     * Lima/Callao: confianza moderada (0.50) — ya al 95%+, perfil urbano mayormente capturado
      * Resto >90%: el acumulado ya manda, factores se reducen a 0.25
      * Resto <90%: damping estándar 0.50
      */
     let currentDamp;
     if (nameKey === 'extranjero') {
-      currentDamp = 0.95;
-    } else if (['lima', 'callao'].includes(nameKey)) {
       currentDamp = 0.80;
+    } else if (['lima', 'callao'].includes(nameKey)) {
+      currentDamp = 0.50;
     } else {
       currentDamp = r.pct > 90 ? 0.25 : 0.50;
     }
