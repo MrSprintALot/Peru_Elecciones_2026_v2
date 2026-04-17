@@ -492,6 +492,16 @@
     </div>
   </div>
 
+  <!-- ══════════════ DISCLAIMER: Discrepancia de datos ══════════════ -->
+  <div style="background:rgba(239,159,39,.08);border:1px solid rgba(239,159,39,.25);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.5">
+    <strong style="color:#EF9F27">⚠️ Nota de transparencia:</strong>
+    Se han reportado discrepancias entre el total nacional de la API ONPE y la suma de las 26 APIs regionales (25 dptos + extranjero).
+    Según el análisis de <a href="https://x.com/primeinstitute_" target="_blank" style="color:var(--c-rla);text-decoration:underline">@primeinstitute_</a>,
+    existen votos contabilizados en el total nacional que no aparecen en ninguna región individual, con un sesgo desproporcionado hacia un candidato.
+    Este dashboard consume la API nacional. Los datos mostrados están sujetos a esta discrepancia mientras la ONPE no la aclare.
+    <div id="discrepanciaData" style="margin-top:6px;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;display:none"></div>
+  </div>
+
   <!-- ══════════════ TABS ══════════════ -->
   <div class="tabs">
     <div class="tab active" onclick="switchTab('onpe')">
@@ -2076,6 +2086,42 @@ async function refreshFromONPE() {
     /* 3. Update regions */
     ONPE_REGIONS.length = 0;
     allRegions.forEach(r => ONPE_REGIONS.push(r));
+
+    /* 3b. VERIFICADOR DE CONSISTENCIA — Nacional vs Suma Regional */
+    try {
+      const natVV = snap1.national.votosValidos || 0;
+      const natContab = snap1.national.contabilizadas || 0;
+      /* Calculate regional totals from actual vote counts */
+      let regVV = 0, regSanch = 0, regRLA = 0;
+      allRegions.forEach(r => {
+        regVV += r.vv || 0;
+        regSanch += Math.round((r.vv || 0) * (r.sanch || 0) / 100);
+        regRLA += Math.round((r.vv || 0) * (r.rla || 0) / 100);
+      });
+      /* National candidate votes (from % × total VV) */
+      const natSanch = Math.round(natVV * (natCands.sanch || 0) / 100);
+      const natRLA = Math.round(natVV * (natCands.rla || 0) / 100);
+      
+      const diffS = natSanch - regSanch;
+      const diffR = natRLA - regRLA;
+      const diffVV = natVV - regVV;
+      
+      const discEl = document.getElementById('discrepanciaData');
+      if (discEl && (Math.abs(diffS) > 50 || Math.abs(diffR) > 50)) {
+        const ratio = diffR !== 0 ? (diffS / diffR).toFixed(1) : '∞';
+        discEl.innerHTML = `<strong style="color:#EF9F27">⚠️ Discrepancia detectada en tiempo real:</strong> ` +
+          `Nacional vs suma regional → Sánchez: <strong>${diffS > 0 ? '+' : ''}${diffS.toLocaleString('es-PE')}</strong> votos | ` +
+          `RLA: <strong>${diffR > 0 ? '+' : ''}${diffR.toLocaleString('es-PE')}</strong> votos | ` +
+          `Ratio: <strong>${ratio}:1</strong> | ` +
+          `VV total: ${diffVV > 0 ? '+' : ''}${diffVV.toLocaleString('es-PE')}`;
+        discEl.style.display = 'block';
+      } else if (discEl) {
+        discEl.innerHTML = '<span style="color:var(--c-nieto)">✓ Sin discrepancia significativa entre API nacional y suma regional</span>';
+        discEl.style.display = 'block';
+      }
+      console.log('[Consistencia] Nacional S:', natSanch, 'Regional S:', regSanch, 'Δ:', diffS,
+        '| Nacional RLA:', natRLA, 'Regional RLA:', regRLA, 'Δ:', diffR);
+    } catch(e) { console.warn('Consistency check failed:', e); }
 
     /* 4. Run projection + re-render probability bars */
     const { finals: projection, vvNational } = runProjection(ONPE_REGIONS);
