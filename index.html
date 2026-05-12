@@ -1186,7 +1186,7 @@ function updateVoteCounters() {
 }
 
 /* ═══ ZONA DE DEFINICIÓN — Banner de brecha 2° vs 3° ═══ */
-function updateZonaDef(projection, vvNational) {
+function updateZonaDef(projection, vvNational, natPctForZona) {
   const el = document.getElementById('zonaDef');
   if (!el) return;
   const labelMap = {fuji:'Fujimori', rla:'López Aliaga', nieto:'Nieto', sanch:'Sánchez', belm:'Belmont'};
@@ -1226,7 +1226,7 @@ function updateZonaDef(projection, vvNational) {
   if (!rangoEl || !valNeutro || !valFactores) return;
 
   /* Run neutral projection (no factors, pure proportional) */
-  const neutralProj = runNeutralProjection(ONPE_REGIONS);
+  const neutralProj = runNeutralProjection(ONPE_REGIONS, natPctForZona);
   if (!neutralProj) { rangoEl.style.display = 'none'; return; }
 
   /* Find 2nd and 3rd in neutral */
@@ -1257,8 +1257,27 @@ function updateZonaDef(projection, vvNational) {
  * exactamente igual que los ya contados. Sin boost urbano ni rural.
  * Es el escenario más conservador y neutral posible.
  */
-function runNeutralProjection(regions) {
+function runNeutralProjection(regions, natPct) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
+
+  /* Early-return al 99%+ igual que runProjection */
+  const natPctCheck = natPct || (regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
+                      (regions.reduce((s,r) => s + (r.vv||0), 0) || 1));
+  if (natPctCheck >= 99.0) {
+    const totals = {};
+    KEYS.forEach(k => { totals[k] = 0; });
+    let totalVVcheck = 0;
+    regions.forEach(r => {
+      KEYS.forEach(k => { totals[k] += (r.vv||0) * (r[k]||0) / 100; });
+      totalVVcheck += r.vv||0;
+    });
+    const finals = KEYS.map(k => ({
+      key: k, actual: totals[k], pending: 0, total: totals[k],
+      pct: totalVVcheck > 0 ? totals[k] / totalVVcheck * 100 : 0
+    })).sort((a,b) => b.pct - a.pct);
+    return { finals, vvNational: totalVVcheck };
+  }
+
   const EXTRANJERO_PADRON = 1210813;
   const EXTRANJERO_PARTIC_HIST = 0.27;
 
@@ -1482,12 +1501,12 @@ async function renderWithEmbeddedData() {
 
   /* Projection + Probability bars */
   try {
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS);
     const initPct = lastCut ? lastCut.pct : 75;
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, initPct);
     const probs = calcProbabilities(projection, initPct);
     renderProbBars(probs);
     updateProjectionUI(projection, probs, vvNational);
-    updateZonaDef(projection, vvNational);
+    updateZonaDef(projection, vvNational, initPct);
   } catch(err) { console.error('Projection error:', err); }
 
   /* Hot-mover glow — AFTER reveal sequence + brief pause for dramatic effect */
@@ -2121,11 +2140,11 @@ async function refreshFromONPE() {
     } catch(e) { console.warn('Consistency check failed:', e); }
 
     /* 4. Run projection + re-render probability bars */
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS);
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, natPct);
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs, vvNational);
-    updateZonaDef(projection, vvNational);
+    updateZonaDef(projection, vvNational, natPct);
 
     /* 5. Hero count-up */
     try {
@@ -2209,12 +2228,12 @@ async function refreshFromONPE() {
    v3: Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50
    — Basado en Renzo Núñez Berdejo, modificado por Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
-function runProjection(regions) {
+function runProjection(regions, natPct) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
 
   /* ═══ EARLY RETURN al 99.5%+: sin pendientes significativos, proyección = conteo actual ═══ */
-  const natPctCheck = regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
-                      (regions.reduce((s,r) => s + (r.vv||0), 0) || 1);
+  const natPctCheck = natPct || (regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
+                      (regions.reduce((s,r) => s + (r.vv||0), 0) || 1));
   if (natPctCheck >= 99.0) {
     const totals = {};
     KEYS.forEach(k => { totals[k] = 0; });
