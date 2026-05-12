@@ -7,13 +7,13 @@
   ║  Seguimiento en vivo del conteo oficial ONPE                 ║
   ║  con proyección al 100% y conteo rápido Datum                ║
   ╠════════════════════════════════════════════════════════════════╣
-  ║  Autor:     Renzo Núñez Berdejo                              ║
+  ║  Autor:     Rafael Vasquez (MrSprintALot)                    ║
   ║  Versión:   v45 (JEE) — mayo 2026                           ║
   ║  Fuentes:   ONPE (resultadoelectoral.onpe.gob.pe)            ║
   ║             Datum Internacional (América TV / Canal N)       ║
   ║             Ipsos Perú                                       ║
   ║  Stack:     HTML/CSS/JS · D3.js · Chart.js · Cloudflare      ║
-  ║  Repo:      github.com/renzonunezaf/Elecciones_2026          ║
+  ║  Repo:      github.com/MrSprintALot/Peru_Elecciones_2026_v2  ║
   ╚════════════════════════════════════════════════════════════════╝
   -->
   <meta charset="UTF-8">
@@ -21,7 +21,7 @@
   <title>Perú Elige 2026 — Dashboard Electoral</title>
   <meta property="og:title" content="Perú Elige 2026 — Dashboard Electoral Interactivo">
   <meta property="og:description" content="Tracking en vivo del conteo ONPE con proyección al 100% y comparación con Datum e Ipsos.">
-  <meta property="og:image" content="https://renzonunezaf.github.io/Elecciones_2026/og-preview.png">
+  <meta property="og:image" content="https://mrsprintalot.github.io/Peru_Elecciones_2026_v2/og-preview.png">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +34,7 @@
 
   <style>
     /* ╔══════════════════════════════════════════════════════╗
-       ║  Estilos — Renzo Núñez Berdejo · abril 2026        ║
+       ║  Estilos — Rafael Vasquez · mayo 2026              ║
        ╚══════════════════════════════════════════════════════╝ */
 
     /* ══════════════ 1. VARIABLES ══════════════ */
@@ -824,13 +824,13 @@
     </div>
   </div>
 
-  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v3-JEE (proyección geográfica JEE) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · mayo 2026</div>
+  <div class="credits">Dashboard Electoral · Rafael Vasquez (MrSprintALot) · Modelo v3-JEE · Fuente: ONPE, Datum Internacional, Ipsos · mayo 2026</div>
 </div>
 
 <script>
 /* ╔════════════════════════════════════════════════════════════════╗
    ║  PERÚ ELIGE 2026 — JavaScript Principal                      ║
-   ║  Autor: Renzo Núñez Berdejo · abril 2026                     ║
+   ║  Autor: Rafael Vasquez (MrSprintALot) · mayo 2026            ║
    ╠════════════════════════════════════════════════════════════════╣
    ║  ÍNDICE                                                       ║
    ║  §1   Data embebida (TRACKING, ONPE_REGIONS, DATUM_REGIONS)  ║
@@ -850,7 +850,7 @@
 /* ══════════════════════════════════════════════════════════
    §1  DATA — Datos electorales embebidos para carga instantánea.
    Se actualizan con cada deploy o se sobreescriben vía Worker.
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 
 const TRACKING = {
@@ -934,7 +934,7 @@ const DATUM_REGIONS = [
    §2  CANDIDATE SYSTEM
    Configuración central de candidatos, colores, imágenes.
    Todo el dashboard deriva de esta única fuente de verdad.
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 const CANDIDATE_CONFIG = [
   { key: 'fuji',  trackKey: 'fujimori', label: 'Fujimori',     short: 'Fujimori',  color: 'var(--c-fuji)',  colorHex: '#E8943A', colorBg: 'var(--c-fuji-bg)',  img: '10001088' },
@@ -1125,7 +1125,7 @@ function renderProbBars(probs) {
 
 /* ══════════════════════════════════════════════════════════
    §3  TABS — Navegación entre ONPE en Vivo y Datum CR
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 let datumRendered = false;
 function switchTab(id) {
@@ -1148,7 +1148,7 @@ function switchTab(id) {
 
 /* ══════════════════════════════════════════════════════════
    §4  UTILIDADES UI — Funciones auxiliares de interfaz
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 
 /* Extranjero: el globo se redibuja en cada renderMap, no requiere update separado */
@@ -1158,7 +1158,7 @@ function updateExtranjero() {}
    §5  TREND ARROWS & HOT MOVER
    Flechas tipo stock-market y efecto glow para el candidato
    con mayor movimiento positivo en los últimos 3 cortes.
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 function updateTrendArrows() {
   /*
@@ -1782,7 +1782,7 @@ function showModal(regionName, data, source) {
 /* ══════════════════════════════════════════════════════════
    §6  MAPA D3 — Renderizado geográfico por departamento
    Matching por coordenadas Haversine + TopoJSON + D3.js
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 const GEO_CENTERS = {
   'Amazonas':[-78,-6],'Áncash':[-77.5,-9.3],'Apurímac':[-73,-14],'Arequipa':[-72,-15.8],
@@ -1971,7 +1971,7 @@ async function renderMap(containerId, regionsData, source) {
    §7  GRÁFICO DE EVOLUCIÓN — Chart.js con tracking + proyección
    Muestra la evolución histórica del conteo con líneas
    por candidato y un área de proyección al 100%.
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 function renderTrackingChart() {
   if (window._trackingChart) { window._trackingChart.destroy(); window._trackingChart = null; }
@@ -2167,7 +2167,7 @@ function renderTrackingChart() {
    Proxy para la API de ONPE vía Cloudflare Worker.
    El Worker agrega CORS, cachea respuestas y split-fetches
    para mantenerse dentro del free tier (50 subrequests).
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 const WORKER_URL = 'https://onpe-proxy.perudata2026.workers.dev';
 /* Último VV nacional oficial — usado para corregir discrepancia regional vs nacional */
@@ -2386,7 +2386,7 @@ async function refreshFromONPE() {
    Al 99%+: proyección geográfica basada en distribución real de actas JEE.
    Fuente: ATuManera/Peru_elecciones2026 — desglose territorial 9 mayo 2026.
    Al <99%: damping dinámico por región (Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50)
-   — Renzo Núñez Berdejo (base) · Rafael Vasquez (v3-JEE)
+   — Rafael Vasquez (v3-JEE)
 ══════════════════════════════════════════════════════════ */
 function runProjection(regions, natPct, natVV, natCands) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
@@ -2618,7 +2618,7 @@ function runProjection(regions, natPct, natVV, natCands) {
    Modelo basado en márgenes proyectados × factor de certeza.
    La asimetría del voto pendiente ya está capturada por los
    factores rurales en runProjection (§9).
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 function calcProbabilities(projection, nationalPct) {
   /*
@@ -2656,7 +2656,7 @@ function calcProbabilities(projection, nationalPct) {
 
 /* ══════════════════════════════════════════════════════════
    §11  UI DE PROYECCIÓN — Actualiza tabla, barras y ref cards
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 function updateProjectionUI(projection, probs, vvNational) {
   const trackKeyMap = {fuji:'fujimori', rla:'rla', nieto:'nieto', belm:'belmont', sanch:'sanchez'};
@@ -2745,7 +2745,7 @@ function updateProjectionUI(projection, probs, vvNational) {
 /* ══════════════════════════════════════════════════════════
    §12  AUTO-REFRESH & COUNTDOWN
    Timer visual con refresh automático cada N minutos.
-   — Renzo Núñez Berdejo
+   — Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
 const REFRESH_MINUTES = 3;
 let autoRefreshInterval = null;
@@ -2805,6 +2805,6 @@ if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
 }
 
 </script>
-<script data-goatcounter="https://renzo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<!-- Analytics removido — agregar el propio si se desea -->
 </body>
 </html>
