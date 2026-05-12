@@ -1226,7 +1226,7 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
   if (!rangoEl || !valNeutro || !valFactores) return;
 
   /* Run neutral projection (no factors, pure proportional) */
-  const neutralProj = runNeutralProjection(ONPE_REGIONS, natPctForZona);
+  const neutralProj = runNeutralProjection(ONPE_REGIONS, natPctForZona, _lastNatVV);
   if (!neutralProj) { rangoEl.style.display = 'none'; return; }
 
   /* Find 2nd and 3rd in neutral */
@@ -1257,7 +1257,7 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
  * exactamente igual que los ya contados. Sin boost urbano ni rural.
  * Es el escenario más conservador y neutral posible.
  */
-function runNeutralProjection(regions, natPct) {
+function runNeutralProjection(regions, natPct, natVV) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
 
   /* Early-return al 99%+ — perfil neutro con pendientes JEE geográficos */
@@ -1285,11 +1285,14 @@ function runNeutralProjection(regions, natPct) {
       totalVVpend += vvJee;
       KEYS.forEach(k => { totals[k] += vvJee * (r[k]||0) / 100; });
     });
-    const vvNational = totalVVcheck + totalVVpend;
+    const vvBase = (natVV && natVV > totalVVcheck) ? natVV : totalVVcheck;
+    const vvNational = vvBase + totalVVpend;
+    const scaleFactor = totalVVcheck > 0 ? vvBase / totalVVcheck : 1;
+    KEYS.forEach(k => { totals[k] *= scaleFactor; });
 
     const actualesN = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
     regions.forEach(r => {
-      KEYS.forEach(k => { actualesN[k] += (r.vv||0) * (r[k]||0) / 100; });
+      KEYS.forEach(k => { actualesN[k] += (r.vv||0) * (r[k]||0) / 100 * scaleFactor; });
     });
 
     const finals = KEYS.map(k => ({
@@ -2037,6 +2040,8 @@ function renderTrackingChart() {
    — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const WORKER_URL = 'https://onpe-proxy.perudata2026.workers.dev';
+/* Último VV nacional oficial — usado para corregir discrepancia regional vs nacional */
+let _lastNatVV = 0;
 const ONPE_DIRECT = 'https://resultadoelectoral.onpe.gob.pe/presentacion-backend';
 
 /* Helper: intenta Worker primero, fallback a ONPE directo */
@@ -2098,6 +2103,7 @@ async function refreshFromONPE() {
     const allRegions = [...(snap1.regions||[]), ...(snap2.regions||[])];
     const natPct = snap1.national.pct;
     const natCands = snap1.national.candidates;
+    _lastNatVV = snap1.national.votosValidos || 0; /* Guardar para proyecciones */
 
     /* 1. Update JEE */
     const jeeActas = snap1.national.enviadasJee || 0;
@@ -2164,7 +2170,7 @@ async function refreshFromONPE() {
     } catch(e) { console.warn('Consistency check failed:', e); }
 
     /* 4. Run projection + re-render probability bars */
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, natPct);
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, natPct, snap1.national.votosValidos);
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs, vvNational);
@@ -2252,7 +2258,7 @@ async function refreshFromONPE() {
    Al <99%: damping dinámico por región (Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50)
    — Renzo Núñez Berdejo (base) · Rafael Vasquez (v3-JEE)
 ══════════════════════════════════════════════════════════ */
-function runProjection(regions, natPct) {
+function runProjection(regions, natPct, natVV) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
 
   /* ═══ PROYECCIÓN JEE al 99%+: usar distribución geográfica real de actas pendientes ═══
@@ -2290,12 +2296,21 @@ function runProjection(regions, natPct) {
       KEYS.forEach(k => { totals[k] += vvJee * (r[k]||0) / 100; });
     });
 
-    const vvNational = totalVVcheck + totalVVpend;
+    /* Si tenemos el total nacional oficial, usarlo como base.
+     * La suma regional puede diferir del nacional por discrepancias conocidas
+     * (~307K votos en esta elección). La proyección debe basarse en el nacional. */
+    const vvBase = (natVV && natVV > totalVVcheck) ? natVV : totalVVcheck;
+    const vvNational = vvBase + totalVVpend;
 
-    /* Separar votos actuales (ya contados) de pendientes JEE para la tabla de proyección */
+    /* Escalar los totales acumulados de regiones al total nacional
+     * para corregir la discrepancia regional vs nacional */
+    const scaleFactor = totalVVcheck > 0 ? vvBase / totalVVcheck : 1;
+    KEYS.forEach(k => { totals[k] *= scaleFactor; });
+
+    /* Separar votos actuales (ya contados) de pendientes JEE */
     const actuales = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
     regions.forEach(r => {
-      KEYS.forEach(k => { actuales[k] += (r.vv||0) * (r[k]||0) / 100; });
+      KEYS.forEach(k => { actuales[k] += (r.vv||0) * (r[k]||0) / 100 * scaleFactor; });
     });
 
     const finals = KEYS.map(k => ({
