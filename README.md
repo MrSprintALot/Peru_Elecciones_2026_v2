@@ -1,4 +1,4 @@
-# Perú Elige 2026 — Dashboard Electoral v3 (JEE)
+# Perú Elige 2026 — Dashboard Electoral v45 (JEE)
 
 Dashboard interactivo de seguimiento del conteo oficial ONPE para las Elecciones Generales 2026 (Primera Vuelta), con modelo de proyección geográfica basado en distribución real de actas JEE.
 
@@ -76,7 +76,7 @@ Browser → Cloudflare Worker → API ONPE
 
 ## Autor
 
-**Rafael Vasquez** — [@MrSprintALot](https://github.com/MrSprintALot)
+**Rafael Vasquez** — [@MrSprintALot](https://github.com/MrSprintALot) · [LinkedIn](https://www.linkedin.com/in/rafaelvasquezba/)
 
 ---
 
