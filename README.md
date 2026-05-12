@@ -1,4 +1,4 @@
-# Perú Elige 2026 — Dashboard Electoral v45 (JEE)
+# Perú Elige 2026 — Dashboard Electoral v3 (JEE)
 
 Dashboard interactivo de seguimiento del conteo oficial ONPE para las Elecciones Generales 2026 (Primera Vuelta), con modelo de proyección geográfica basado en distribución real de actas JEE.
 
