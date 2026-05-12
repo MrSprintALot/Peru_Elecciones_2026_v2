@@ -8,7 +8,7 @@
   ║  con proyección al 100% y conteo rápido Datum                ║
   ╠════════════════════════════════════════════════════════════════╣
   ║  Autor:     Renzo Núñez Berdejo                              ║
-  ║  Versión:   v44 — abril 2026                                 ║
+  ║  Versión:   v45 (JEE) — mayo 2026                           ║
   ║  Fuentes:   ONPE (resultadoelectoral.onpe.gob.pe)            ║
   ║             Datum Internacional (América TV / Canal N)       ║
   ║             Ipsos Perú                                       ║
@@ -697,7 +697,7 @@
     </div>
   </div>
 
-  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v3 (damping dinámico calibrado) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
+  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v3-JEE (proyección geográfica JEE) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · mayo 2026</div>
 </div>
 
 <script>
@@ -714,7 +714,7 @@
    ║  §6   Mapa D3 (geo matching + renderizado)                   ║
    ║  §7   Gráfico de evolución (Chart.js)                        ║
    ║  §8   ONPE API & Cloudflare Worker                           ║
-   ║  §9   Motor de proyección                                    ║
+   ║  §9   Motor de proyección v3-JEE (geográfico al 99%+)       ║
    ║  §10  Calculador de probabilidades                           ║
    ║  §11  UI de proyección                                       ║
    ║  §12  Auto-refresh & countdown                               ║
@@ -1260,22 +1260,46 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
 function runNeutralProjection(regions, natPct) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
 
-  /* Early-return al 99%+ igual que runProjection */
+  /* Early-return al 99%+ — perfil neutro con pendientes JEE geográficos */
   const natPctCheck = natPct || (regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
                       (regions.reduce((s,r) => s + (r.vv||0), 0) || 1));
   if (natPctCheck >= 99.0) {
-    const totals = {};
-    KEYS.forEach(k => { totals[k] = 0; });
+    const JEE_ACTAS = {
+      'Lima': 142, 'Piura': 94, 'Cusco': 53, 'San Martín': 39, 'Cajamarca': 36,
+      'Ucayali': 31, 'Madre de Dios': 13, 'Ayacucho': 11, 'Apurímac': 10,
+      'Callao': 8, 'Áncash': 4, 'Ica': 3, 'Huancavelica': 2,
+      'La Libertad': 1, 'Moquegua': 1, 'Puno': 1, 'Tacna': 1
+    };
+    const AVG_VV_JEE = 180;
+    const totals = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
     let totalVVcheck = 0;
+    let totalVVpend = 0;
     regions.forEach(r => {
       KEYS.forEach(k => { totals[k] += (r.vv||0) * (r[k]||0) / 100; });
       totalVVcheck += r.vv||0;
     });
+    regions.forEach(r => {
+      const jeeActas = JEE_ACTAS[r.name] || 0;
+      if (jeeActas === 0) return;
+      const vvJee = jeeActas * AVG_VV_JEE;
+      totalVVpend += vvJee;
+      KEYS.forEach(k => { totals[k] += vvJee * (r[k]||0) / 100; });
+    });
+    const vvNational = totalVVcheck + totalVVpend;
+
+    const actualesN = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
+    regions.forEach(r => {
+      KEYS.forEach(k => { actualesN[k] += (r.vv||0) * (r[k]||0) / 100; });
+    });
+
     const finals = KEYS.map(k => ({
-      key: k, actual: totals[k], pending: 0, total: totals[k],
-      pct: totalVVcheck > 0 ? totals[k] / totalVVcheck * 100 : 0
+      key: k,
+      actual: actualesN[k],
+      pending: totals[k] - actualesN[k],
+      total: totals[k],
+      pct: vvNational > 0 ? totals[k] / vvNational * 100 : 0
     })).sort((a,b) => b.pct - a.pct);
-    return { finals, vvNational: totalVVcheck };
+    return { finals, vvNational };
   }
 
   const EXTRANJERO_PADRON = 1210813;
@@ -2222,34 +2246,66 @@ async function refreshFromONPE() {
 /* Init is now at the top — see switchTab / init section */
 
 /* ══════════════════════════════════════════════════════════
-   §9  MOTOR DE PROYECCIÓN v3
-   Estima resultados finales a partir de la data regional parcial.
-   Aplica factores de ajuste con damping dinámico por región.
-   v3: Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50
-   — Basado en Renzo Núñez Berdejo, modificado por Rafael Vasquez
+   §9  MOTOR DE PROYECCIÓN v3-JEE
+   Al 99%+: proyección geográfica basada en distribución real de actas JEE.
+   Fuente: ATuManera/Peru_elecciones2026 — desglose territorial 9 mayo 2026.
+   Al <99%: damping dinámico por región (Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50)
+   — Renzo Núñez Berdejo (base) · Rafael Vasquez (v3-JEE)
 ══════════════════════════════════════════════════════════ */
 function runProjection(regions, natPct) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
 
-  /* ═══ EARLY RETURN al 99.5%+: sin pendientes significativos, proyección = conteo actual ═══ */
+  /* ═══ PROYECCIÓN JEE al 99%+: usar distribución geográfica real de actas pendientes ═══
+   * Fuente: ATuManera/Peru_elecciones2026 README — desglose territorial 9 mayo 2026
+   * 450 actas "Para envío al JEE" distribuidas por región
+   * ~180 VV promedio por acta JEE (actas más pequeñas/rurales)
+   */
   const natPctCheck = natPct || (regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
                       (regions.reduce((s,r) => s + (r.vv||0), 0) || 1));
   if (natPctCheck >= 99.0) {
-    const totals = {};
-    KEYS.forEach(k => { totals[k] = 0; });
+    const JEE_ACTAS = {
+      'Lima': 142, 'Piura': 94, 'Cusco': 53, 'San Martín': 39, 'Cajamarca': 36,
+      'Ucayali': 31, 'Madre de Dios': 13, 'Ayacucho': 11, 'Apurímac': 10,
+      'Callao': 8, 'Áncash': 4, 'Ica': 3, 'Huancavelica': 2,
+      'La Libertad': 1, 'Moquegua': 1, 'Puno': 1, 'Tacna': 1
+    };
+    const AVG_VV_JEE = 180; /* votos válidos promedio por acta JEE */
+
+    const totals = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
     let totalVVcheck = 0;
+    let totalVVpend = 0;
+
+    /* Votos ya contados */
     regions.forEach(r => {
       KEYS.forEach(k => { totals[k] += (r.vv||0) * (r[k]||0) / 100; });
       totalVVcheck += r.vv||0;
     });
+
+    /* Votos pendientes JEE por región */
+    regions.forEach(r => {
+      const jeeActas = JEE_ACTAS[r.name] || 0;
+      if (jeeActas === 0) return;
+      const vvJee = jeeActas * AVG_VV_JEE;
+      totalVVpend += vvJee;
+      KEYS.forEach(k => { totals[k] += vvJee * (r[k]||0) / 100; });
+    });
+
+    const vvNational = totalVVcheck + totalVVpend;
+
+    /* Separar votos actuales (ya contados) de pendientes JEE para la tabla de proyección */
+    const actuales = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
+    regions.forEach(r => {
+      KEYS.forEach(k => { actuales[k] += (r.vv||0) * (r[k]||0) / 100; });
+    });
+
     const finals = KEYS.map(k => ({
       key: k,
-      actual: totals[k],
-      pending: 0,
+      actual: actuales[k],
+      pending: totals[k] - actuales[k],
       total: totals[k],
-      pct: totalVVcheck > 0 ? totals[k] / totalVVcheck * 100 : 0
+      pct: vvNational > 0 ? totals[k] / vvNational * 100 : 0
     })).sort((a,b) => b.pct - a.pct);
-    return { finals, vvNational: totalVVcheck };
+    return { finals, vvNational };
   }
 
   /*
