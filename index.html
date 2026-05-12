@@ -286,6 +286,10 @@
     .tag.err{background:rgba(224,72,72,.15);color:#E04848}
 
     .credits{text-align:center;margin-top:16px;font-size:10px;color:var(--tx3);padding-bottom:20px}
+    @media(max-width:600px){
+      #obsGrid{grid-template-columns:1fr !important}
+      #obsGrid [style*="grid-column:1/-1"]{grid-column:unset}
+    }
 
     /* ══════════════════════════════════════════════════════
        RESPONSIVE — TABLET (≤900px)
@@ -432,7 +436,7 @@
     }
     .status-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
       margin-bottom:12px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);
-      border-radius:8px;opacity:0;animation:fadeUp .5s ease .3s forwards}
+      border-radius:8px;opacity:1}
     .status-bar-left,.status-bar-right{display:flex;align-items:center;gap:8px}
     .jee-badge,.timer-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2)}
     .jee-badge svg{color:var(--c-fuji);opacity:.7}
@@ -509,6 +513,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
       Datum CR 100%
     </div>
+    <div class="tab" onclick="switchTab('irregularidades')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Irregularidades
+    </div>
   </div>
 
   <!-- ══════════════════════════════════════════════
@@ -530,27 +538,14 @@
       <div class="zona-def-brecha empate" id="zonaBrecha">Calculando...</div>
       <div class="zona-def-names" id="zonaNames"></div>
       <div class="zona-def-sub" id="zonaSub"></div>
-      <!-- Rango dual: neutro vs factores -->
-      <div id="zonaRango" style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border);font-size:11px;color:var(--tx2);display:none">
-        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:6px">Rango de proyección</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-          <div id="zonaRangoNeutro" style="text-align:center;flex:1">
-            <div style="font-size:9px;color:var(--tx3)">Perfil plano (neutro)</div>
-            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="zonaValNeutro">—</div>
-          </div>
-          <div style="color:var(--tx3);font-size:10px">↔</div>
-          <div id="zonaRangoFactores" style="text-align:center;flex:1">
-            <div style="font-size:9px;color:var(--tx3)">Con factores regionales</div>
-            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="zonaValFactores">—</div>
-          </div>
-        </div>
-        <div style="margin-top:8px;font-size:9px;color:var(--tx3);line-height:1.4" id="zonaExplica">
-          <strong style="color:var(--tx2)">¿Qué significa?</strong> El perfil plano asume que los votos pendientes se reparten igual que los ya contados.
-          Los factores regionales ajustan por el perfil urbano/rural de cada zona (ej: Lima pendiente tiende ligeramente más urbano, sierra pendiente tiende más rural).
-          La verdad probablemente está entre ambos escenarios.
-        </div>
+      <!-- Panel de Observaciones e Irregularidades -->
+      <div id="zonaRango" style="margin-top:10px;display:none">
+        <!-- zonaValNeutro y zonaValFactores se mantienen ocultos para compatibilidad -->
+        <span id="zonaValNeutro" style="display:none"></span>
+        <span id="zonaValFactores" style="display:none"></span>
       </div>
     </div>
+
 
     <!-- VOTOS PENDIENTES POR ZONA -->
     <div class="pend-zona" id="pendZona">
@@ -685,6 +680,138 @@
       <div class="card-title">Mapa — Ganador por departamento (Datum CR 100%)</div>
       <div class="map-container" id="mapDatum"></div>
     </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       TAB 3: IRREGULARIDADES
+  ══════════════════════════════════════════════ -->
+  <div class="tab-content" id="tab-irregularidades">
+  <div id="obsPanel" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:14px;opacity:0;animation:fadeUp .5s ease .3s forwards">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px">
+        Registro de Irregularidades — Elecciones 2026
+      </div>
+      <div style="display:flex;gap:10px;font-size:9px;font-weight:500">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#2ECDA7;display:inline-block"></span>Procedió</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;display:inline-block"></span>Pendiente</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E04848;display:inline-block"></span>No procedió</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="obsGrid">
+
+      <!-- COLUMNA 1 -->
+
+      <!-- API / Datos -->
+      <div style="grid-column:1/-1;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:6px 0 2px;border-bottom:1px solid var(--border);margin-bottom:2px">API &amp; Datos</div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Discrepancia API nacional vs 26 regionales</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">~307K VV en nacional sin respaldo regional. Ratio 9:1 hacia Sánchez. Confirmado en tiempo real por este dashboard.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">4,343 mesas en nacional sin existencia regional</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Mesas contabilizadas en API nacional que no aparecen en ninguna API regional (análisis Prime Institute).</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Actas serie 900,000 — patrones anómalos</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Z-scores hasta 9.76 en 133 mesas del top 0.2%. JPP concentra 77% de anomalías (análisis OpenElection).</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Actas con resultados idénticos en varias mesas</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Identificados en al menos 6 locales. ONPE atribuyó a errores humanos de miembros de mesa.</div>
+        </div>
+      </div>
+
+      <!-- Logística -->
+      <div style="grid-column:1/-1;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:6px 0 2px;border-bottom:1px solid var(--border);margin-bottom:2px;margin-top:6px">Logística</div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Demoras masivas de material electoral — Lima y Callao</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Empresa Galaga falló. Centros abrieron con hasta 5h de retraso. +60K personas sin votar reportadas. Jornada extendida al lunes 13.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Pérdida de actas y cadena de custodia</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Extravío en SJL y San Borja. Cédulas abandonadas en Surquillo. Contradicciones ONPE/JNE sobre acompañamiento policial en traslados.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Denuncias de eliminación de material — Callao</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Investigación por Fiscalía por posible eliminación intencional de material electoral en colegios del Callao.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Actas de prueba publicadas en portal web</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">ONPE publicó erróneamente actas de prueba en el portal de resultados, generando confusión pública sobre los datos.</div>
+        </div>
+      </div>
+
+      <!-- Institucional -->
+      <div style="grid-column:1/-1;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:6px 0 2px;border-bottom:1px solid var(--border);margin-bottom:2px;margin-top:6px">Institucional</div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#2ECDA7;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Renuncia del jefe de ONPE Piero Corvetto</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Admitió responsabilidad por fallos logísticos (cargo irrenunciable en proceso). Jefe interino Bernardo Pachas reconoció "error garrafal" ante el Congreso.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Allanamientos e investigaciones fiscales a ONPE</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Fiscalía y Contraloría investigan a funcionarios por negligencia y demora en funciones. Denuncia del JNE contra ONPE por violación de derechos al voto.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Auditoría informática — empresa M&amp;T Internacional</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">MYPE de 2 empleados, sin sede física, con inhabilitación previa (OSCE 2016). Dueño desconoce su propia dirección fiscal. Exigen auditoría internacional independiente.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
+        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
+        <div>
+          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">+5,000 actas observadas para presidencial</div>
+          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Errores y omisiones en llenado, mayormente en zonas rurales y exterior. Requirieron recuento. Proceso continúa con 196 actas en JEE.</div>
+        </div>
+      </div>
+
+    </div>
+    <div style="margin-top:8px;font-size:9px;color:var(--tx3);line-height:1.4;border-top:1px solid var(--border);padding-top:6px">
+      ⚠️ La mayoría de fuentes atribuyen los fallos a negligencia y mala planificación, no a fraude orquestado. No hay evidencia concluyente de manipulación masiva que altere el resultado global. Investigaciones en curso.
+    </div>
+  </div>
+
   </div>
 
   <!-- ══════════════ MODAL ══════════════ -->
@@ -1002,7 +1129,8 @@ function renderProbBars(probs) {
 ══════════════════════════════════════════════════════════ */
 let datumRendered = false;
 function switchTab(id) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === (id==='onpe'?0:1)));
+  const tabIdx = {onpe:0, datum:1, irregularidades:2};
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === (tabIdx[id] ?? 0)));
   document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
 
@@ -1201,7 +1329,9 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
   const gapPct = second.pct - third.pct;
   const totalVV = vvNational || 17000000;
   const gapVotes = Math.round(gapPct / 100 * totalVV);
-  const isEmpate = gapVotes < 80000;
+  /* Umbral de empate técnico: con <0.5% actas pendientes y brecha <30K votos,
+   * el resultado puede revertirse con los pendientes JEE (~81K VV disponibles) */
+  const isEmpate = gapVotes < 30000;
 
   const brechaEl = document.getElementById('zonaBrecha');
   const namesEl = document.getElementById('zonaNames');
