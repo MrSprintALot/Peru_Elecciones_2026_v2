@@ -493,12 +493,9 @@
   </div>
 
   <!-- ══════════════ DISCLAIMER: Discrepancia de datos ══════════════ -->
-  <div style="background:rgba(239,159,39,.08);border:1px solid rgba(239,159,39,.25);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.5">
-    <strong style="color:#EF9F27">⚠️ Nota de transparencia:</strong>
-    Se han reportado discrepancias entre el total nacional de la API ONPE y la suma de las 26 APIs regionales (25 dptos + extranjero).
-    Según el análisis de <a href="https://x.com/primeinstitute_" target="_blank" style="color:var(--c-rla);text-decoration:underline">@primeinstitute_</a>,
-    existen votos contabilizados en el total nacional que no aparecen en ninguna región individual, con un sesgo desproporcionado hacia un candidato.
-    Este dashboard consume la API nacional. Los datos mostrados están sujetos a esta discrepancia mientras la ONPE no la aclare.
+  <div style="background:rgba(74,144,217,.06);border:1px solid rgba(74,144,217,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.5">
+    <strong style="color:var(--c-rla)">ℹ️ Verificador de consistencia:</strong>
+    Este dashboard compara en tiempo real el total nacional de la API ONPE con la suma de las 26 APIs regionales (25 dptos + extranjero) para detectar discrepancias.
     <div id="discrepanciaData" style="margin-top:6px;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;display:none"></div>
   </div>
 
@@ -1996,7 +1993,7 @@ function renderTrackingChart() {
    para mantenerse dentro del free tier (50 subrequests).
    — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
-const WORKER_URL = 'https://onpe-proxy.renzonunez-af.workers.dev';
+const WORKER_URL = 'https://onpe-proxy.perudata2026.workers.dev';
 const ONPE_DIRECT = 'https://resultadoelectoral.onpe.gob.pe/presentacion-backend';
 
 /* Helper: intenta Worker primero, fallback a ONPE directo */
@@ -2214,6 +2211,27 @@ async function refreshFromONPE() {
 ══════════════════════════════════════════════════════════ */
 function runProjection(regions) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
+
+  /* ═══ EARLY RETURN al 99.5%+: sin pendientes significativos, proyección = conteo actual ═══ */
+  const natPctCheck = regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
+                      (regions.reduce((s,r) => s + (r.vv||0), 0) || 1);
+  if (natPctCheck >= 99.0) {
+    const totals = {};
+    KEYS.forEach(k => { totals[k] = 0; });
+    let totalVVcheck = 0;
+    regions.forEach(r => {
+      KEYS.forEach(k => { totals[k] += (r.vv||0) * (r[k]||0) / 100; });
+      totalVVcheck += r.vv||0;
+    });
+    const finals = KEYS.map(k => ({
+      key: k,
+      actual: totals[k],
+      pending: 0,
+      total: totals[k],
+      pct: totalVVcheck > 0 ? totals[k] / totalVVcheck * 100 : 0
+    })).sort((a,b) => b.pct - a.pct);
+    return { finals, vvNational: totalVVcheck };
+  }
 
   /*
    * Empirical marginal factors per department.
