@@ -4,6 +4,8 @@ Dashboard interactivo de seguimiento del conteo oficial ONPE para las Elecciones
 
 **[Ver dashboard live →](https://mrsprintalot.github.io/Peru_Elecciones_2026_v2/)**
 
+**[📊 Análisis electoral completo →](https://github.com/MrSprintALot/Peru_Elecciones_2026_v2/blob/main/analisis_electoral_2026_v2.md)**
+
 ---
 
 ## Características
