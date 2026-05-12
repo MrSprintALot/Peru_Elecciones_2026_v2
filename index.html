@@ -2170,7 +2170,7 @@ async function refreshFromONPE() {
     } catch(e) { console.warn('Consistency check failed:', e); }
 
     /* 4. Run projection + re-render probability bars */
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, natPct, snap1.national.votosValidos);
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, natPct, snap1.national.votosValidos, natCands);
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs, vvNational);
@@ -2258,7 +2258,7 @@ async function refreshFromONPE() {
    Al <99%: damping dinámico por región (Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50)
    — Renzo Núñez Berdejo (base) · Rafael Vasquez (v3-JEE)
 ══════════════════════════════════════════════════════════ */
-function runProjection(regions, natPct, natVV) {
+function runProjection(regions, natPct, natVV, natCands) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
 
   /* ═══ PROYECCIÓN JEE al 99%+: usar distribución geográfica real de actas pendientes ═══
@@ -2269,6 +2269,15 @@ function runProjection(regions, natPct, natVV) {
   const natPctCheck = natPct || (regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
                       (regions.reduce((s,r) => s + (r.vv||0), 0) || 1));
   if (natPctCheck >= 99.0) {
+    /*
+     * Al 99%+: proyección basada en distribución geográfica real de actas JEE.
+     * Fuente: ATuManera/Peru_elecciones2026 — desglose territorial 9 mayo 2026.
+     *
+     * IMPORTANTE: Usamos los % del API nacional (natCands) como base, NO la suma
+     * de las APIs regionales. La suma regional tiene ~303K votos menos que el
+     * nacional por discrepancias conocidas en la API de ONPE. El nacional es la
+     * fuente canónica para los porcentajes finales.
+     */
     const JEE_ACTAS = {
       'Lima': 142, 'Piura': 94, 'Cusco': 53, 'San Martín': 39, 'Cajamarca': 36,
       'Ucayali': 31, 'Madre de Dios': 13, 'Ayacucho': 11, 'Apurímac': 10,
@@ -2277,48 +2286,46 @@ function runProjection(regions, natPct, natVV) {
     };
     const AVG_VV_JEE = 180; /* votos válidos promedio por acta JEE */
 
-    const totals = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
-    let totalVVcheck = 0;
+    /* Base: total nacional oficial (fuente canónica, evita discrepancia regional) */
+    const vvBase = (natVV && natVV > 0) ? natVV : regions.reduce((s,r) => s + (r.vv||0), 0);
+
+    /* Porcentajes base: del nacional si disponible, si no de la suma regional */
+    const basePcts = (natCands && natCands.fuji > 0) ? {
+      fuji: natCands.fuji, rla: natCands.rla, nieto: natCands.nieto,
+      belm: natCands.belm, sanch: natCands.sanch
+    } : (() => {
+      /* Fallback: calcular desde regiones */
+      const sumVV = regions.reduce((s,r) => s + (r.vv||0), 0) || 1;
+      const res = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
+      regions.forEach(r => { KEYS.forEach(k => { res[k] += (r.vv||0) * (r[k]||0) / 100; }); });
+      KEYS.forEach(k => { res[k] = res[k] / sumVV * 100; });
+      return res;
+    })();
+
+    /* Votos JEE pendientes por región (usa % regionales — más granulares) */
     let totalVVpend = 0;
-
-    /* Votos ya contados */
-    regions.forEach(r => {
-      KEYS.forEach(k => { totals[k] += (r.vv||0) * (r[k]||0) / 100; });
-      totalVVcheck += r.vv||0;
-    });
-
-    /* Votos pendientes JEE por región */
+    const pendVotos = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
     regions.forEach(r => {
       const jeeActas = JEE_ACTAS[r.name] || 0;
       if (jeeActas === 0) return;
       const vvJee = jeeActas * AVG_VV_JEE;
       totalVVpend += vvJee;
-      KEYS.forEach(k => { totals[k] += vvJee * (r[k]||0) / 100; });
+      KEYS.forEach(k => { pendVotos[k] += vvJee * (r[k]||0) / 100; });
     });
 
-    /* Si tenemos el total nacional oficial, usarlo como base.
-     * La suma regional puede diferir del nacional por discrepancias conocidas
-     * (~307K votos en esta elección). La proyección debe basarse en el nacional. */
-    const vvBase = (natVV && natVV > totalVVcheck) ? natVV : totalVVcheck;
     const vvNational = vvBase + totalVVpend;
 
-    /* Escalar los totales acumulados de regiones al total nacional
-     * para corregir la discrepancia regional vs nacional */
-    const scaleFactor = totalVVcheck > 0 ? vvBase / totalVVcheck : 1;
-    KEYS.forEach(k => { totals[k] *= scaleFactor; });
+    /* Votos actuales = % nacional × VV nacional */
+    const actuales = {};
+    KEYS.forEach(k => { actuales[k] = vvBase * basePcts[k] / 100; });
 
-    /* Separar votos actuales (ya contados) de pendientes JEE */
-    const actuales = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
-    regions.forEach(r => {
-      KEYS.forEach(k => { actuales[k] += (r.vv||0) * (r[k]||0) / 100 * scaleFactor; });
-    });
-
+    /* Total final = actuales + pendientes JEE */
     const finals = KEYS.map(k => ({
       key: k,
       actual: actuales[k],
-      pending: totals[k] - actuales[k],
-      total: totals[k],
-      pct: vvNational > 0 ? totals[k] / vvNational * 100 : 0
+      pending: pendVotos[k],
+      total: actuales[k] + pendVotos[k],
+      pct: vvNational > 0 ? (actuales[k] + pendVotos[k]) / vvNational * 100 : 0
     })).sort((a,b) => b.pct - a.pct);
     return { finals, vvNational };
   }
