@@ -571,18 +571,18 @@
       <div class="zona-def-brecha empate" id="zonaBrecha">Calculando...</div>
       <div class="zona-def-names" id="zonaNames"></div>
       <div class="zona-def-sub" id="zonaSub"></div>
-      <!-- Actas pendientes panel -->
-      <div id="zonaActasPend" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border)">
-        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:8px">Actas por contabilizar</div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap">
+      <!-- Panel JEE -->
+      <div id="zonaJeePanel" style="display:none;margin-top:12px;padding:10px 18px;background:rgba(232,148,58,.06);border-radius:8px;border:1px solid rgba(232,148,58,.2)">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--c-fuji);margin-bottom:10px">Actas en revisión JEE</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:32px;flex-wrap:wrap">
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--tx3);margin-bottom:2px">Actas pendientes</div>
-            <div id="zonaActasNum" style="font-family:'DM Mono',monospace;font-size:28px;font-weight:700;color:var(--tx1);letter-spacing:-1px">—</div>
+            <div style="font-size:9px;color:var(--tx3);margin-bottom:3px">Actas JEE</div>
+            <div id="zonaJeeActas" style="font-family:'DM Mono',monospace;font-size:32px;font-weight:700;color:var(--c-fuji);letter-spacing:-1.5px;line-height:1">—</div>
           </div>
-          <div style="color:var(--tx3);font-size:18px">≈</div>
+          <div style="color:var(--tx3);font-size:20px;padding-top:8px">·</div>
           <div style="text-align:center">
-            <div style="font-size:9px;color:var(--tx3);margin-bottom:2px">Votos estimados</div>
-            <div id="zonaVotosNum" style="font-family:'DM Mono',monospace;font-size:28px;font-weight:700;color:#EF9F27;letter-spacing:-1px">—</div>
+            <div style="font-size:9px;color:var(--tx3);margin-bottom:3px">Votos en juego</div>
+            <div id="zonaJeeVotos" style="font-family:'DM Mono',monospace;font-size:32px;font-weight:700;color:#EF9F27;letter-spacing:-1.5px;line-height:1">—</div>
           </div>
         </div>
       </div>
@@ -1325,31 +1325,6 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
     ? '⚠️ EMPATE TÉCNICO — Cualquiera puede pasar a 2da vuelta'
     : '✓ Ventaja proyectada de ' + labelMap[second.key];
 
-  /* ═══ RANGO DUAL: Neutral vs Con Factores ═══ */
-  const rangoEl = document.getElementById('zonaRango');
-  const valNeutro = document.getElementById('zonaValNeutro');
-  const valFactores = document.getElementById('zonaValFactores');
-  if (!rangoEl || !valNeutro || !valFactores) return;
-
-  /* Run neutral projection (no factors, pure proportional) */
-  const neutralProj = runNeutralProjection(ONPE_REGIONS);
-  if (!neutralProj) { rangoEl.style.display = 'none'; return; }
-
-  /* Find 2nd and 3rd in neutral */
-  const nSorted = [...neutralProj.finals].sort((a, b) => b.pct - a.pct);
-  const n2 = nSorted[1];
-  const n3 = nSorted[2];
-  if (!n2 || !n3) return;
-
-  const nGap = n2.pct - n3.pct;
-  const nGapVotes = Math.round(nGap / 100 * (neutralProj.vvNational || totalVV));
-  const nLeader = labelMap[n2.key];
-  const nColor = colorMap[n2.key];
-
-  /* Factored projection (already calculated = the main projection) */
-  const fLeader = labelMap[second.key];
-  const fColor = colorMap[second.key];
-
   /* ── Actas pendientes totales ── */
   let actasPend = 0, votosPend = 0;
   const natPctCurrent = TRACKING.cuts.length ? TRACKING.cuts[TRACKING.cuts.length - 1].pct : 0;
@@ -1369,32 +1344,38 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
     }
   });
 
+  /* Leer datos JEE del status bar (ya poblados por el Worker) */
+  const jeeActasEl = document.getElementById('jeeActas');
+  const jeeVotosEl = document.getElementById('jeeVotos');
+  const jeeActasVal = jeeActasEl ? jeeActasEl.textContent.replace(/[^0-9]/g,'') : '0';
+  const jeeVotosVal = jeeVotosEl ? jeeVotosEl.textContent : '—';
+  const jeeActasNum = parseInt(jeeActasVal) || 0;
+
   const titleEl = document.getElementById('zonaDefTitle');
-  const panelEl = document.getElementById('zonaActasPend');
-  const actasEl = document.getElementById('zonaActasNum');
-  const votosEl = document.getElementById('zonaVotosNum');
+  const panelEl = document.getElementById('zonaJeePanel');
+  const actasEl = document.getElementById('zonaJeeActas');
+  const votosEl = document.getElementById('zonaJeeVotos');
 
   if (isResultadoFinal) {
     if (titleEl) titleEl.textContent = 'Brecha 2° vs 3° lugar — Resultado final';
     subEl.textContent = isEmpate
-      ? '⚠️ Diferencia mínima — Pendientes JEE pueden revertir'
+      ? '⚠️ Diferencia mínima — Actas JEE pueden revertir el resultado'
       : '✓ Resultado definitivo: ' + labelMap[second.key] + ' pasa a segunda vuelta';
-    if (panelEl && actasEl && votosEl) {
-      actasEl.textContent = actasPend > 0 ? actasPend.toLocaleString('es-PE') : '0';
-      actasEl.style.color = actasPend > 0 ? 'var(--tx1)' : 'var(--c-nieto)';
-      votosEl.textContent = votosPend > 0 ? '~' + (votosPend / 1000).toFixed(0) + 'K' : '0';
-      votosEl.style.color = votosPend > 0 ? '#EF9F27' : 'var(--c-nieto)';
-      panelEl.style.display = 'block';
-    }
   } else {
     if (titleEl) titleEl.textContent = 'Brecha 2° vs 3° lugar — Define segunda vuelta';
     subEl.textContent = isEmpate
       ? '⚠️ RESULTADO AJUSTADO — Margen dentro del rango de actas JEE pendientes'
       : '✓ Ventaja proyectada de ' + labelMap[second.key];
-    if (panelEl && actasEl && votosEl) {
-      actasEl.textContent = actasPend > 0 ? actasPend.toLocaleString('es-PE') : '—';
-      votosEl.textContent = votosPend > 0 ? '~' + (votosPend / 1000).toFixed(0) + 'K' : '—';
-      panelEl.style.display = actasPend > 0 ? 'block' : 'none';
+  }
+
+  /* Mostrar panel JEE siempre que haya actas en revisión */
+  if (panelEl && actasEl && votosEl) {
+    if (jeeActasNum > 0) {
+      actasEl.textContent = jeeActasNum.toLocaleString('es-PE');
+      votosEl.textContent = jeeVotosVal.startsWith('~') ? jeeVotosVal : '~' + jeeVotosVal;
+      panelEl.style.display = 'block';
+    } else {
+      panelEl.style.display = 'none';
     }
   }
 }
@@ -1631,12 +1612,12 @@ async function renderWithEmbeddedData() {
 
   /* Projection + Probability bars */
   try {
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, initPct);
     const initPct = lastCut ? lastCut.pct : 75;
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, initPct);
     const probs = calcProbabilities(projection, initPct);
     renderProbBars(probs);
     updateProjectionUI(projection, probs, vvNational);
-    updateZonaDef(projection, vvNational, natPct);
+    updateZonaDef(projection, vvNational, initPct);
   } catch(err) { console.error('Projection error:', err); }
 
   /* Hot-mover glow — AFTER reveal sequence + brief pause for dramatic effect */
@@ -2213,7 +2194,7 @@ async function refreshFromONPE() {
     const elJA = document.getElementById('jeeActas');
     const elJV = document.getElementById('jeeVotos');
     if (elJA) elJA.textContent = jeeActas.toLocaleString('es-PE');
-    if (elJV) elJV.textContent = '~' + (jeeActas * votosPerActa).toLocaleString('es-PE');
+    if (elJV) elJV.textContent = '~' + Math.abs(jeeActas * votosPerActa).toLocaleString('es-PE');
 
     /* 2. Update tracking */
     const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
@@ -2233,7 +2214,14 @@ async function refreshFromONPE() {
 
     /* 3. Update regions */
     ONPE_REGIONS.length = 0;
-    allRegions.forEach(r => ONPE_REGIONS.push(r));
+    allRegions.forEach(r => {
+      /* Si el conteo nacional está al 99.5%+, forzar Extranjero a 100% */
+      if (natPct >= 99.5) {
+        const isExt = (r.name||'').toLowerCase().includes('extranj');
+        if (isExt && r.pct < 99) r.pct = 100;
+      }
+      ONPE_REGIONS.push(r);
+    });
 
     /* 3b. VERIFICADOR DE CONSISTENCIA — Nacional vs Suma Regional */
     try {
@@ -2276,7 +2264,7 @@ async function refreshFromONPE() {
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs, vvNational);
-    updateZonaDef(projection, vvNational, natPct || initPct);
+    updateZonaDef(projection, vvNational, natPct);
 
     /* 5. Hero count-up */
     try {
