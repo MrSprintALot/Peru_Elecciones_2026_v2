@@ -7,13 +7,13 @@
   ║  Seguimiento en vivo del conteo oficial ONPE                 ║
   ║  con proyección al 100% y conteo rápido Datum                ║
   ╠════════════════════════════════════════════════════════════════╣
-  ║  Autor:     Rafael Vasquez (MrSprintALot)                    ║
-  ║  Versión:   v45 (JEE) — mayo 2026                           ║
+  ║  Autor:     Renzo Núñez Berdejo                              ║
+  ║  Versión:   v44 — abril 2026                                 ║
   ║  Fuentes:   ONPE (resultadoelectoral.onpe.gob.pe)            ║
   ║             Datum Internacional (América TV / Canal N)       ║
   ║             Ipsos Perú                                       ║
   ║  Stack:     HTML/CSS/JS · D3.js · Chart.js · Cloudflare      ║
-  ║  Repo:      github.com/MrSprintALot/Peru_Elecciones_2026_v2  ║
+  ║  Repo:      github.com/renzonunezaf/Elecciones_2026          ║
   ╚════════════════════════════════════════════════════════════════╝
   -->
   <meta charset="UTF-8">
@@ -21,7 +21,7 @@
   <title>Perú Elige 2026 — Dashboard Electoral</title>
   <meta property="og:title" content="Perú Elige 2026 — Dashboard Electoral Interactivo">
   <meta property="og:description" content="Tracking en vivo del conteo ONPE con proyección al 100% y comparación con Datum e Ipsos.">
-  <meta property="og:image" content="https://mrsprintalot.github.io/Peru_Elecciones_2026_v2/og-preview.png">
+  <meta property="og:image" content="https://renzonunezaf.github.io/Elecciones_2026/og-preview.png">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +34,7 @@
 
   <style>
     /* ╔══════════════════════════════════════════════════════╗
-       ║  Estilos — Rafael Vasquez · mayo 2026              ║
+       ║  Estilos — Renzo Núñez Berdejo · abril 2026        ║
        ╚══════════════════════════════════════════════════════╝ */
 
     /* ══════════════ 1. VARIABLES ══════════════ */
@@ -102,7 +102,7 @@
     .hero-live{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--tx3);margin-top:2px}
     .live-dot{width:7px;height:7px;border-radius:50%;background:var(--c-nieto);animation:livePulse 2s ease-in-out infinite}
     @keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(46,205,167,.5)}50%{opacity:.7;box-shadow:0 0 0 6px rgba(46,205,167,0)}}
-    .hero-right{min-width:100px;text-align:right}
+    .hero-right{min-width:100px;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:0}
 
     /* ══════════════ 4. TABS ══════════════ */
     .tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border)}
@@ -171,20 +171,27 @@
     }
     .kpi.hot-mover .kpi-label::after{content:' 🔥';font-size:10px}
 
-    /* ══════════════ 5b. PROBABILITY BARS ══════════════ */
-    .prob-section{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);
+    /* ══════════════ 5b. RESULTADO FINAL BANNER ══════════════ */
+    .resultado-final-banner{background:linear-gradient(135deg,rgba(74,144,217,.12),rgba(46,205,167,.10));
+      border:1px solid rgba(74,144,217,.3);border-radius:var(--radius);
       padding:14px 18px;margin-bottom:16px;opacity:0;animation:fadeUp .5s ease .35s forwards}
-    .prob-title{font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
-    .prob-new{display:inline-block;font-size:9px;color:#E04848;font-weight:500;text-transform:none;letter-spacing:0;
-      border:1px solid rgba(224,72,72,.3);border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle}
-    .prob-bars{display:flex;gap:16px;flex-wrap:wrap}
-    .prob-item{flex:1;min-width:180px;display:flex;align-items:center;gap:8px}
-    .prob-name{font-size:11px;font-weight:600;min-width:75px;white-space:nowrap}
-    .prob-track{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;min-width:60px}
-    .prob-fill{height:100%;border-radius:4px;transition:width 1s cubic-bezier(.25,.8,.25,1);
-      animation:barGrow 1.2s cubic-bezier(.25,.8,.25,1) forwards;transform-origin:left}
-    @keyframes barGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-    .prob-pct{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;min-width:36px;text-align:right}
+    .rfb-label{font-size:10px;font-weight:600;color:var(--c-nieto);text-transform:uppercase;
+      letter-spacing:.8px;margin-bottom:10px}
+    .rfb-body{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center}
+    .rfb-cand{display:flex;align-items:center;gap:8px;flex:1;min-width:150px;
+      background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:8px 14px}
+    .rfb-pos{font-family:'DM Mono',monospace;font-size:11px;color:var(--tx3);min-width:18px}
+    .rfb-name{font-size:14px;font-weight:600;color:var(--tx1);flex:1}
+    .rfb-pct{font-family:'DM Mono',monospace;font-size:18px;font-weight:700}
+    .rfb-1st .rfb-pct{color:var(--c-fuji)}
+    .rfb-2nd .rfb-pct{color:var(--c-rla)}
+    .rfb-sep{font-size:11px;font-weight:600;color:var(--tx3);text-align:center;
+      letter-spacing:.5px;white-space:nowrap}
+    @media(max-width:600px){
+      .rfb-body{flex-direction:column;gap:8px}
+      .rfb-cand{min-width:unset;width:100%}
+      .rfb-sep{transform:rotate(90deg)}
+    }
 
     /* ══════════════ 6. GRID ══════════════ */
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
@@ -286,10 +293,6 @@
     .tag.err{background:rgba(224,72,72,.15);color:#E04848}
 
     .credits{text-align:center;margin-top:16px;font-size:10px;color:var(--tx3);padding-bottom:20px}
-    @media(max-width:600px){
-      #obsGrid{grid-template-columns:1fr !important}
-      #obsGrid [style*="grid-column:1/-1"]{grid-column:unset}
-    }
 
     /* ══════════════════════════════════════════════════════
        RESPONSIVE — TABLET (≤900px)
@@ -331,7 +334,6 @@
       .kpi-avatar{width:26px;height:26px}
 
       /* Probability bars: vertical stack */
-      .prob-section{padding:10px 12px}
       .prob-bars{flex-direction:column;gap:8px}
       .prob-item{min-width:unset}
       .prob-name{min-width:65px;font-size:10px}
@@ -402,6 +404,11 @@
     .refresh-btn:hover{background:var(--c-rla-bg);color:var(--c-rla);border-color:var(--c-rla)}
     .refresh-btn.loading svg{animation:spin 1s linear infinite}
     .refresh-btn:disabled{opacity:.5;cursor:not-allowed}
+    .onpe-link-btn{display:flex;align-items:center;gap:5px;margin-top:6px;
+      background:var(--bg-alt);border:1px solid var(--border);color:var(--tx3);
+      font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;padding:4px 10px;
+      border-radius:6px;cursor:pointer;transition:all .2s;text-decoration:none;white-space:nowrap}
+    .onpe-link-btn:hover{background:rgba(239,159,39,.1);color:#EF9F27;border-color:rgba(239,159,39,.4)}
     @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
     .refresh-status{font-size:11px;font-family:'DM Mono',monospace;margin-bottom:10px;min-height:16px;
       color:var(--tx3);transition:color .3s}
@@ -436,7 +443,7 @@
     }
     .status-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
       margin-bottom:12px;padding:8px 14px;background:var(--bg-card);border:1px solid var(--border);
-      border-radius:8px;opacity:1}
+      border-radius:8px;opacity:0;animation:fadeUp .5s ease .3s forwards}
     .status-bar-left,.status-bar-right{display:flex;align-items:center;gap:8px}
     .jee-badge,.timer-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2)}
     .jee-badge svg{color:var(--c-fuji);opacity:.7}
@@ -476,6 +483,10 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
         Actualizar
       </button>
+      <a class="onpe-link-btn" href="https://resultadoelectoral.onpe.gob.pe/main/resumen" target="_blank" rel="noopener">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        ONPE oficial
+      </a>
     </div>
   </div>
   <div class="refresh-status" id="refreshStatus"></div>
@@ -497,9 +508,12 @@
   </div>
 
   <!-- ══════════════ DISCLAIMER: Discrepancia de datos ══════════════ -->
-  <div style="background:rgba(74,144,217,.06);border:1px solid rgba(74,144,217,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.5">
-    <strong style="color:var(--c-rla)">ℹ️ Verificador de consistencia:</strong>
-    Este dashboard compara en tiempo real el total nacional de la API ONPE con la suma de las 26 APIs regionales (25 dptos + extranjero) para detectar discrepancias.
+  <div style="background:rgba(239,159,39,.08);border:1px solid rgba(239,159,39,.25);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--tx2);line-height:1.5">
+    <strong style="color:#EF9F27">⚠️ Nota de transparencia:</strong>
+    Se han reportado discrepancias entre el total nacional de la API ONPE y la suma de las 26 APIs regionales (25 dptos + extranjero).
+    Según el análisis de <a href="https://x.com/primeinstitute_" target="_blank" style="color:var(--c-rla);text-decoration:underline">@primeinstitute_</a>,
+    existen votos contabilizados en el total nacional que no aparecen en ninguna región individual, con un sesgo desproporcionado hacia un candidato.
+    Este dashboard consume la API nacional. Los datos mostrados están sujetos a esta discrepancia mientras la ONPE no la aclare.
     <div id="discrepanciaData" style="margin-top:6px;padding:6px 10px;background:rgba(255,255,255,.03);border-radius:6px;font-family:'DM Mono',monospace;font-size:10px;display:none"></div>
   </div>
 
@@ -513,10 +527,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
       Datum CR 100%
     </div>
-    <div class="tab" onclick="switchTab('irregularidades')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      Irregularidades
-    </div>
   </div>
 
   <!-- ══════════════════════════════════════════════
@@ -526,10 +536,22 @@
     <!-- KPIs: Top 5 candidates (rendered dynamically, sorted by %) -->
     <div class="kpis" id="kpiCandidates"></div>
 
-    <!-- Probability of passing to second round -->
-    <div class="prob-section">
-      <div class="prob-title">Probabilidad de pase a segunda vuelta <span class="prob-new">Modelo v3: damping dinámico calibrado + rango dual</span></div>
-      <div class="prob-bars" id="probBars"></div>
+    <!-- Banner de resultado final: segunda vuelta definida -->
+    <div class="resultado-final-banner" id="resultadoFinalBanner">
+      <div class="rfb-label">✓ Resultado definitivo — 100% de actas contabilizadas</div>
+      <div class="rfb-body">
+        <div class="rfb-cand rfb-1st">
+          <span class="rfb-pos">1°</span>
+          <span class="rfb-name" id="rfbName1">—</span>
+          <span class="rfb-pct" id="rfbPct1">—</span>
+        </div>
+        <div class="rfb-sep">→ Segunda Vuelta ←</div>
+        <div class="rfb-cand rfb-2nd">
+          <span class="rfb-pos">2°</span>
+          <span class="rfb-name" id="rfbName2">—</span>
+          <span class="rfb-pct" id="rfbPct2">—</span>
+        </div>
+      </div>
     </div>
 
     <!-- ZONA DE DEFINICIÓN: Brecha 2° vs 3° con rango dual -->
@@ -538,14 +560,27 @@
       <div class="zona-def-brecha empate" id="zonaBrecha">Calculando...</div>
       <div class="zona-def-names" id="zonaNames"></div>
       <div class="zona-def-sub" id="zonaSub"></div>
-      <!-- Panel de Observaciones e Irregularidades -->
-      <div id="zonaRango" style="margin-top:10px;display:none">
-        <!-- zonaValNeutro y zonaValFactores se mantienen ocultos para compatibilidad -->
-        <span id="zonaValNeutro" style="display:none"></span>
-        <span id="zonaValFactores" style="display:none"></span>
+      <!-- Rango dual: neutro vs factores -->
+      <div id="zonaRango" style="margin-top:10px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid var(--border);font-size:11px;color:var(--tx2);display:none">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);margin-bottom:6px">Rango de proyección</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <div id="zonaRangoNeutro" style="text-align:center;flex:1">
+            <div style="font-size:9px;color:var(--tx3)">Perfil plano (neutro)</div>
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="zonaValNeutro">—</div>
+          </div>
+          <div style="color:var(--tx3);font-size:10px">↔</div>
+          <div id="zonaRangoFactores" style="text-align:center;flex:1">
+            <div style="font-size:9px;color:var(--tx3)">Con factores regionales</div>
+            <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600" id="zonaValFactores">—</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:9px;color:var(--tx3);line-height:1.4" id="zonaExplica">
+          <strong style="color:var(--tx2)">¿Qué significa?</strong> El perfil plano asume que los votos pendientes se reparten igual que los ya contados.
+          Los factores regionales ajustan por el perfil urbano/rural de cada zona (ej: Lima pendiente tiende ligeramente más urbano, sierra pendiente tiende más rural).
+          La verdad probablemente está entre ambos escenarios.
+        </div>
       </div>
     </div>
-
 
     <!-- VOTOS PENDIENTES POR ZONA -->
     <div class="pend-zona" id="pendZona">
@@ -583,7 +618,7 @@
     <!-- Map + Chart Grid -->
     <div class="grid">
       <div class="card">
-        <div class="card-title">Mapa — Ganador por departamento (ONPE parcial)</div>
+        <div class="card-title">Mapa — Ganador por departamento (ONPE 100%)</div>
         <div class="vote-counters" id="voteCounters">
           <div class="vote-counter">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--c-nieto)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -682,138 +717,6 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════
-       TAB 3: IRREGULARIDADES
-  ══════════════════════════════════════════════ -->
-  <div class="tab-content" id="tab-irregularidades">
-  <div id="obsPanel" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:14px;opacity:0;animation:fadeUp .5s ease .3s forwards">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-      <div style="font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px">
-        Registro de Irregularidades — Elecciones 2026
-      </div>
-      <div style="display:flex;gap:10px;font-size:9px;font-weight:500">
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#2ECDA7;display:inline-block"></span>Procedió</span>
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;display:inline-block"></span>Pendiente</span>
-        <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:#E04848;display:inline-block"></span>No procedió</span>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="obsGrid">
-
-      <!-- COLUMNA 1 -->
-
-      <!-- API / Datos -->
-      <div style="grid-column:1/-1;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:6px 0 2px;border-bottom:1px solid var(--border);margin-bottom:2px">API &amp; Datos</div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Discrepancia API nacional vs 26 regionales</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">~307K VV en nacional sin respaldo regional. Ratio 9:1 hacia Sánchez. Confirmado en tiempo real por este dashboard.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">4,343 mesas en nacional sin existencia regional</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Mesas contabilizadas en API nacional que no aparecen en ninguna API regional (análisis Prime Institute).</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Actas serie 900,000 — patrones anómalos</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Z-scores hasta 9.76 en 133 mesas del top 0.2%. JPP concentra 77% de anomalías (análisis OpenElection).</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Actas con resultados idénticos en varias mesas</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Identificados en al menos 6 locales. ONPE atribuyó a errores humanos de miembros de mesa.</div>
-        </div>
-      </div>
-
-      <!-- Logística -->
-      <div style="grid-column:1/-1;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:6px 0 2px;border-bottom:1px solid var(--border);margin-bottom:2px;margin-top:6px">Logística</div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Demoras masivas de material electoral — Lima y Callao</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Empresa Galaga falló. Centros abrieron con hasta 5h de retraso. +60K personas sin votar reportadas. Jornada extendida al lunes 13.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Pérdida de actas y cadena de custodia</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Extravío en SJL y San Borja. Cédulas abandonadas en Surquillo. Contradicciones ONPE/JNE sobre acompañamiento policial en traslados.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Denuncias de eliminación de material — Callao</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Investigación por Fiscalía por posible eliminación intencional de material electoral en colegios del Callao.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Actas de prueba publicadas en portal web</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">ONPE publicó erróneamente actas de prueba en el portal de resultados, generando confusión pública sobre los datos.</div>
-        </div>
-      </div>
-
-      <!-- Institucional -->
-      <div style="grid-column:1/-1;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--tx3);padding:6px 0 2px;border-bottom:1px solid var(--border);margin-bottom:2px;margin-top:6px">Institucional</div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#2ECDA7;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Renuncia del jefe de ONPE Piero Corvetto</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Admitió responsabilidad por fallos logísticos (cargo irrenunciable en proceso). Jefe interino Bernardo Pachas reconoció "error garrafal" ante el Congreso.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Allanamientos e investigaciones fiscales a ONPE</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Fiscalía y Contraloría investigan a funcionarios por negligencia y demora en funciones. Denuncia del JNE contra ONPE por violación de derechos al voto.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">Auditoría informática — empresa M&amp;T Internacional</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">MYPE de 2 empleados, sin sede física, con inhabilitación previa (OSCE 2016). Dueño desconoce su propia dirección fiscal. Exigen auditoría internacional independiente.</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:flex-start;padding:6px 8px;background:rgba(255,255,255,.02);border-radius:6px;border:1px solid var(--border)">
-        <span style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0;margin-top:3px"></span>
-        <div>
-          <div style="font-size:10px;font-weight:600;color:var(--tx1);line-height:1.3">+5,000 actas observadas para presidencial</div>
-          <div style="font-size:9px;color:var(--tx3);margin-top:2px;line-height:1.4">Errores y omisiones en llenado, mayormente en zonas rurales y exterior. Requirieron recuento. Proceso continúa con 196 actas en JEE.</div>
-        </div>
-      </div>
-
-    </div>
-    <div style="margin-top:8px;font-size:9px;color:var(--tx3);line-height:1.4;border-top:1px solid var(--border);padding-top:6px">
-      ⚠️ La mayoría de fuentes atribuyen los fallos a negligencia y mala planificación, no a fraude orquestado. No hay evidencia concluyente de manipulación masiva que altere el resultado global. Investigaciones en curso.
-    </div>
-  </div>
-
-  </div>
-
   <!-- ══════════════ MODAL ══════════════ -->
   <div class="modal-overlay" id="modal">
     <div class="modal">
@@ -824,13 +727,13 @@
     </div>
   </div>
 
-  <div class="credits">Dashboard Electoral · Rafael Vasquez (MrSprintALot) · Modelo v3-JEE · Fuente: ONPE, Datum Internacional, Ipsos · mayo 2026</div>
+  <div class="credits">Elaborado por Renzo Núñez Berdejo · Modelo v3 (damping dinámico calibrado) por Rafael Vasquez · Fuente: ONPE, Datum Internacional, Ipsos · abril 2026</div>
 </div>
 
 <script>
 /* ╔════════════════════════════════════════════════════════════════╗
    ║  PERÚ ELIGE 2026 — JavaScript Principal                      ║
-   ║  Autor: Rafael Vasquez (MrSprintALot) · mayo 2026            ║
+   ║  Autor: Renzo Núñez Berdejo · abril 2026                     ║
    ╠════════════════════════════════════════════════════════════════╣
    ║  ÍNDICE                                                       ║
    ║  §1   Data embebida (TRACKING, ONPE_REGIONS, DATUM_REGIONS)  ║
@@ -841,7 +744,7 @@
    ║  §6   Mapa D3 (geo matching + renderizado)                   ║
    ║  §7   Gráfico de evolución (Chart.js)                        ║
    ║  §8   ONPE API & Cloudflare Worker                           ║
-   ║  §9   Motor de proyección v3-JEE (geográfico al 99%+)       ║
+   ║  §9   Motor de proyección                                    ║
    ║  §10  Calculador de probabilidades                           ║
    ║  §11  UI de proyección                                       ║
    ║  §12  Auto-refresh & countdown                               ║
@@ -850,7 +753,7 @@
 /* ══════════════════════════════════════════════════════════
    §1  DATA — Datos electorales embebidos para carga instantánea.
    Se actualizan con cada deploy o se sobreescriben vía Worker.
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 
 const TRACKING = {
@@ -934,7 +837,7 @@ const DATUM_REGIONS = [
    §2  CANDIDATE SYSTEM
    Configuración central de candidatos, colores, imágenes.
    Todo el dashboard deriva de esta única fuente de verdad.
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const CANDIDATE_CONFIG = [
   { key: 'fuji',  trackKey: 'fujimori', label: 'Fujimori',     short: 'Fujimori',  color: 'var(--c-fuji)',  colorHex: '#E8943A', colorBg: 'var(--c-fuji-bg)',  img: '10001088' },
@@ -1096,41 +999,51 @@ function renderKPIs(values) {
 /* ── §2b  Barras de probabilidad — renderizado dinámico ordenado por prob % ── */
 
 /**
- * renderProbBars — Genera barras de probabilidad ordenadas de mayor a menor.
- * Excluye a Fujimori (1er lugar asegurado).
- * @param {Object} probs — {rla: 46, nieto: 23, sanch: 24, belm: 7}
- *                          If null, renders skeletons.
+ * renderProbBars — Reemplazada por banner de resultado final.
+ * Se mantiene como no-op para compatibilidad con llamadas existentes.
  */
 function renderProbBars(probs) {
-  const container = document.getElementById('probBars');
-  if (!container) return;
+  /* No-op: la sección de probabilidades fue reemplazada por el banner de resultado */
+}
 
-  /* Filter out Fujimori, sort by probability descending */
+/**
+ * updateResultadoBanner — Llena el banner de resultado final con el 1° y 2° lugar
+ * según los resultados actuales de la API nacional.
+ * @param {Object} cands — {fuji, rla, nieto, belm, sanch} con % de cada candidato
+ */
+function updateResultadoBanner(cands) {
+  if (!cands) return;
   const sorted = CANDIDATE_CONFIG
-    .filter(c => c.key !== 'fuji')
-    .map(c => ({ ...c, prob: probs ? (probs[c.key] || 0) : 0 }))
-    .sort((a, b) => b.prob - a.prob);
+    .map(c => ({ ...c, pct: cands[c.key] || 0 }))
+    .sort((a, b) => b.pct - a.pct);
 
-  container.innerHTML = sorted.map(c => {
-    const pctHtml = probs
-      ? `<div class="prob-pct" style="color:${c.color}" data-prob-key="${c.key}">${c.prob}%</div>`
-      : `<div class="prob-pct" style="color:${c.color}" data-prob-key="${c.key}"><span class="skel" style="width:30px;height:14px"></span></div>`;
-    return `<div class="prob-item" data-candidate="${c.key}">
-      <div class="prob-name" style="color:${c.color}">${c.label}</div>
-      <div class="prob-track"><div class="prob-fill" style="width:${probs ? c.prob : 0}%;background:${c.color}" data-fill-key="${c.key}"></div></div>
-      ${pctHtml}
-    </div>`;
-  }).join('');
+  const first = sorted[0], second = sorted[1];
+  if (!first || !second) return;
+
+  const el1Name = document.getElementById('rfbName1');
+  const el1Pct  = document.getElementById('rfbPct1');
+  const el2Name = document.getElementById('rfbName2');
+  const el2Pct  = document.getElementById('rfbPct2');
+
+  if (el1Name) el1Name.textContent = first.label;
+  if (el1Pct)  { el1Pct.textContent = first.pct.toFixed(2) + '%'; el1Pct.style.color = first.colorHex; }
+  if (el2Name) el2Name.textContent = second.label;
+  if (el2Pct)  { el2Pct.textContent = second.pct.toFixed(2) + '%'; el2Pct.style.color = second.colorHex; }
+
+  /* Update rfb-1st and rfb-2nd border colors to match candidate */
+  const b1 = document.querySelector('.rfb-1st');
+  const b2 = document.querySelector('.rfb-2nd');
+  if (b1) b1.style.borderColor = first.colorHex + '55';
+  if (b2) b2.style.borderColor = second.colorHex + '55';
 }
 
 /* ══════════════════════════════════════════════════════════
    §3  TABS — Navegación entre ONPE en Vivo y Datum CR
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 let datumRendered = false;
 function switchTab(id) {
-  const tabIdx = {onpe:0, datum:1, irregularidades:2};
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === (tabIdx[id] ?? 0)));
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i === (id==='onpe'?0:1)));
   document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
 
@@ -1148,7 +1061,7 @@ function switchTab(id) {
 
 /* ══════════════════════════════════════════════════════════
    §4  UTILIDADES UI — Funciones auxiliares de interfaz
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 
 /* Extranjero: el globo se redibuja en cada renderMap, no requiere update separado */
@@ -1158,7 +1071,7 @@ function updateExtranjero() {}
    §5  TREND ARROWS & HOT MOVER
    Flechas tipo stock-market y efecto glow para el candidato
    con mayor movimiento positivo en los últimos 3 cortes.
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function updateTrendArrows() {
   /*
@@ -1314,7 +1227,7 @@ function updateVoteCounters() {
 }
 
 /* ═══ ZONA DE DEFINICIÓN — Banner de brecha 2° vs 3° ═══ */
-function updateZonaDef(projection, vvNational, natPctForZona) {
+function updateZonaDef(projection, vvNational) {
   const el = document.getElementById('zonaDef');
   if (!el) return;
   const labelMap = {fuji:'Fujimori', rla:'López Aliaga', nieto:'Nieto', sanch:'Sánchez', belm:'Belmont'};
@@ -1329,9 +1242,7 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
   const gapPct = second.pct - third.pct;
   const totalVV = vvNational || 17000000;
   const gapVotes = Math.round(gapPct / 100 * totalVV);
-  /* Umbral de empate técnico: con <0.5% actas pendientes y brecha <30K votos,
-   * el resultado puede revertirse con los pendientes JEE (~81K VV disponibles) */
-  const isEmpate = gapVotes < 30000;
+  const isEmpate = gapVotes < 80000;
 
   const brechaEl = document.getElementById('zonaBrecha');
   const namesEl = document.getElementById('zonaNames');
@@ -1346,7 +1257,7 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
     `<span class="zona-def-cand" style="color:${colorMap[third.key]}">${labelMap[third.key]} ~${third.pct.toFixed(2)}%</span>`;
 
   subEl.textContent = isEmpate
-    ? '⚠️ RESULTADO AJUSTADO — Margen dentro del rango de actas JEE pendientes'
+    ? '⚠️ EMPATE TÉCNICO — Cualquiera puede pasar a 2da vuelta'
     : '✓ Ventaja proyectada de ' + labelMap[second.key];
 
   /* ═══ RANGO DUAL: Neutral vs Con Factores ═══ */
@@ -1356,7 +1267,7 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
   if (!rangoEl || !valNeutro || !valFactores) return;
 
   /* Run neutral projection (no factors, pure proportional) */
-  const neutralProj = runNeutralProjection(ONPE_REGIONS, natPctForZona, _lastNatVV);
+  const neutralProj = runNeutralProjection(ONPE_REGIONS);
   if (!neutralProj) { rangoEl.style.display = 'none'; return; }
 
   /* Find 2nd and 3rd in neutral */
@@ -1387,54 +1298,8 @@ function updateZonaDef(projection, vvNational, natPctForZona) {
  * exactamente igual que los ya contados. Sin boost urbano ni rural.
  * Es el escenario más conservador y neutral posible.
  */
-function runNeutralProjection(regions, natPct, natVV) {
+function runNeutralProjection(regions) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
-
-  /* Early-return al 99%+ — perfil neutro con pendientes JEE geográficos */
-  const natPctCheck = natPct || (regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
-                      (regions.reduce((s,r) => s + (r.vv||0), 0) || 1));
-  if (natPctCheck >= 99.0) {
-    const JEE_ACTAS = {
-      'Lima': 142, 'Piura': 94, 'Cusco': 53, 'San Martín': 39, 'Cajamarca': 36,
-      'Ucayali': 31, 'Madre de Dios': 13, 'Ayacucho': 11, 'Apurímac': 10,
-      'Callao': 8, 'Áncash': 4, 'Ica': 3, 'Huancavelica': 2,
-      'La Libertad': 1, 'Moquegua': 1, 'Puno': 1, 'Tacna': 1
-    };
-    const AVG_VV_JEE = 180;
-    const totals = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
-    let totalVVcheck = 0;
-    let totalVVpend = 0;
-    regions.forEach(r => {
-      KEYS.forEach(k => { totals[k] += (r.vv||0) * (r[k]||0) / 100; });
-      totalVVcheck += r.vv||0;
-    });
-    regions.forEach(r => {
-      const jeeActas = JEE_ACTAS[r.name] || 0;
-      if (jeeActas === 0) return;
-      const vvJee = jeeActas * AVG_VV_JEE;
-      totalVVpend += vvJee;
-      KEYS.forEach(k => { totals[k] += vvJee * (r[k]||0) / 100; });
-    });
-    const vvBase = (natVV && natVV > totalVVcheck) ? natVV : totalVVcheck;
-    const vvNational = vvBase + totalVVpend;
-    const scaleFactor = totalVVcheck > 0 ? vvBase / totalVVcheck : 1;
-    KEYS.forEach(k => { totals[k] *= scaleFactor; });
-
-    const actualesN = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
-    regions.forEach(r => {
-      KEYS.forEach(k => { actualesN[k] += (r.vv||0) * (r[k]||0) / 100 * scaleFactor; });
-    });
-
-    const finals = KEYS.map(k => ({
-      key: k,
-      actual: actualesN[k],
-      pending: totals[k] - actualesN[k],
-      total: totals[k],
-      pct: vvNational > 0 ? totals[k] / vvNational * 100 : 0
-    })).sort((a,b) => b.pct - a.pct);
-    return { finals, vvNational };
-  }
-
   const EXTRANJERO_PADRON = 1210813;
   const EXTRANJERO_PARTIC_HIST = 0.27;
 
@@ -1648,7 +1513,9 @@ async function renderWithEmbeddedData() {
   const lastCut = TRACKING.cuts[TRACKING.cuts.length - 1];
   let revealMs = 0;
   if (lastCut) {
-    revealMs = renderKPIs({fuji: lastCut.fujimori, rla: lastCut.rla, nieto: lastCut.nieto, sanch: lastCut.sanchez, belm: lastCut.belmont});
+    const initCands = {fuji: lastCut.fujimori, rla: lastCut.rla, nieto: lastCut.nieto, sanch: lastCut.sanchez, belm: lastCut.belmont};
+    revealMs = renderKPIs(initCands);
+    updateResultadoBanner(initCands);
   } else {
     renderKPIs(null); /* Render skeletons */
   }
@@ -1658,12 +1525,12 @@ async function renderWithEmbeddedData() {
 
   /* Projection + Probability bars */
   try {
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS);
     const initPct = lastCut ? lastCut.pct : 75;
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, initPct);
     const probs = calcProbabilities(projection, initPct);
     renderProbBars(probs);
     updateProjectionUI(projection, probs, vvNational);
-    updateZonaDef(projection, vvNational, initPct);
+    updateZonaDef(projection, vvNational);
   } catch(err) { console.error('Projection error:', err); }
 
   /* Hot-mover glow — AFTER reveal sequence + brief pause for dramatic effect */
@@ -1782,7 +1649,7 @@ function showModal(regionName, data, source) {
 /* ══════════════════════════════════════════════════════════
    §6  MAPA D3 — Renderizado geográfico por departamento
    Matching por coordenadas Haversine + TopoJSON + D3.js
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const GEO_CENTERS = {
   'Amazonas':[-78,-6],'Áncash':[-77.5,-9.3],'Apurímac':[-73,-14],'Arequipa':[-72,-15.8],
@@ -1918,7 +1785,10 @@ async function renderMap(containerId, regionsData, source) {
   });
 
   /* ── Extranjero "island" globe in the Pacific Ocean ── */
-  const ext = regionsData.find(r => r.name === 'Extranjero');
+  const ext = regionsData.find(r => {
+    const n = (r.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return n === 'extranjero' || n.includes('extranj');
+  });
   if (ext && ext.pct !== undefined) {
     const gx = W * 0.14, gy = H * 0.58, gr = W < 400 ? 16 : 22;
     const extG = svg.append('g').attr('class','ext-globe')
@@ -1971,7 +1841,7 @@ async function renderMap(containerId, regionsData, source) {
    §7  GRÁFICO DE EVOLUCIÓN — Chart.js con tracking + proyección
    Muestra la evolución histórica del conteo con líneas
    por candidato y un área de proyección al 100%.
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function renderTrackingChart() {
   if (window._trackingChart) { window._trackingChart.destroy(); window._trackingChart = null; }
@@ -2167,11 +2037,9 @@ function renderTrackingChart() {
    Proxy para la API de ONPE vía Cloudflare Worker.
    El Worker agrega CORS, cachea respuestas y split-fetches
    para mantenerse dentro del free tier (50 subrequests).
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
-const WORKER_URL = 'https://onpe-proxy.perudata2026.workers.dev';
-/* Último VV nacional oficial — usado para corregir discrepancia regional vs nacional */
-let _lastNatVV = 0;
+const WORKER_URL = 'https://onpe-proxy.renzonunez-af.workers.dev';
 const ONPE_DIRECT = 'https://resultadoelectoral.onpe.gob.pe/presentacion-backend';
 
 /* Helper: intenta Worker primero, fallback a ONPE directo */
@@ -2233,7 +2101,6 @@ async function refreshFromONPE() {
     const allRegions = [...(snap1.regions||[]), ...(snap2.regions||[])];
     const natPct = snap1.national.pct;
     const natCands = snap1.national.candidates;
-    _lastNatVV = snap1.national.votosValidos || 0; /* Guardar para proyecciones */
 
     /* 1. Update JEE */
     const jeeActas = snap1.national.enviadasJee || 0;
@@ -2300,11 +2167,11 @@ async function refreshFromONPE() {
     } catch(e) { console.warn('Consistency check failed:', e); }
 
     /* 4. Run projection + re-render probability bars */
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, natPct, snap1.national.votosValidos, natCands);
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS);
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs, vvNational);
-    updateZonaDef(projection, vvNational, natPct);
+    updateZonaDef(projection, vvNational);
 
     /* 5. Hero count-up */
     try {
@@ -2321,6 +2188,8 @@ async function refreshFromONPE() {
 
     /* 6. KPIs — re-render sorted by current %, with staggered reveal */
     const refreshRevealMs = renderKPIs(natCands);
+    /* Actualizar banner de resultado final */
+    updateResultadoBanner(natCands);
     /* Hot-mover and trends delayed to appear AFTER the reveal sequence */
     setTimeout(() => {
       updateTrendArrows();
@@ -2382,83 +2251,14 @@ async function refreshFromONPE() {
 /* Init is now at the top — see switchTab / init section */
 
 /* ══════════════════════════════════════════════════════════
-   §9  MOTOR DE PROYECCIÓN v3-JEE
-   Al 99%+: proyección geográfica basada en distribución real de actas JEE.
-   Fuente: ATuManera/Peru_elecciones2026 — desglose territorial 9 mayo 2026.
-   Al <99%: damping dinámico por región (Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50)
-   — Rafael Vasquez (v3-JEE)
+   §9  MOTOR DE PROYECCIÓN v3
+   Estima resultados finales a partir de la data regional parcial.
+   Aplica factores de ajuste con damping dinámico por región.
+   v3: Extranjero 0.80 / Lima-Callao 0.50 / >90% 0.25 / resto 0.50
+   — Basado en Renzo Núñez Berdejo, modificado por Rafael Vasquez
 ══════════════════════════════════════════════════════════ */
-function runProjection(regions, natPct, natVV, natCands) {
+function runProjection(regions) {
   const KEYS = ['fuji','rla','nieto','belm','sanch'];
-
-  /* ═══ PROYECCIÓN JEE al 99%+: usar distribución geográfica real de actas pendientes ═══
-   * Fuente: ATuManera/Peru_elecciones2026 README — desglose territorial 9 mayo 2026
-   * 450 actas "Para envío al JEE" distribuidas por región
-   * ~180 VV promedio por acta JEE (actas más pequeñas/rurales)
-   */
-  const natPctCheck = natPct || (regions.reduce((s,r) => s + r.pct * (r.vv||0), 0) /
-                      (regions.reduce((s,r) => s + (r.vv||0), 0) || 1));
-  if (natPctCheck >= 99.0) {
-    /*
-     * Al 99%+: proyección basada en distribución geográfica real de actas JEE.
-     * Fuente: ATuManera/Peru_elecciones2026 — desglose territorial 9 mayo 2026.
-     *
-     * IMPORTANTE: Usamos los % del API nacional (natCands) como base, NO la suma
-     * de las APIs regionales. La suma regional tiene ~303K votos menos que el
-     * nacional por discrepancias conocidas en la API de ONPE. El nacional es la
-     * fuente canónica para los porcentajes finales.
-     */
-    const JEE_ACTAS = {
-      'Lima': 142, 'Piura': 94, 'Cusco': 53, 'San Martín': 39, 'Cajamarca': 36,
-      'Ucayali': 31, 'Madre de Dios': 13, 'Ayacucho': 11, 'Apurímac': 10,
-      'Callao': 8, 'Áncash': 4, 'Ica': 3, 'Huancavelica': 2,
-      'La Libertad': 1, 'Moquegua': 1, 'Puno': 1, 'Tacna': 1
-    };
-    const AVG_VV_JEE = 180; /* votos válidos promedio por acta JEE */
-
-    /* Base: total nacional oficial (fuente canónica, evita discrepancia regional) */
-    const vvBase = (natVV && natVV > 0) ? natVV : regions.reduce((s,r) => s + (r.vv||0), 0);
-
-    /* Porcentajes base: del nacional si disponible, si no de la suma regional */
-    const basePcts = (natCands && natCands.fuji > 0) ? {
-      fuji: natCands.fuji, rla: natCands.rla, nieto: natCands.nieto,
-      belm: natCands.belm, sanch: natCands.sanch
-    } : (() => {
-      /* Fallback: calcular desde regiones */
-      const sumVV = regions.reduce((s,r) => s + (r.vv||0), 0) || 1;
-      const res = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
-      regions.forEach(r => { KEYS.forEach(k => { res[k] += (r.vv||0) * (r[k]||0) / 100; }); });
-      KEYS.forEach(k => { res[k] = res[k] / sumVV * 100; });
-      return res;
-    })();
-
-    /* Votos JEE pendientes por región (usa % regionales — más granulares) */
-    let totalVVpend = 0;
-    const pendVotos = { fuji: 0, rla: 0, nieto: 0, belm: 0, sanch: 0 };
-    regions.forEach(r => {
-      const jeeActas = JEE_ACTAS[r.name] || 0;
-      if (jeeActas === 0) return;
-      const vvJee = jeeActas * AVG_VV_JEE;
-      totalVVpend += vvJee;
-      KEYS.forEach(k => { pendVotos[k] += vvJee * (r[k]||0) / 100; });
-    });
-
-    const vvNational = vvBase + totalVVpend;
-
-    /* Votos actuales = % nacional × VV nacional */
-    const actuales = {};
-    KEYS.forEach(k => { actuales[k] = vvBase * basePcts[k] / 100; });
-
-    /* Total final = actuales + pendientes JEE */
-    const finals = KEYS.map(k => ({
-      key: k,
-      actual: actuales[k],
-      pending: pendVotos[k],
-      total: actuales[k] + pendVotos[k],
-      pct: vvNational > 0 ? (actuales[k] + pendVotos[k]) / vvNational * 100 : 0
-    })).sort((a,b) => b.pct - a.pct);
-    return { finals, vvNational };
-  }
 
   /*
    * Empirical marginal factors per department.
@@ -2561,9 +2361,7 @@ function runProjection(regions, natPct, natVV, natCands) {
      * Resto <90%: damping estándar 0.50
      */
     let currentDamp;
-    if (r.pct >= 99.5) {
-      currentDamp = 0; /* Al 99.5%+: el conteo ya es el resultado, sin factores */
-    } else if (nameKey === 'extranjero') {
+    if (nameKey === 'extranjero') {
       currentDamp = 0.80;
     } else if (['lima', 'callao'].includes(nameKey)) {
       currentDamp = 0.50;
@@ -2618,7 +2416,7 @@ function runProjection(regions, natPct, natVV, natCands) {
    Modelo basado en márgenes proyectados × factor de certeza.
    La asimetría del voto pendiente ya está capturada por los
    factores rurales en runProjection (§9).
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function calcProbabilities(projection, nationalPct) {
   /*
@@ -2656,7 +2454,7 @@ function calcProbabilities(projection, nationalPct) {
 
 /* ══════════════════════════════════════════════════════════
    §11  UI DE PROYECCIÓN — Actualiza tabla, barras y ref cards
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 function updateProjectionUI(projection, probs, vvNational) {
   const trackKeyMap = {fuji:'fujimori', rla:'rla', nieto:'nieto', belm:'belmont', sanch:'sanchez'};
@@ -2745,7 +2543,7 @@ function updateProjectionUI(projection, probs, vvNational) {
 /* ══════════════════════════════════════════════════════════
    §12  AUTO-REFRESH & COUNTDOWN
    Timer visual con refresh automático cada N minutos.
-   — Rafael Vasquez
+   — Renzo Núñez Berdejo
 ══════════════════════════════════════════════════════════ */
 const REFRESH_MINUTES = 3;
 let autoRefreshInterval = null;
@@ -2805,6 +2603,6 @@ if (WORKER_URL && !WORKER_URL.includes('TUSUBDOMINIO')) {
 }
 
 </script>
-<!-- Analytics removido — agregar el propio si se desea -->
+<script data-goatcounter="https://renzo.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
