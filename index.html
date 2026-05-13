@@ -2277,7 +2277,7 @@ async function refreshFromONPE() {
     } catch(e) { console.warn('Consistency check failed:', e); }
 
     /* 4. Run projection + re-render probability bars */
-    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, initPct);
+    const { finals: projection, vvNational } = runProjection(ONPE_REGIONS, natPct, snap1.national.votosValidos, natCands);
     const probs = calcProbabilities(projection, natPct);
     renderProbBars(probs); /* Re-sort prob bars by probability */
     updateProjectionUI(projection, probs, vvNational);
