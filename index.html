@@ -1578,7 +1578,11 @@ async function renderWithEmbeddedData() {
       if (data.regions?.length > 0 && data.natPct) {
         console.log('[Cache] localStorage: ' + data.natPct + '% from ' + data.savedAt);
         ONPE_REGIONS.length = 0;
-        data.regions.forEach(r => ONPE_REGIONS.push(r));
+        data.regions.forEach(r => {
+          /* Limpiar pct incorrecto de Extranjero en cache viejo */
+          if ((r.name||'').toLowerCase().includes('extranj')) r.pct = 100;
+          ONPE_REGIONS.push(r);
+        });
         /* Merge localStorage tracking with embedded history (don't lose early cuts).
            Embedded data has the full history (56%→75%). localStorage may have
            newer cuts (76%→81%) that should be APPENDED, not replace the whole thing. */
@@ -2232,11 +2236,9 @@ async function refreshFromONPE() {
     /* 3. Update regions */
     ONPE_REGIONS.length = 0;
     allRegions.forEach(r => {
-      /* Si el conteo nacional está al 99.5%+, forzar Extranjero a 100% */
-      if (natPct >= 99.5) {
-        const isExt = (r.name||'').toLowerCase().includes('extranj');
-        if (isExt && r.pct < 99) r.pct = 100;
-      }
+      /* Extranjero: forzar siempre a 100% — la API regional no lo refleja correctamente */
+      const isExt = (r.name||'').toLowerCase().includes('extranj');
+      if (isExt) r.pct = 100;
       ONPE_REGIONS.push(r);
     });
 
